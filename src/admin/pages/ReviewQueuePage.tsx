@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Card, Input, Segmented, Select, Space, Table, Typography } from "antd";
+import { Card, Input, Space, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
@@ -14,29 +14,19 @@ import type { ReviewItem } from "@/types/domain";
 const { Text } = Typography;
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
-type StatusFilter = ReviewStatus | "all";
-type TypeFilter = "Story" | "Chapter" | "all";
-
+// The queue only ever holds items still awaiting a decision (Pending or
+// Reviewing) — a decided chapter leaves it. So there's nothing to filter by
+// status here; "all" fetches every open item.
 export function ReviewQueuePage() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState<StatusFilter>("Pending");
-  const [type, setType] = useState<TypeFilter>("all");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
 
   const { data, loading } = useMockQuery(
-    () => reviewService.listQueue({ pageNumber: page, pageSize: PAGE_SIZE, status, type, q }),
-    [page, status, type, q],
+    () => reviewService.listQueue({ pageNumber: page, pageSize: PAGE_SIZE, status: "all", q }),
+    [page, q],
   );
 
-  const onStatus = (value: string | number) => {
-    setPage(1);
-    setStatus(value as StatusFilter);
-  };
-  const onType = (value: string) => {
-    setPage(1);
-    setType(value as TypeFilter);
-  };
   const onSearch = (value: string) => {
     setPage(1);
     setQ(value);
@@ -85,31 +75,6 @@ export function ReviewQueuePage() {
 
       <Card
         styles={{ body: { paddingTop: 16 } }}
-        title={
-          <Space wrap>
-            <Segmented
-              value={status}
-              onChange={onStatus}
-              options={[
-                { label: "Pending", value: "Pending" },
-                { label: "Reviewing", value: "Reviewing" },
-                { label: "Approved", value: "Approved" },
-                { label: "Rejected", value: "Rejected" },
-                { label: "All", value: "all" },
-              ]}
-            />
-            <Select
-              value={type}
-              onChange={onType}
-              style={{ width: 140 }}
-              options={[
-                { label: "All types", value: "all" },
-                { label: "Story", value: "Story" },
-                { label: "Chapter", value: "Chapter" },
-              ]}
-            />
-          </Space>
-        }
         extra={
           <Input.Search
             allowClear
