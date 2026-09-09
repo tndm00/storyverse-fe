@@ -1,5 +1,6 @@
 import { lazyNamed } from "@/utils/lazyNamed";
 import { RequireAuth } from "@/auth/RequireAuth";
+import { ADMIN_BASE_PATH } from "@/utils/constants";
 import { AdminLayout } from "./layouts/AdminLayout";
 
 // Pages are code-split; layout + auth guard stay in the main chunk.
@@ -11,10 +12,12 @@ const ReportDetailPage = lazyNamed(() => import("./pages/ReportDetailPage"), "Re
 const StoriesPage = lazyNamed(() => import("./pages/StoriesPage"), "StoriesPage");
 const GenresPage = lazyNamed(() => import("./pages/GenresPage"), "GenresPage");
 
-// Admin console route subtree, mounted at /admin. Gated by RequireAuth
-// (moderators + platform admins only — see src/services/authService.js).
+// Admin console route subtree, mounted at ADMIN_BASE_PATH (an obscure,
+// hard-to-guess slug — not "/admin" — so the console isn't findable by
+// probing common paths). Gated by RequireAuth (moderators + platform
+// admins only — see src/services/authService.js).
 export const adminRoutes = {
-  path: "admin",
+  path: ADMIN_BASE_PATH,
   element: (
     <RequireAuth requireAdminConsole>
       <AdminLayout />

@@ -84,8 +84,14 @@ export const DEFAULT_PAGE_SIZE = 10;
 // ---------------------------------------------------------------------------
 // Routes — absolute paths for navigation (navigate(), <Link to>, <Navigate to>).
 // Two areas: the public reader site (src/site) and the admin console
-// (src/admin, all under /admin). Route *patterns* live in the *Routes.tsx files.
+// (src/admin). Route *patterns* live in the *Routes.tsx files.
 // ---------------------------------------------------------------------------
+
+// The admin console is deliberately NOT mounted at the guessable "/admin" —
+// it lives under this slug instead, so it isn't found by probing common
+// paths. Change it here only (adminRoutes.tsx reads it too); everything
+// under ROUTES.admin.* is derived from it.
+export const ADMIN_BASE_PATH = "console-7f2k";
 
 export const ROUTES = {
   // public reader site
@@ -113,13 +119,13 @@ export const ROUTES = {
 
   // admin console
   admin: {
-    dashboard: "/admin",
-    reviewQueue: "/admin/review",
-    reports: "/admin/reports",
-    stories: "/admin/stories",
-    genres: "/admin/genres",
-    reviewItem: (id: string) => `/admin/review/${id}`,
-    report: (id: string) => `/admin/reports/${id}`,
+    dashboard: `/${ADMIN_BASE_PATH}`,
+    reviewQueue: `/${ADMIN_BASE_PATH}/review`,
+    reports: `/${ADMIN_BASE_PATH}/reports`,
+    stories: `/${ADMIN_BASE_PATH}/stories`,
+    genres: `/${ADMIN_BASE_PATH}/genres`,
+    reviewItem: (id: string) => `/${ADMIN_BASE_PATH}/review/${id}`,
+    report: (id: string) => `/${ADMIN_BASE_PATH}/reports/${id}`,
   },
 
   notFound: "/404",

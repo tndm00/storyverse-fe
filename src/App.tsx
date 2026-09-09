@@ -9,7 +9,8 @@ import { PageLoader } from "@/components/PageLoader";
 
 // Two areas, one router:
 //   siteRoutes  -> public reader site at "/"      (src/site)
-//   adminRoutes -> admin console at "/admin"      (src/admin, behind RequireAuth)
+//   adminRoutes -> admin console at ADMIN_BASE_PATH (src/admin, behind RequireAuth;
+//                  deliberately not "/admin" — see utils/constants.ts)
 // plus the shared /login gate and a catch-all 404. Page components are lazily
 // loaded, so a <Suspense> boundary wraps the route tree.
 function App() {
