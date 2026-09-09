@@ -1,6 +1,18 @@
-import { COMMUNITY_STATS, CONTRIBUTORS, DISCUSSIONS } from "../siteContent";
+import { useMockQuery } from "@/hooks/useMockQuery";
+import { browseStories } from "../readerService";
 
 export function CommunityPage() {
+  // Only real, backend-backed number available for this page today: total
+  // published stories (Content service paged listing's totalCount). There is
+  // no aggregate endpoint yet for storyteller count or comment count, and no
+  // "featured contributors" / "discussion board" endpoint at all — see report.
+  const { data: storyCount } = useMockQuery(
+    () => browseStories({ pageSize: 1 }).then((r) => r.totalCount),
+    [],
+  );
+
+  const vi = new Intl.NumberFormat("vi-VN");
+
   return (
     <>
       <section className="cb-section">
@@ -15,49 +27,13 @@ export function CommunityPage() {
 
       <section className="cb-section" style={{ paddingTop: 0 }}>
         <div className="cb-stats-row">
-          {COMMUNITY_STATS.map((s) => (
-            <div className="cb-stat" key={s.label}>
-              <div className="cb-stat-value">{s.value}</div>
-              <div className="cb-stat-label">{s.label}</div>
+          <div className="cb-stat">
+            <div className="cb-stat-value">
+              {storyCount != null ? vi.format(storyCount) : "…"}
             </div>
-          ))}
+            <div className="cb-stat-label">truyện đã đăng</div>
+          </div>
         </div>
-
-        <div className="cb-section-head" style={{ marginTop: 32 }}>
-          <h2>Người kể được yêu thích</h2>
-        </div>
-        <div className="cb-contributor-grid">
-          {CONTRIBUTORS.map((c) => (
-            <div className="cb-contributor-card" key={c.name}>
-              <div className="cb-contributor-top">
-                <div className="cb-avatar" aria-hidden="true">
-                  {c.initials}
-                </div>
-                <div>
-                  <div className="cb-contributor-name">{c.name}</div>
-                  <div className="cb-contributor-role">{c.role}</div>
-                </div>
-              </div>
-              <p className="cb-contributor-bio">{c.bio}</p>
-              <div className="cb-contributor-count">{c.count}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="cb-section-head" style={{ marginTop: 32 }}>
-          <h2>Đang thảo luận</h2>
-        </div>
-        <ul className="cb-trend">
-          {DISCUSSIONS.map((d) => (
-            <li key={d.id}>
-              <span className="cb-trend-left">
-                <span className="cb-trend-rank">·</span>
-                <span className="cb-trend-title">{d.title}</span>
-              </span>
-              <span className="cb-trend-views">{d.replies}</span>
-            </li>
-          ))}
-        </ul>
 
         <div className="cb-cta-band" style={{ marginTop: 32 }}>
           <div>

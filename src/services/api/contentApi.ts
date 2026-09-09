@@ -41,12 +41,24 @@ export const contentApi = {
     client.post(`/v1/stories/${storyId}/chapters`, body),
   getChapter: (chapterId: Id) => client.get(`/v1/chapters/${chapterId}`),
   updateChapter: (chapterId: Id, body: Body) => client.put(`/v1/chapters/${chapterId}`, body),
-  publishChapter: (chapterId: Id) => client.post(`/v1/chapters/${chapterId}/publish`),
+  // Author submits (or resubmits after rejection) for moderation — does not
+  // publish directly. See the review-queue methods below for the decision.
+  submitChapterForReview: (chapterId: Id) =>
+    client.post(`/v1/chapters/${chapterId}/submit-for-review`),
   scheduleChapter: (chapterId: Id, scheduledAt: string) =>
     client.post(`/v1/chapters/${chapterId}/schedule`, { scheduledAt }),
   cancelChapterSchedule: (chapterId: Id) =>
     client.post(`/v1/chapters/${chapterId}/cancel-schedule`),
   removeChapter: (chapterId: Id) => client.post(`/v1/chapters/${chapterId}/remove`),
+
+  // ---- chapter moderation (content.moderate) --------------------------
+  listPendingReviewChapters: (params?: Query) =>
+    client.get("/v1/chapters/pending-review", { params }),
+  getChapterForReview: (chapterId: Id) => client.get(`/v1/chapters/${chapterId}/for-review`),
+  reviewChapter: (chapterId: Id) => client.post(`/v1/chapters/${chapterId}/review`),
+  approveChapter: (chapterId: Id) => client.post(`/v1/chapters/${chapterId}/approve`),
+  rejectChapter: (chapterId: Id, reason: string) =>
+    client.post(`/v1/chapters/${chapterId}/reject`, { reason }),
 
   // ---- taxonomy ----------------------------------------------------
   // GET /v1/genres  (anonymous, active only). ?include-inactive=true for the admin page.

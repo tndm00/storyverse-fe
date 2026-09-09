@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Alert, Card, Input, Segmented, Select, Space, Table, Typography } from "antd";
+import { Card, Input, Segmented, Select, Space, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
@@ -80,15 +80,7 @@ export function ReviewQueuePage() {
     <div>
       <AppPageHeader
         title={LABELS.reviewQueue}
-        subtitle="Stories and chapters submitted by authors, awaiting a publish decision"
-      />
-
-      <Alert
-        type="warning"
-        showIcon
-        style={{ marginBottom: 16 }}
-        message="Dữ liệu giả"
-        description="Chưa có backend cho hàng đợi duyệt bài (pre-publication review). Trang này chạy trên mock và mọi thao tác chỉ nằm trong bộ nhớ."
+        subtitle="Chapters submitted by authors, awaiting a publish decision"
       />
 
       <Card

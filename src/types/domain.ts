@@ -1,6 +1,5 @@
 // Domain models shared across services, pages and components.
-// The mock layer (src/services/mock) produces these shapes; the real API layer
-// (src/services/api) will map backend DTOs onto them.
+// The real API layer (src/services/api) maps backend DTOs onto these shapes.
 
 import type {
   ChapterStatus,
@@ -52,7 +51,7 @@ export interface Chapter {
   submittedAt: string;
 }
 
-/** Frontend-proposed review-queue item — no backend equivalent yet. */
+/** Review-queue item — mapped from the Content service's pending-review chapters. */
 export interface ReviewItem {
   id: string;
   targetType: Extract<TargetType, "Story" | "Chapter">;

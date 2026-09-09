@@ -25,14 +25,20 @@ After install, tell Claude — it runs `dotnet ef database update` for all 6 ser
 - [ ] Content: authorized admin story listing incl. every status — DEFERRED.
       Public `GET /v1/stories` is published-only; admin list + counts + get-by-id
       still need backend work. FE admin runs published-only against the real API.
-- [ ] Moderation `reviewService` (pre-publication queue) — DEFERRED, no backend
-      endpoint. Reports lifecycle exists and can be wired next.
+- [x] Content chapter review workflow — real pre-publication gate. `ChapterStatus`:
+      `Draft/Rejected → PendingReview → InReview → Published/Rejected`. A story
+      stays `Draft` (hidden from the public) until its first chapter is approved.
+      Moderator endpoints (`content.moderate`, granted to `Moderator` +
+      `PlatformAdmin`): `GET /v1/chapters/pending-review`,
+      `GET /v1/chapters/{id}/for-review`, `POST /v1/chapters/{id}/review`,
+      `POST /v1/chapters/{id}/approve`, `POST /v1/chapters/{id}/reject {reason}`.
+      Author side: `POST /v1/chapters/{id}/submit-for-review` (submit/resubmit).
 
 ## Phase 2 — FE service facades (`useRealApi` branch)
 
 - [x] `storyService` → `contentApi` (list + counts; `get()` rejects — no by-id API)
 - [ ] `reportService` → `moderationApi` — next
-- [ ] `reviewService` — blocked on backend
+- [x] `reviewService` → `contentApi` chapter-review endpoints (real)
 - [ ] library / notification / community facades — not yet
 
 ## Phase 3 — FE reader site (Canh Ba)
@@ -147,12 +153,14 @@ cd story-fe-prj && npm run e2e
 # direct to the service ports (TLS-insecure, no dev server needed):
 BASE=https://localhost npm run e2e
 ```
-27 steps across all 6 services: register → author profile → re-login → **guest
-publish (anonymous)** → quick-publish → Phần 2 + chapter → 2nd reader
-comments/rates/votes → library + reading progress → report → **admin genre
-create/update/hide** → admin review/resolve → notifications → anonymous reads →
-author filter.
-**27/27 pass** in both modes (verified 2026-09-09).
+30 steps across all 6 services: register → author profile → re-login → **guest
+publish (anonymous, stays Draft)** → quick-publish (Draft) → **admin approves
+chapter 1 (story goes live)** → Phần 2 + submit chapter 2 for review →
+**admin approves chapter 2** → 2nd reader comments/rates/votes → library +
+reading progress → report → **admin genre create/update/hide** →
+moderation reports review/resolve → notifications → **admin rejects a chapter,
+author resubmits** → anonymous reads → author filter.
+**30/30 pass** in both modes (verified 2026-09-09, chapter review workflow).
 
 ### Reset all test data (keeps genres + admin/reader accounts)
 
@@ -178,8 +186,10 @@ pwsh story-be-prj/deploy/dev-run.ps1
 - Moderation queue has no free-text search — admin `q` box is a no-op in API mode.
 - No `Role.Moderator` grant path — the reports queue uses `admin@storyverse.local`.
 - Moderation decisions are audit-only (Hide/Remove not applied to the content).
-- `reviewService` (pre-publication review) has no backend — `/admin/review*` stays
-  mock, labelled with a warning banner.
+- `reviewService` has no aggregate counts for already-decided chapters (no listing
+  endpoint for them) — Dashboard/queue "Approved"/"Rejected" counts always show `0`.
+- `reviewService.listQueue`'s free-text `q` and `type` ("Story" vs "Chapter")
+  filters are mock-mode-only — ignored against the real API (queue is chapter-only).
 - Auth: no token-refresh endpoint (re-login after author-profile stays).
 - Scheduled-chapter auto-publisher (no background job).
 - `GET /v1/stories/mine` (author's own incl. drafts), admin all-status list, story

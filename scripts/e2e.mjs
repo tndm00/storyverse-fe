@@ -173,11 +173,13 @@ async function main() {
         chapterContent: "Không cần đăng nhập vẫn đăng được truyện. ".repeat(10),
       },
     });
-    assert(d.status === "Ongoing", `expected Ongoing, got ${d.status}`);
-    const detail = await req("content", `/v1/stories/by-slug/${d.slug}`);
+    S.guestStorySlug = d.slug;
+    assert(d.status === "Draft", `expected Draft (pending review), got ${d.status}`);
+    // Anonymous by-slug 404s while pending review (same rule as any Draft story) —
+    // guestAuthorName is already on the creation response itself.
     assert(
-      detail.guestAuthorName === "Khách E2E",
-      `guestAuthorName not persisted: ${detail.guestAuthorName}`,
+      d.guestAuthorName === "Khách E2E",
+      `guestAuthorName not persisted: ${d.guestAuthorName}`,
     );
     return `${d.slug}`;
   });
@@ -202,8 +204,30 @@ async function main() {
     S.storyId = d.story.id;
     S.storySlug = d.story.slug;
     S.chapter1Id = d.firstChapter.id;
-    assert(d.story.status === "Ongoing", `expected Ongoing, got ${d.story.status}`);
+    assert(d.story.status === "Draft", `expected Draft (pending review), got ${d.story.status}`);
+    assert(
+      d.firstChapter.status === "PendingReview",
+      `expected PendingReview, got ${d.firstChapter.status}`,
+    );
     return `${S.storySlug} (${S.storyId.slice(0, 8)})`;
+  });
+
+  await step("admin approves chapter 1 (story goes live)", async () => {
+    const login = await req("authentication", "/v1/auth/login", {
+      method: "POST",
+      body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+    });
+    S.tokenAdmin = login.accessToken;
+    await req("content", `/v1/chapters/${S.chapter1Id}/review`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    await req("content", `/v1/chapters/${S.chapter1Id}/approve`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    const story = await req("content", `/v1/stories/by-slug/${S.storySlug}`);
+    assert(story.status === "Ongoing", `expected Ongoing after approval, got ${story.status}`);
   });
 
   await step('add volume "Phần 2"', async () => {
@@ -215,7 +239,7 @@ async function main() {
     S.volumeId = d.id;
   });
 
-  await step("add + publish chapter 2 in Phần 2", async () => {
+  await step("add + submit chapter 2 in Phần 2 for review", async () => {
     const d = await req("content", `/v1/stories/${S.storyId}/chapters`, {
       method: "POST",
       token: S.tokenA,
@@ -228,6 +252,18 @@ async function main() {
       },
     });
     S.chapter2Id = d.id;
+    assert(d.status === "PendingReview", `expected PendingReview, got ${d.status}`);
+  });
+
+  await step("admin approves chapter 2", async () => {
+    await req("content", `/v1/chapters/${S.chapter2Id}/review`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    const d = await req("content", `/v1/chapters/${S.chapter2Id}/approve`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
     assert(d.status === "Published", `expected Published, got ${d.status}`);
   });
 
@@ -458,6 +494,42 @@ async function main() {
       token: S.tokenB,
     });
     assert(all.count === 0, `expected 0 unread after read-all, got ${all.count}`);
+  });
+
+  await step("admin rejects a chapter, author resubmits", async () => {
+    const d = await req("content", `/v1/stories/${S.storyId}/chapters`, {
+      method: "POST",
+      token: S.tokenA,
+      body: {
+        title: "Chương 3 (nháp lỗi)",
+        content: "Bản nháp sẽ bị từ chối. ".repeat(10),
+        orderIndex: 3,
+        publishImmediately: true,
+      },
+    });
+    const chapter3Id = d.id;
+    assert(d.status === "PendingReview", `expected PendingReview, got ${d.status}`);
+
+    await req("content", `/v1/chapters/${chapter3Id}/review`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    const rejected = await req("content", `/v1/chapters/${chapter3Id}/reject`, {
+      method: "POST",
+      token: S.tokenAdmin,
+      body: { reason: "Thiếu nội dung, vui lòng bổ sung." },
+    });
+    assert(rejected.status === "Rejected", `expected Rejected, got ${rejected.status}`);
+    assert(rejected.rejectionReason, "rejectionReason not set");
+
+    const resubmitted = await req("content", `/v1/chapters/${chapter3Id}/submit-for-review`, {
+      method: "POST",
+      token: S.tokenA,
+    });
+    assert(
+      resubmitted.status === "PendingReview",
+      `expected PendingReview after resubmit, got ${resubmitted.status}`,
+    );
   });
 
   await step("anonymous reads (content)", async () => {

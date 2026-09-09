@@ -28,14 +28,12 @@ every call rejects with `ApiError { code: "not_implemented" }` until the
   avoided — the backend has no CORS config.
 - Prod / custom: set `VITE_<SERVICE>_API_URL` to an absolute URL.
 
-## Wiring a page to the real backend
+## Running against the backend
 
 1. Start the backend service(s) + Postgres (`docker compose up -d`, then
    `dotnet run` per service).
-2. `.env.local` → `VITE_DATA_SOURCE=api`.
-3. The service facades (`src/services/authService.js`, etc.) branch on
-   `useRealApi`. `authService` is already wired; `reviewService` / `reportService`
-   have no backend yet; `storyService` needs the response DTO mapped.
+2. `npm run dev` — the service facades (`src/services/authService.ts`, etc.)
+   always call the real backend through this API layer.
 
 ## Usage
 

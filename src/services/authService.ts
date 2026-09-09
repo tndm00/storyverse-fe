@@ -1,22 +1,13 @@
 // Auth facade used by AuthProvider.
-//   DATA_SOURCE=mock -> validate against src/services/mock/db.ts
-//   DATA_SOURCE=api  -> POST /v1/auth/login + GET /v1/auth/me (Authentication service)
+//   POST /v1/auth/login + GET /v1/auth/me (Authentication service)
 //
 // Login is role-agnostic: any account (Reader / Author / Moderator / PlatformAdmin)
 // gets a session. The admin console gate lives in RequireAuth + LoginPage via the
 // exported `canUseAdminConsole`.
 
-import { users } from "./mock/db";
-import { withLatency, failWithLatency } from "./mock/latency";
-import { useRealApi } from "./dataSource";
 import { authenticationApi } from "./api/authenticationApi";
 import type { CurrentUserResponse } from "./api/types";
-import {
-  ADMIN_CONSOLE_ROLES,
-  AUTH_TOKEN_KEY,
-  BEARER_TOKEN_TYPE,
-  MESSAGES,
-} from "@/utils/constants";
+import { ADMIN_CONSOLE_ROLES, AUTH_TOKEN_KEY, BEARER_TOKEN_TYPE } from "@/utils/constants";
 import type { AdminUser } from "@/types/domain";
 
 export const AUTHOR_ROLE = "Author";
@@ -25,24 +16,6 @@ export interface LoginResult {
   accessToken: string;
   tokenType: string;
   user: AdminUser;
-}
-
-interface MockUser {
-  id: string;
-  email: string;
-  displayName: string;
-  avatarUrl: string | null;
-  roles: string[];
-}
-
-function publicUser(u: MockUser): AdminUser {
-  return {
-    id: u.id,
-    email: u.email,
-    displayName: u.displayName,
-    avatarUrl: u.avatarUrl,
-    roles: u.roles,
-  };
 }
 
 // GET /v1/auth/me returns the caller's role names (Reader / Author / Moderator /
@@ -69,19 +42,7 @@ export function canUseAdminConsole(roles: readonly string[] | undefined): boolea
 
 // ---- login --------------------------------------------------------------
 
-async function loginMock(email: string, password: string): Promise<LoginResult> {
-  const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase().trim());
-  if (!user || user.password !== password) {
-    return failWithLatency<LoginResult>(MESSAGES.auth.invalidCredentials);
-  }
-  return withLatency<LoginResult>({
-    accessToken: `mock.${btoa(user.id)}.${Date.now()}`,
-    tokenType: BEARER_TOKEN_TYPE,
-    user: publicUser(user),
-  });
-}
-
-async function loginApi(email: string, password: string): Promise<LoginResult> {
+export async function login(email: string, password: string): Promise<LoginResult> {
   const tokens = await authenticationApi.login(email, password);
   // the api client reads the token from localStorage, so persist it before /me.
   localStorage.setItem(AUTH_TOKEN_KEY, tokens.accessToken);
@@ -109,38 +70,18 @@ async function loginApi(email: string, password: string): Promise<LoginResult> {
   };
 }
 
-export function login(email: string, password: string): Promise<LoginResult> {
-  return useRealApi ? loginApi(email, password) : loginMock(email, password);
-}
-
 // ---- resolve current user from a stored token (app boot / refresh) ------
+// `token` is unused here (the api client reads it from localStorage) — kept for
+// call-site compatibility.
 
-async function meMock(token: string | null): Promise<AdminUser> {
-  const match = /^mock\.([^.]+)\./.exec(token ?? "");
-  if (!match) return failWithLatency<AdminUser>(MESSAGES.auth.sessionExpired);
-  let userId: string;
-  try {
-    userId = atob(match[1]);
-  } catch {
-    return failWithLatency<AdminUser>(MESSAGES.auth.invalidSession);
-  }
-  const user = users.find((u) => u.id === userId);
-  if (!user) return failWithLatency<AdminUser>(MESSAGES.auth.sessionExpired);
-  return withLatency<AdminUser>(publicUser(user));
-}
-
-async function meApi(): Promise<AdminUser> {
-  const me = await authenticationApi.me();
-  const roles = rolesFrom(me);
+export async function me(_token: string | null): Promise<AdminUser> {
+  const meRes = await authenticationApi.me();
+  const roles = rolesFrom(meRes);
   return {
-    id: String(me.userId),
-    email: me.email,
-    displayName: me.displayName,
-    avatarUrl: me.avatarUrl,
+    id: String(meRes.userId),
+    email: meRes.email,
+    displayName: meRes.displayName,
+    avatarUrl: meRes.avatarUrl,
     roles,
   };
-}
-
-export function me(token: string | null): Promise<AdminUser> {
-  return useRealApi ? meApi() : meMock(token);
 }

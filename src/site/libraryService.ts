@@ -1,11 +1,9 @@
 // Library facade — bookshelf entries + reading progress.
-//   useRealApi -> Library service (+ Content GET /v1/stories/{id} to resolve titles)
-//   otherwise  -> methods throw
+// Library service (+ Content GET /v1/stories/{id} to resolve titles).
 
 import { libraryApi } from "@/services/api/libraryApi";
 import { contentApi } from "@/services/api/contentApi";
 import { ApiError } from "@/services/api/client";
-import { useRealApi } from "@/services/dataSource";
 
 export type Shelf = "Reading" | "PlanToRead" | "Completed" | "Dropped";
 
@@ -20,14 +18,6 @@ const SHELF_LABEL: Record<string, string> = Object.fromEntries(
   SHELVES.map((s) => [s.value, s.label]),
 );
 export const shelfLabel = (v: string) => SHELF_LABEL[v] ?? v;
-
-function assertApi(): void {
-  if (!useRealApi) {
-    throw new ApiError("Tủ truyện chỉ hoạt động khi kết nối máy chủ thật.", {
-      code: "mock_unsupported",
-    });
-  }
-}
 
 // ---- backend DTOs ----------------------------------------------------
 
@@ -103,7 +93,6 @@ export async function listLibrary(
   shelf?: Shelf,
   opts: { pageNumber?: number; pageSize?: number } = {},
 ): Promise<{ items: LibraryItem[]; totalCount: number }> {
-  assertApi();
   const paged = await libraryApi.client.get<Paged<LibraryEntryDto>>("/v1/library", {
     params: {
       "shelf-status": shelf,
@@ -125,7 +114,6 @@ export async function listLibrary(
 }
 
 export async function getEntryForStory(storyId: string): Promise<LibraryItem | null> {
-  assertApi();
   // No single-entry GET — list the first page and find it.
   const paged = await libraryApi.client.get<Paged<LibraryEntryDto>>("/v1/library", {
     params: { "page-number": 1, "page-size": 200 },
@@ -142,17 +130,14 @@ export async function getEntryForStory(storyId: string): Promise<LibraryItem | n
 }
 
 export async function addToLibrary(storyId: string, shelf: Shelf = "Reading"): Promise<void> {
-  assertApi();
   await libraryApi.client.post("/v1/library", { storyId, shelfStatus: shelf });
 }
 
 export async function setShelf(storyId: string, shelf: Shelf): Promise<void> {
-  assertApi();
   await libraryApi.client.put(`/v1/library/${storyId}/shelf-status`, { shelfStatus: shelf });
 }
 
 export async function removeFromLibrary(storyId: string): Promise<void> {
-  assertApi();
   await libraryApi.client.del(`/v1/library/${storyId}`);
 }
 
@@ -161,7 +146,6 @@ export async function removeFromLibrary(storyId: string): Promise<void> {
 export async function listContinueReading(
   opts: { pageNumber?: number; pageSize?: number } = {},
 ): Promise<ContinueItem[]> {
-  assertApi();
   const paged = await libraryApi.client.get<Paged<ReadingProgressDto>>(
     "/v1/reading-progress/continue-reading",
     { params: { "page-number": opts.pageNumber ?? 1, "page-size": opts.pageSize ?? 6 } },
@@ -177,7 +161,6 @@ export async function listContinueReading(
 }
 
 export async function getReadingProgress(storyId: string): Promise<ReadingProgressDto | null> {
-  assertApi();
   try {
     return await libraryApi.client.get<ReadingProgressDto>(`/v1/reading-progress/${storyId}`);
   } catch (err) {
@@ -191,6 +174,5 @@ export async function saveReadingProgress(
   lastChapterId: string,
   scrollPercent?: number,
 ): Promise<void> {
-  if (!useRealApi) return;
   await libraryApi.client.put(`/v1/reading-progress/${storyId}`, { lastChapterId, scrollPercent });
 }
