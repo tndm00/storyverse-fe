@@ -29,8 +29,8 @@ const NAV: { label: string; to: string; end?: boolean }[] = [
 ];
 
 // Public reader-facing shell for Canh Ba. Sticky header, hero-less content
-// via <Outlet />, footer. The admin console lives under /admin behind its own
-// layout and keeps the Ant Design theme untouched.
+// via <Outlet />, footer. The admin console lives under its own (deliberately
+// obscure) path behind its own layout and keeps the Ant Design theme untouched.
 export function SiteLayout() {
   const { isAuthenticated, user, logout } = useAuth();
   const [navOpen, setNavOpen] = useState(false);
