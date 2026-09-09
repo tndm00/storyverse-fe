@@ -1,6 +1,6 @@
-// Domain enums. The story/chapter sets mirror the backend
-// (Content.Domain/Enums). REVIEW_STATUS is a frontend-proposed lifecycle for the
-// pre-publication review queue — the backend has no equivalent yet.
+// Domain enums. The story/chapter sets mirror the backend (Content.Domain/Enums).
+// REVIEW_STATUS is the FE's mapping of the backend's pending-review chapter
+// statuses (see src/services/reviewService.ts).
 
 export const STORY_STATUS = ["Draft", "Ongoing", "Completed", "Hiatus", "Dropped"] as const;
 export type StoryStatus = (typeof STORY_STATUS)[number];
@@ -67,16 +67,12 @@ export const AUTH_TOKEN_KEY = "sv_admin_token";
 
 export const BEARER_TOKEN_TYPE = "Bearer";
 
-// Data-source switch values (see src/services/dataSource.ts and .env.example).
-export const DATA_SOURCE = { api: "api", mock: "mock" } as const;
-export type DataSource = (typeof DATA_SOURCE)[keyof typeof DATA_SOURCE];
-
 // Roles allowed into the admin console. Matched loosely (case / separators
-// ignored) so both the mock naming ("PLATFORM_ADMIN") and the backend enum
+// ignored) so both underscore-style ("PLATFORM_ADMIN") and the backend enum
 // names ("PlatformAdmin") pass — see src/services/authService.ts.
 export const ADMIN_CONSOLE_ROLES = ["PlatformAdmin", "Moderator"] as const;
 
-// Shown on the login screen and pre-filled in the mock user table.
+// Shown on the login screen (seeded backend admin account).
 export const DEMO_CREDENTIALS = { email: "admin@storyverse.local", password: "admin123" };
 
 // ---------------------------------------------------------------------------
@@ -84,9 +80,6 @@ export const DEMO_CREDENTIALS = { email: "admin@storyverse.local", password: "ad
 // ---------------------------------------------------------------------------
 
 export const DEFAULT_PAGE_SIZE = 10;
-
-// Simulated network latency for the mock services (ms).
-export const MOCK_LATENCY_MS = 350;
 
 // ---------------------------------------------------------------------------
 // Routes — absolute paths for navigation (navigate(), <Link to>, <Navigate to>).

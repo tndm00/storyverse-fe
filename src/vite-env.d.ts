@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_DATA_SOURCE?: "api" | "mock";
   readonly VITE_AUTHENTICATION_API_URL?: string;
   readonly VITE_CONTENT_API_URL?: string;
   readonly VITE_COMMUNITY_API_URL?: string;

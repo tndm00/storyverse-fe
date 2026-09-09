@@ -4,7 +4,6 @@ import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { useMockQuery } from "@/hooks/useMockQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
-import { useRealApi } from "@/services/dataSource";
 import * as genreService from "@/services/genreService";
 import type { Genre } from "@/services/genreService";
 
@@ -113,20 +112,11 @@ export function GenresPage() {
         title="Thể loại"
         subtitle="Danh sách thể loại truyện (lưu trong CSDL Content). Ẩn thể loại thay vì xoá — truyện đã gán vẫn giữ nguyên."
         extra={
-          <Button type="primary" onClick={openCreate} disabled={!useRealApi}>
+          <Button type="primary" onClick={openCreate}>
             Thêm thể loại
           </Button>
         }
       />
-
-      {!useRealApi ? (
-        <Alert
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-          message="Cần kết nối máy chủ thật (VITE_DATA_SOURCE=api) để quản lý thể loại."
-        />
-      ) : null}
 
       <Card styles={{ body: { padding: 0 } }}>
         <Table<Genre>

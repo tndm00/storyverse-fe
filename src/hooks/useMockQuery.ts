@@ -7,7 +7,7 @@ export interface QueryResult<T> {
   refetch: () => void;
 }
 
-// Minimal data-fetching hook for the mock services.
+// Minimal data-fetching hook for the service facades.
 // `asyncFn` is re-run whenever any value in `deps` changes, or on `refetch()`.
 export function useMockQuery<T>(
   asyncFn: () => Promise<T>,

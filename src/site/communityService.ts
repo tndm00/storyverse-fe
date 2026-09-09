@@ -1,6 +1,5 @@
 // Community facade — chapter comments, story ratings, weekly votes.
-//   useRealApi -> Community service
-//   otherwise  -> methods throw (no meaningful mock)
+// Backed by the Community service.
 //
 // The backend returns only numeric user ids (no display names, no batch lookup),
 // so `authorLabel` is the caller's own display name for their rows and
@@ -10,15 +9,6 @@
 import { communityApi } from "@/services/api/communityApi";
 import { notificationApi } from "@/services/api/notificationApi";
 import { ApiError } from "@/services/api/client";
-import { useRealApi } from "@/services/dataSource";
-
-function assertApi(): void {
-  if (!useRealApi) {
-    throw new ApiError("Tính năng cộng đồng chỉ hoạt động khi kết nối máy chủ thật.", {
-      code: "mock_unsupported",
-    });
-  }
-}
 
 // ---- backend DTOs --------------------------------------------------------
 
@@ -145,7 +135,6 @@ export async function listChapterComments(
   currentUserId: number | null,
   opts: { pageNumber?: number; pageSize?: number; currentUserName?: string } = {},
 ): Promise<CommentPage> {
-  assertApi();
   const paged = await communityApi.client.get<Paged<CommentDto>>("/v1/comments", {
     params: {
       "chapter-id": chapterId,
@@ -170,7 +159,6 @@ export async function listChapterComments(
 }
 
 export async function addComment(chapterId: string, content: string): Promise<void> {
-  assertApi();
   await communityApi.client.post("/v1/comments", { chapterId, content: content.trim() });
 }
 
@@ -180,7 +168,6 @@ export async function replyToComment(
   parentAuthorUserId?: number,
   currentUserId?: number | null,
 ): Promise<void> {
-  assertApi();
   await communityApi.client.post(`/v1/comments/${parentId}/replies`, { content: content.trim() });
 
   // Dev stand-in for the missing "CommentReplied" event consumer: notify the
@@ -202,19 +189,16 @@ export async function replyToComment(
 }
 
 export async function editComment(commentId: string, content: string): Promise<void> {
-  assertApi();
   await communityApi.client.put(`/v1/comments/${commentId}`, { content: content.trim() });
 }
 
 export async function deleteComment(commentId: string): Promise<void> {
-  assertApi();
   await communityApi.client.del(`/v1/comments/${commentId}`);
 }
 
 // ---- ratings ------------------------------------------------------
 
 export async function getMyRating(storyId: string): Promise<MyRating | null> {
-  assertApi();
   try {
     const dto = await communityApi.client.get<RatingDto>("/v1/ratings/mine", {
       params: { "story-id": storyId },
@@ -236,7 +220,6 @@ export async function listStoryRatings(
   currentUserId: number | null,
   opts: { pageNumber?: number; pageSize?: number } = {},
 ): Promise<{ items: RatingRow[]; totalCount: number }> {
-  assertApi();
   const paged = await communityApi.client.get<Paged<RatingDto>>("/v1/ratings", {
     params: {
       "story-id": storyId,
@@ -262,7 +245,6 @@ export async function rateStory(
   score: number,
   reviewText: string,
 ): Promise<MyRating> {
-  assertApi();
   const dto = await communityApi.client.put<RatingDto>("/v1/ratings", {
     storyId,
     score,
@@ -279,7 +261,6 @@ export async function rateStory(
 // ---- votes ------------------------------------------------------
 
 export async function getVoteCount(storyId: string): Promise<VoteCount> {
-  assertApi();
   const dto = await communityApi.client.get<VoteCountDto>("/v1/votes/count", {
     params: { "story-id": storyId },
   });
@@ -287,7 +268,6 @@ export async function getVoteCount(storyId: string): Promise<VoteCount> {
 }
 
 export async function castVote(storyId: string): Promise<CastVoteResult> {
-  assertApi();
   const dto = await communityApi.client.post<CastVoteDto>("/v1/votes", { storyId });
   return { weekKey: dto.weekKey, weekVoteCount: dto.weekVoteCount, recorded: dto.recorded };
 }

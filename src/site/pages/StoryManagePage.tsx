@@ -8,7 +8,7 @@ import {
   addChapter,
   addVolume,
   getMyStory,
-  publishChapter,
+  submitChapterForReview,
   setStoryStatus,
   STORY_STATUS_TRANSITIONS,
   type StoryStatus,
@@ -76,7 +76,7 @@ function ManageBody({ slug }: { slug: string }) {
           volumeId: chVolume || undefined,
           publishImmediately: chPublish,
         }),
-      chPublish ? "Đã thêm và xuất bản chương" : "Đã lưu chương nháp",
+      chPublish ? "Đã gửi chương để duyệt" : "Đã lưu chương nháp",
       () => {
         setChTitle("");
         setChContent("");
@@ -86,11 +86,11 @@ function ManageBody({ slug }: { slug: string }) {
     );
   };
 
-  const doPublish = (chapterId: string) => {
+  const doSubmitForReview = (chapterId: string) => {
     setPublishingId(chapterId);
     run(
-      () => publishChapter(chapterId),
-      "Đã xuất bản chương",
+      () => submitChapterForReview(chapterId),
+      "Đã gửi duyệt",
       () => {
         setPublishingId(null);
         refetch();
@@ -119,7 +119,8 @@ function ManageBody({ slug }: { slug: string }) {
 
         {story.status === "Draft" ? (
           <p className="cb-page-intro">
-            Truyện đang là nháp. Xuất bản chương đầu tiên để truyện hiển thị công khai.
+            Truyện đang là nháp và chưa hiển thị công khai. Gửi duyệt chương đầu tiên — truyện sẽ
+            hiển thị công khai ngay sau khi được kiểm duyệt.
           </p>
         ) : transitions.length > 0 ? (
           <div className="cb-inline-form">
@@ -192,8 +193,8 @@ function ManageBody({ slug }: { slug: string }) {
           storySlug={story.slug}
           volumes={volumes}
           chapters={chapters}
-          onPublish={doPublish}
-          publishingId={publishingId}
+          onSubmitForReview={doSubmitForReview}
+          submittingId={publishingId}
         />
 
         <div className="cb-form-card" style={{ marginTop: 20 }}>
@@ -247,7 +248,7 @@ function ManageBody({ slug }: { slug: string }) {
                 checked={chPublish}
                 onChange={(e) => setChPublish(e.target.checked)}
               />
-              <label htmlFor="nc-pub">Xuất bản ngay</label>
+              <label htmlFor="nc-pub">Gửi duyệt ngay</label>
             </div>
           </div>
           <button

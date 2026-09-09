@@ -959,6 +959,15 @@ textarea.cb-input {
 .cb-badge-draft {
   color: var(--cb-muted);
 }
+.cb-badge-pendingreview,
+.cb-badge-inreview {
+  color: #c9a227;
+  border-color: #c9a227;
+}
+.cb-badge-rejected {
+  color: #c0392b;
+  border-color: #c0392b;
+}
 
 .cb-genre-empty {
   color: var(--cb-accent-soft);

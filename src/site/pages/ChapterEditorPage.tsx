@@ -6,8 +6,8 @@ import { NotFoundPage } from "@/components/NotFoundPage";
 import {
   getChapter,
   getMyStory,
-  publishChapter,
   removeChapter,
+  submitChapterForReview,
   updateChapter,
   type ChapterStatus,
   type VolumeRef,
@@ -17,7 +17,10 @@ import { AuthorGuard } from "../components/author/AuthorGuard";
 const STATUS_LABEL: Record<string, string> = {
   Draft: "Nháp",
   Scheduled: "Đã lên lịch",
-  Published: "Đã xuất bản",
+  PendingReview: "Chờ duyệt",
+  InReview: "Đang duyệt",
+  Published: "Đã duyệt",
+  Rejected: "Bị từ chối",
   Removed: "Đã gỡ",
 };
 
@@ -32,6 +35,7 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
   const [orderIndex, setOrderIndex] = useState(0);
   const [volumeId, setVolumeId] = useState("");
   const [status, setStatus] = useState<ChapterStatus>("Draft");
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [volumes, setVolumes] = useState<VolumeRef[]>([]);
 
   useEffect(() => {
@@ -44,6 +48,7 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
         setOrderIndex(ch.orderIndex);
         setVolumeId(ch.volumeId ?? "");
         setStatus(ch.status);
+        setRejectionReason(ch.rejectionReason);
         setVolumes(view.volumes);
         setLoaded(true);
       })
@@ -72,11 +77,14 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
       "Đã lưu chương",
     );
 
-  const doPublish = () =>
+  const doSubmitForReview = () =>
     run(
-      () => publishChapter(chapterId),
-      "Đã xuất bản chương",
-      () => setStatus("Published"),
+      () => submitChapterForReview(chapterId),
+      "Đã gửi duyệt",
+      () => {
+        setStatus("PendingReview");
+        setRejectionReason(null);
+      },
     );
 
   const doRemove = () => run(() => removeChapter(chapterId), "Đã gỡ chương", backToStory);
@@ -90,8 +98,16 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
         </Link>
       </div>
       <div className="cb-detail-meta">
-        <span className="cb-badge">{STATUS_LABEL[status] ?? status}</span>
+        <span className={`cb-badge cb-badge-${status.toLowerCase()}`}>
+          {STATUS_LABEL[status] ?? status}
+        </span>
       </div>
+
+      {status === "Rejected" && rejectionReason ? (
+        <p className="cb-genre-empty" style={{ marginTop: 12 }}>
+          Bị từ chối: {rejectionReason}
+        </p>
+      ) : null}
 
       <div className="cb-form-card" style={{ marginTop: 16 }}>
         <div className="cb-field">
@@ -157,9 +173,14 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
         </button>
 
         <div className="cb-cta-actions" style={{ marginTop: 12, flexWrap: "wrap" }}>
-          {status === "Draft" || status === "Scheduled" ? (
-            <button type="button" className="cb-btn cb-ghost" disabled={busy} onClick={doPublish}>
-              Xuất bản chương
+          {status === "Draft" || status === "Rejected" ? (
+            <button
+              type="button"
+              className="cb-btn cb-ghost"
+              disabled={busy}
+              onClick={doSubmitForReview}
+            >
+              {status === "Rejected" ? "Gửi lại duyệt" : "Gửi duyệt"}
             </button>
           ) : null}
           {status === "Published" ? (

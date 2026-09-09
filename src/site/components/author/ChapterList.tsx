@@ -5,25 +5,27 @@ import type { AuthorChapter, VolumeRef } from "../../authorService";
 const STATUS_LABEL: Record<string, string> = {
   Draft: "Nháp",
   Scheduled: "Đã lên lịch",
-  Published: "Đã xuất bản",
+  PendingReview: "Chờ duyệt",
+  InReview: "Đang duyệt",
+  Published: "Đã duyệt",
+  Rejected: "Bị từ chối",
   Removed: "Đã gỡ",
 };
 
 // Chapters grouped by volume ("Phần"). The "no volume" bucket comes first, then
-// each volume by orderIndex. Each row links to the chapter editor; Draft rows get
-// a "Xuất bản" action.
+// each volume by orderIndex. Draft/Rejected rows get a "Gửi duyệt" action.
 export function ChapterList({
   storySlug,
   volumes,
   chapters,
-  onPublish,
-  publishingId,
+  onSubmitForReview,
+  submittingId,
 }: {
   storySlug: string;
   volumes: VolumeRef[];
   chapters: AuthorChapter[];
-  onPublish: (chapterId: string) => void;
-  publishingId: string | null;
+  onSubmitForReview: (chapterId: string) => void;
+  submittingId: string | null;
 }) {
   const groups: { key: string; title: string; items: AuthorChapter[] }[] = [
     {
@@ -57,23 +59,41 @@ export function ChapterList({
                   <span className="cb-trend-title">{c.title}</span>
                 </Link>
                 <span className="cb-chapter-row-actions">
-                  <span className={`cb-badge cb-badge-${c.status.toLowerCase()}`}>
+                  <span
+                    className={`cb-badge cb-badge-${c.status.toLowerCase()}`}
+                    title={c.status === "Rejected" ? (c.rejectionReason ?? undefined) : undefined}
+                  >
                     {STATUS_LABEL[c.status] ?? c.status}
                   </span>
-                  {c.status === "Draft" ? (
+                  {c.status === "Draft" || c.status === "Rejected" ? (
                     <button
                       type="button"
                       className="cb-btn cb-ghost cb-btn-sm"
-                      disabled={publishingId === c.id}
-                      onClick={() => onPublish(c.id)}
+                      disabled={submittingId === c.id}
+                      onClick={() => onSubmitForReview(c.id)}
                     >
-                      {publishingId === c.id ? "Đang xuất bản…" : "Xuất bản"}
+                      {submittingId === c.id
+                        ? "Đang gửi…"
+                        : c.status === "Rejected"
+                          ? "Gửi lại duyệt"
+                          : "Gửi duyệt"}
                     </button>
                   ) : null}
                 </span>
               </li>
             ))}
           </ul>
+          {g.items.some((c) => c.status === "Rejected" && c.rejectionReason) ? (
+            <ul className="cb-page-intro" style={{ marginTop: 8 }}>
+              {g.items
+                .filter((c) => c.status === "Rejected" && c.rejectionReason)
+                .map((c) => (
+                  <li key={c.id}>
+                    <strong>{c.title}</strong> bị từ chối: {c.rejectionReason}
+                  </li>
+                ))}
+            </ul>
+          ) : null}
         </div>
       ))}
     </div>

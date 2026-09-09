@@ -1,6 +1,5 @@
-// Author workspace data facade — the "Đăng truyện" flow.
-//   useRealApi -> Content service authoring endpoints + Authentication author-profile
-//   otherwise  -> every method throws (authoring has no meaningful mock)
+// Author workspace data facade — the "Đăng truyện" flow, backed by the Content
+// service authoring endpoints + Authentication author-profile.
 //
 // Pages call this, never contentApi/authenticationApi directly.
 //
@@ -16,7 +15,6 @@
 import { contentApi } from "@/services/api/contentApi";
 import { authenticationApi } from "@/services/api/authenticationApi";
 import { ApiError } from "@/services/api/client";
-import { useRealApi } from "@/services/dataSource";
 import type { AuthorProfileResponse, RegisterResponse } from "@/services/api/types";
 
 // ---- shared enums ----------------------------------------------------------
@@ -24,7 +22,8 @@ import type { AuthorProfileResponse, RegisterResponse } from "@/services/api/typ
 export type StoryContentType = "Original" | "Translated";
 export type AgeRating = "General" | "Mature";
 export type StoryStatus = "Draft" | "Ongoing" | "Completed" | "Hiatus" | "Dropped";
-export type ChapterStatus = "Draft" | "Scheduled" | "Published" | "Removed";
+export type ChapterStatus =
+  "Draft" | "Scheduled" | "PendingReview" | "InReview" | "Published" | "Rejected" | "Removed";
 
 // Manual story-status transitions the backend allows (StoryStatusPolicy).
 export const STORY_STATUS_TRANSITIONS: Record<StoryStatus, StoryStatus[]> = {
@@ -72,6 +71,7 @@ interface ChapterDetailDto {
   wordCount: number;
   status: ChapterStatus;
   publishedAt: string | null;
+  rejectionReason: string | null;
 }
 
 interface ChapterSummaryDto {
@@ -82,6 +82,7 @@ interface ChapterSummaryDto {
   wordCount: number;
   status: ChapterStatus;
   publishedAt: string | null;
+  rejectionReason: string | null;
 }
 
 interface VolumeDto {
@@ -140,6 +141,7 @@ export interface AuthorChapter {
   status: ChapterStatus;
   volumeId: string | null;
   wordCount: number;
+  rejectionReason: string | null;
 }
 
 export interface AuthorStoryView {
@@ -188,14 +190,6 @@ export interface AddChapterInput {
 
 const TRACK_KEY = "sv_author_stories";
 
-function assertApi(): void {
-  if (!useRealApi) {
-    throw new ApiError("Chức năng đăng truyện chỉ hoạt động khi kết nối máy chủ thật.", {
-      code: "mock_unsupported",
-    });
-  }
-}
-
 function toStoryRef(dto: StoryDetailDto): StoryRef {
   return { publicId: dto.id, slug: dto.slug, title: dto.title, status: dto.status };
 }
@@ -222,6 +216,7 @@ function toAuthorChapter(dto: ChapterSummaryDto | ChapterDetailDto): AuthorChapt
     status: dto.status,
     volumeId: dto.volumeId,
     wordCount: dto.wordCount,
+    rejectionReason: dto.rejectionReason ?? null,
   };
 }
 
@@ -284,7 +279,6 @@ export function forgetStory(slug: string): void {
 // ---- profile / onboarding -------------------------------------------
 
 export async function hasAuthorProfile(): Promise<AuthorProfileResponse | null> {
-  assertApi();
   try {
     return await authenticationApi.getMyAuthorProfile();
   } catch (err) {
@@ -299,7 +293,6 @@ export function becomeAuthor(input: {
   avatarUrl?: string;
   bannerUrl?: string;
 }): Promise<AuthorProfileResponse> {
-  assertApi();
   return authenticationApi.createAuthorProfile({
     penName: input.penName.trim(),
     bio: trimOpt(input.bio),
@@ -313,7 +306,6 @@ export function register(input: {
   password: string;
   displayName: string;
 }): Promise<RegisterResponse> {
-  assertApi();
   return authenticationApi.register({
     email: input.email.trim(),
     password: input.password,
@@ -324,7 +316,6 @@ export function register(input: {
 // ---- taxonomy ------------------------------------------------------
 
 export async function listGenres(): Promise<GenreOption[]> {
-  assertApi();
   const rows = await contentApi.client.get<GenreDto[]>("/v1/genres");
   return (rows ?? [])
     .filter((g) => g.isActive)
@@ -337,7 +328,6 @@ export async function listGenres(): Promise<GenreOption[]> {
 export async function quickPublish(
   input: QuickPublishInput,
 ): Promise<{ story: AuthorStory; firstChapter: AuthorChapter }> {
-  assertApi();
   validateGenres(input.genres);
   validateTags(input.tags);
 
@@ -373,7 +363,6 @@ export async function guestPublish(input: {
   genreSlug: string;
   chapterContent: string;
 }): Promise<{ story: AuthorStory }> {
-  assertApi();
   const dto = await contentApi.client.post<StoryDetailDto>("/v1/stories/guest-publish", {
     guestPenName: input.penName.trim(),
     title: input.title.trim(),
@@ -385,7 +374,6 @@ export async function guestPublish(input: {
 }
 
 export async function createDraft(input: CreateDraftInput): Promise<StoryRef> {
-  assertApi();
   const dto = await contentApi.client.post<StoryDetailDto>("/v1/stories", {
     title: input.title.trim(),
     description: input.description.trim(),
@@ -399,19 +387,16 @@ export async function createDraft(input: CreateDraftInput): Promise<StoryRef> {
 }
 
 export async function setGenres(storyId: string, genres: GenreSelection[]): Promise<void> {
-  assertApi();
   validateGenres(genres);
   await contentApi.client.put(`/v1/stories/${storyId}/genres`, { genres });
 }
 
 export async function setTags(storyId: string, tags: string[]): Promise<void> {
-  assertApi();
   validateTags(tags);
   await contentApi.client.put(`/v1/stories/${storyId}/tags`, { tags });
 }
 
 export async function addVolume(storyId: string, input: AddVolumeInput): Promise<VolumeRef> {
-  assertApi();
   const dto = await contentApi.client.post<VolumeDto>(`/v1/stories/${storyId}/volumes`, {
     title: input.title.trim(),
     orderIndex: input.orderIndex ?? 0,
@@ -420,7 +405,6 @@ export async function addVolume(storyId: string, input: AddVolumeInput): Promise
 }
 
 export async function addChapter(storyId: string, input: AddChapterInput): Promise<AuthorChapter> {
-  assertApi();
   const dto = await contentApi.client.post<ChapterDetailDto>(`/v1/stories/${storyId}/chapters`, {
     title: input.title.trim(),
     content: input.content.trim(),
@@ -435,7 +419,6 @@ export async function updateChapter(
   chapterId: string,
   input: AddChapterInput & { orderIndex: number },
 ): Promise<void> {
-  assertApi();
   await contentApi.client.put(`/v1/chapters/${chapterId}`, {
     title: input.title.trim(),
     content: input.content.trim(),
@@ -444,18 +427,17 @@ export async function updateChapter(
   });
 }
 
-export async function publishChapter(chapterId: string): Promise<void> {
-  assertApi();
-  await contentApi.client.post(`/v1/chapters/${chapterId}/publish`);
+// Submits a draft (or resubmits a rejected) chapter for moderation. Does not
+// publish it — a moderator must approve it first.
+export async function submitChapterForReview(chapterId: string): Promise<void> {
+  await contentApi.client.post(`/v1/chapters/${chapterId}/submit-for-review`);
 }
 
 export async function removeChapter(chapterId: string): Promise<void> {
-  assertApi();
   await contentApi.client.post(`/v1/chapters/${chapterId}/remove`);
 }
 
 export async function setStoryStatus(storyId: string, target: StoryStatus): Promise<void> {
-  assertApi();
   await contentApi.client.post(`/v1/stories/${storyId}/status`, { targetStatus: target });
 }
 
@@ -468,8 +450,8 @@ export async function getChapter(chapterId: string): Promise<{
   orderIndex: number;
   volumeId: string | null;
   status: ChapterStatus;
+  rejectionReason: string | null;
 }> {
-  assertApi();
   const dto = await contentApi.client.get<ChapterDetailDto>(`/v1/chapters/${chapterId}`);
   return {
     id: dto.id,
@@ -478,11 +460,11 @@ export async function getChapter(chapterId: string): Promise<{
     orderIndex: Number(dto.orderIndex),
     volumeId: dto.volumeId,
     status: dto.status,
+    rejectionReason: dto.rejectionReason ?? null,
   };
 }
 
 export async function getMyStory(slug: string): Promise<AuthorStoryView> {
-  assertApi();
   const story = await contentApi.client.get<StoryDetailDto>(
     `/v1/stories/by-slug/${encodeURIComponent(slug)}`,
   );
@@ -505,7 +487,6 @@ export async function getMyStory(slug: string): Promise<AuthorStoryView> {
 }
 
 export async function listMyStories(): Promise<AuthorStory[]> {
-  assertApi();
   const tracked = readTracked();
   const results = await Promise.all(
     tracked.map((t) =>

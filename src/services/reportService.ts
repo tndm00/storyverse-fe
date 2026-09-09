@@ -1,19 +1,13 @@
-// Report / moderation-queue facade.
-//   DATA_SOURCE=mock -> src/services/mock/db.ts
-//   DATA_SOURCE=api  -> Moderation service /v1/reports
+// Report / moderation-queue facade — Moderation service /v1/reports.
 //
 // Signatures + return shapes are unchanged so the admin pages (ReportsQueuePage,
-// ReportDetailPage, DashboardPage) need no edits. In API mode:
+// ReportDetailPage, DashboardPage) need no edits.
 //   - the free-text `q` filter is ignored (no backend search)
 //   - report summaries carry no target title / reporter name — shown as
 //     "<TargetType> <id8>" / "Người dùng #<id>"
 //   - `ReportDetail.story` is always null (no cross-service lookup)
 //   - a decision is recorded but NOT applied to the reported content (backend is audit-only)
 
-import dayjs from "dayjs";
-import { reports, findStory } from "./mock/db";
-import { withLatency, failWithLatency, paginate } from "./mock/latency";
-import { useRealApi } from "./dataSource";
 import { moderationApi } from "./api/moderationApi";
 import { DEFAULT_PAGE_SIZE, MESSAGES } from "@/utils/constants";
 import type { ModerationAction, ReportReason, ReportStatus, TargetType } from "@/utils/constants";
@@ -112,7 +106,7 @@ function detailToReport(d: ReportDetailDto): ReportDetail {
   };
 }
 
-// ---- user-facing: file a report (both modes hit the real API) --------
+// ---- user-facing: file a report ---------------------------------------
 
 export async function fileReport(input: {
   targetType: TargetType;
@@ -130,19 +124,12 @@ export async function fileReport(input: {
 
 // ---- admin queue ---------------------------------------------------
 
-const byDateDesc = (a: { createdAt: string }, b: { createdAt: string }) =>
-  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-
-export function listReports(params: ReportListParams = {}): Promise<Paged<Report>> {
-  return useRealApi ? listReportsApi(params) : listReportsMock(params);
-}
-
-async function listReportsApi({
+export async function listReports({
   pageNumber = 1,
   pageSize = DEFAULT_PAGE_SIZE,
   status = "all",
   reason = "all",
-}: ReportListParams): Promise<Paged<Report>> {
+}: ReportListParams = {}): Promise<Paged<Report>> {
   const paged = await moderationApi.client.get<PagedDto<ReportSummaryDto>>("/v1/reports", {
     params: {
       status: status === "all" ? undefined : status,
@@ -160,42 +147,9 @@ async function listReportsApi({
   };
 }
 
-function listReportsMock({
-  pageNumber = 1,
-  pageSize = DEFAULT_PAGE_SIZE,
-  status = "all",
-  reason = "all",
-  q = "",
-}: ReportListParams): Promise<Paged<Report>> {
-  let rows = [...reports].sort(byDateDesc);
-  if (status !== "all") rows = rows.filter((r) => r.status === status);
-  if (reason !== "all") rows = rows.filter((r) => r.reason === reason);
-  if (q) {
-    const needle = q.toLowerCase();
-    rows = rows.filter(
-      (r) =>
-        r.targetRef.title.toLowerCase().includes(needle) ||
-        r.reporterName.toLowerCase().includes(needle),
-    );
-  }
-  return withLatency(paginate(rows, pageNumber, pageSize));
-}
-
 const STATUSES: ReportStatus[] = ["Pending", "Reviewing", "Resolved", "Dismissed"];
 
-export function counts(): Promise<ReportCounts> {
-  if (useRealApi) return countsApi();
-  const by = (s: ReportStatus) => reports.filter((r) => r.status === s).length;
-  return withLatency({
-    Pending: by("Pending"),
-    Reviewing: by("Reviewing"),
-    Resolved: by("Resolved"),
-    Dismissed: by("Dismissed"),
-    total: reports.length,
-  });
-}
-
-async function countsApi(): Promise<ReportCounts> {
+export async function counts(): Promise<ReportCounts> {
   const perStatus = await Promise.all(
     STATUSES.map((s) =>
       moderationApi.client
@@ -208,56 +162,21 @@ async function countsApi(): Promise<ReportCounts> {
 }
 
 export function get(reportId: string): Promise<ReportDetail> {
-  if (useRealApi) {
-    return moderationApi.client
-      .get<ReportDetailDto>(`/v1/reports/${reportId}`)
-      .then(detailToReport);
-  }
-  const report = reports.find((r) => r.id === reportId);
-  if (!report) return failWithLatency<ReportDetail>(MESSAGES.report.notFound);
-  const story = report.targetType !== "Comment" ? findStory(report.targetRef.id) : null;
-  return withLatency({ ...report, story });
+  return moderationApi.client.get<ReportDetailDto>(`/v1/reports/${reportId}`).then(detailToReport);
 }
 
 export function pickUp(reportId: string): Promise<Report> {
-  if (useRealApi) {
-    return moderationApi.client
-      .post<ReportDetailDto>(`/v1/reports/${reportId}/review`)
-      .then(detailToReport);
-  }
-  const report = reports.find((r) => r.id === reportId);
-  if (!report) return failWithLatency<Report>(MESSAGES.report.notFound);
-  if (report.status !== "Pending")
-    return failWithLatency<Report>(MESSAGES.report.onlyPendingCanPickUp);
-  report.status = "Reviewing";
-  report.history = [
-    ...report.history,
-    { at: dayjs().toISOString(), actor: "Content Moderator", action: "Picked up", note: null },
-  ];
-  return withLatency({ ...report });
+  return moderationApi.client
+    .post<ReportDetailDto>(`/v1/reports/${reportId}/review`)
+    .then(detailToReport);
 }
 
 export function act(reportId: string, { action, note }: ModerationInput): Promise<Report> {
-  if (useRealApi) {
-    if (!action) return Promise.reject(new Error(MESSAGES.report.chooseAction));
-    if (action !== "Dismiss" && !note)
-      return Promise.reject(new Error(MESSAGES.report.noteRequired));
-    const req =
-      action === "Dismiss"
-        ? moderationApi.dismissReport(reportId, note || "Không vi phạm.")
-        : moderationApi.resolveReport(reportId, { action, note });
-    return (req as Promise<ReportDetailDto>).then(detailToReport);
-  }
-  const report = reports.find((r) => r.id === reportId);
-  if (!report) return failWithLatency<Report>(MESSAGES.report.notFound);
-  if (!action) return failWithLatency<Report>(MESSAGES.report.chooseAction);
-  if (action !== "Dismiss" && !note) return failWithLatency<Report>(MESSAGES.report.noteRequired);
-  report.action = action;
-  report.status = action === "Dismiss" ? "Dismissed" : "Resolved";
-  report.resolutionNote = note || "No violation found.";
-  report.history = [
-    ...report.history,
-    { at: dayjs().toISOString(), actor: "Content Moderator", action, note: report.resolutionNote },
-  ];
-  return withLatency({ ...report });
+  if (!action) return Promise.reject(new Error(MESSAGES.report.chooseAction));
+  if (action !== "Dismiss" && !note) return Promise.reject(new Error(MESSAGES.report.noteRequired));
+  const req =
+    action === "Dismiss"
+      ? moderationApi.dismissReport(reportId, note || "Không vi phạm.")
+      : moderationApi.resolveReport(reportId, { action, note });
+  return (req as Promise<ReportDetailDto>).then(detailToReport);
 }

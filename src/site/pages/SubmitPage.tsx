@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import { MESSAGES, ROUTES } from "@/utils/constants";
-import { SUBMIT_GUIDELINES } from "../siteContent";
 import { listGenres } from "../readerService";
 import {
   guestPublish,
@@ -14,6 +13,15 @@ import {
 } from "../authorService";
 
 const DEFAULT_GENRE = "sang-tac";
+
+// Static submission guidelines — house rules, not data pulled from the backend.
+const SUBMIT_GUIDELINES: string[] = [
+  "Câu chuyện do bạn tự viết hoặc được kể lại có xin phép người kể gốc.",
+  "Không sao chép nguyên văn từ nguồn khác chưa được cho phép.",
+  "Hạn chế mô tả quá mức bạo lực, máu me hoặc nội dung nhạy cảm.",
+  "Đội biên tập có thể liên hệ để chỉnh sửa trước khi đăng.",
+  "Thời gian phản hồi thường trong vòng 3–5 ngày.",
+];
 
 export function SubmitPage() {
   const { isAuthenticated } = useAuth();
@@ -97,7 +105,7 @@ export function SubmitPage() {
         story = res.story;
       }
       setPublished(story);
-    }, "Đã đăng truyện");
+    }, "Đã gửi duyệt");
 
   const resetForm = () => {
     setPublished(null);
@@ -123,8 +131,11 @@ export function SubmitPage() {
               <path d="m5 13 4 4 10-10" />
             </svg>
           </div>
-          <h2 style={{ fontSize: 18 }}>Đã đăng truyện</h2>
-          <p>Truyện {published.title} đã được xuất bản và hiển thị công khai.</p>
+          <h2 style={{ fontSize: 18 }}>Đã gửi duyệt</h2>
+          <p>
+            Truyện {published.title} đã được gửi và đang chờ duyệt. Truyện sẽ hiển thị công khai sau
+            khi được kiểm duyệt.
+          </p>
           <div className="cb-cta-actions" style={{ justifyContent: "center", flexWrap: "wrap" }}>
             <Link to={ROUTES.story(published.slug)} className="cb-btn cb-ghost">
               Xem truyện

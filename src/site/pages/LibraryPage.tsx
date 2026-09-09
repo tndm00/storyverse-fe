@@ -3,7 +3,6 @@ import { ROUTES } from "@/utils/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { useMockQuery } from "@/hooks/useMockQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
-import { useRealApi } from "@/services/dataSource";
 import {
   listContinueReading,
   listLibrary,
@@ -139,19 +138,6 @@ export function LibraryPage() {
         <Link to={ROUTES.account} className="cb-btn">
           Đăng nhập
         </Link>
-      </section>
-    );
-  }
-
-  if (!useRealApi) {
-    return (
-      <section className="cb-section">
-        <div className="cb-hero-head">
-          <h1>Tủ truyện</h1>
-          <p className="cb-page-intro">
-            Tủ truyện cần kết nối máy chủ thật (VITE_DATA_SOURCE=api).
-          </p>
-        </div>
       </section>
     );
   }

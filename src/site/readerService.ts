@@ -1,15 +1,9 @@
-// Reader-site data facade.
-//   useRealApi -> Content service (anonymous discovery endpoints)
-//   otherwise / on network failure -> the hardcoded seed in homeData.ts + siteContent.ts
+// Reader-site data facade — Content service (anonymous discovery endpoints).
 //
-// The reader pages call this, never contentApi directly, so the fallback is in
-// one place and the pages render the same shape regardless of source.
+// The reader pages call this, never contentApi directly, so the mapping is in
+// one place and the pages render the same shape regardless of endpoint.
 
 import { contentApi } from "@/services/api/contentApi";
-import { useRealApi } from "@/services/dataSource";
-import type { StoryCard, TrendingItem } from "./homeData";
-import { EDITIONS, TRENDING } from "./homeData";
-import { FEATURED_PICKS, SPOTLIGHT, TOPICS } from "./siteContent";
 
 // ---- backend shapes (see Content.Application/Dtos) ----------------------
 
@@ -106,6 +100,12 @@ export interface ReaderChapterContent {
   html: string;
 }
 
+export interface TrendingItem {
+  slug: string;
+  title: string;
+  reads: string;
+}
+
 // ---- helpers ----------------------------------------------------------
 
 const vi = new Intl.NumberFormat("vi-VN");
@@ -124,38 +124,6 @@ function summaryToReader(dto: StorySummaryDto): ReaderStory {
     ratingLabel: ratingLabel(dto.ratingAvg, dto.ratingCount),
     letter: (dto.title.trim()[0] || "•").toUpperCase(),
   };
-}
-
-function cardToReader(card: StoryCard): ReaderStory {
-  return {
-    slug: card.slug,
-    title: card.title,
-    description: card.excerpt ?? "",
-    kicker: card.kicker,
-    reads: card.reads,
-    ratingLabel: card.readTime,
-    letter: card.letter,
-  };
-}
-
-// Every story mentioned in the hardcoded seed, de-duped by slug — the fallback pool.
-function seedStories(): ReaderStory[] {
-  const cards: StoryCard[] = [
-    ...EDITIONS.flatMap((e) => [e.feature, ...e.side]),
-    ...FEATURED_PICKS,
-    {
-      slug: SPOTLIGHT.slug,
-      letter: SPOTLIGHT.letter,
-      kicker: SPOTLIGHT.kicker,
-      title: SPOTLIGHT.title,
-      readTime: "",
-      reads: "—",
-      excerpt: SPOTLIGHT.excerpt,
-    },
-  ];
-  const bySlug = new Map<string, ReaderStory>();
-  for (const c of cards) if (!bySlug.has(c.slug)) bySlug.set(c.slug, cardToReader(c));
-  return [...bySlug.values()];
 }
 
 // ---- API -------------------------------------------------------------
@@ -200,15 +168,11 @@ export interface BrowseResult {
   pageNumber: number;
 }
 
-// Paged discovery listing for the Browse page / author profile. Real API only —
-// returns an empty page (not seed data) when the backend is unreachable.
+// Paged discovery listing for the Browse page / author profile. Returns an
+// empty page when the backend is unreachable.
 export async function browseStories(opts: BrowseOptions = {}): Promise<BrowseResult> {
   const pageNumber = opts.pageNumber ?? 1;
   const pageSize = opts.pageSize ?? 24;
-  if (!useRealApi) {
-    const pool = seedStories().slice(0, pageSize);
-    return { items: pool, totalCount: pool.length, totalPages: 1, pageNumber: 1 };
-  }
   try {
     const paged = await contentApi.client.get<Paged<StorySummaryDto>>("/v1/stories", {
       params: {
@@ -243,116 +207,74 @@ export async function listStories({
   genreSlug,
   pageSize = 12,
 }: ListStoriesOptions = {}): Promise<ReaderStory[]> {
-  if (useRealApi) {
-    try {
-      const paged = await contentApi.client.get<Paged<StorySummaryDto>>("/v1/stories", {
-        params: {
-          "sort-by": sort,
-          "sort-direction": "desc",
-          "genre-slug": genreSlug,
-          "page-size": pageSize,
-        },
-      });
-      if (paged?.items?.length) return paged.items.map(summaryToReader);
-    } catch {
-      // fall through to seed
-    }
+  try {
+    const paged = await contentApi.client.get<Paged<StorySummaryDto>>("/v1/stories", {
+      params: {
+        "sort-by": sort,
+        "sort-direction": "desc",
+        "genre-slug": genreSlug,
+        "page-size": pageSize,
+      },
+    });
+    return paged?.items?.length ? paged.items.map(summaryToReader) : [];
+  } catch {
+    return [];
   }
-  let pool = seedStories();
-  if (genreSlug) {
-    const topic = TOPICS.find((t) => t.key === genreSlug);
-    const titles = new Set(topic?.stories.map((s) => s.title));
-    pool = pool.filter((s) => titles.has(s.title));
-    if (pool.length === 0 && topic) {
-      pool = topic.stories.map((s) => ({
-        slug: s.slug,
-        title: s.title,
-        description: "",
-        kicker: topic.name,
-        reads: s.reads,
-        ratingLabel: "",
-        letter: s.title.trim()[0]?.toUpperCase() ?? "•",
-      }));
-    }
-  }
-  return pool.slice(0, pageSize);
 }
 
 export async function trendingStories(limit = 5): Promise<TrendingItem[]> {
-  if (useRealApi) {
-    try {
-      const paged = await contentApi.client.get<Paged<StorySummaryDto>>("/v1/stories", {
-        params: { "sort-by": "viewCount", "sort-direction": "desc", "page-size": limit },
-      });
-      if (paged?.items?.length) {
-        return paged.items.map((s) => ({
-          slug: s.slug,
-          title: s.title,
-          reads: readsLabel(s.viewCount),
-        }));
-      }
-    } catch {
-      // fall through
-    }
+  try {
+    const paged = await contentApi.client.get<Paged<StorySummaryDto>>("/v1/stories", {
+      params: { "sort-by": "viewCount", "sort-direction": "desc", "page-size": limit },
+    });
+    return (paged?.items ?? []).map((s) => ({
+      slug: s.slug,
+      title: s.title,
+      reads: readsLabel(s.viewCount),
+    }));
+  } catch {
+    return [];
   }
-  return TRENDING.slice(0, limit);
 }
 
 export async function getStoryDetail(slug: string): Promise<ReaderStoryDetail | null> {
-  if (useRealApi) {
-    try {
-      const dto = await contentApi.client.get<StoryDetailDto>(
-        `/v1/stories/by-slug/${encodeURIComponent(slug)}`,
-      );
-      const chapters = await contentApi.client
-        .get<{ items?: ChapterSummaryDto[] } | ChapterSummaryDto[]>(
-          `/v1/stories/${dto.id}/chapters`,
-        )
-        .then((r) => (Array.isArray(r) ? r : (r.items ?? [])))
-        .catch(() => [] as ChapterSummaryDto[]);
+  try {
+    const dto = await contentApi.client.get<StoryDetailDto>(
+      `/v1/stories/by-slug/${encodeURIComponent(slug)}`,
+    );
+    const chapters = await contentApi.client
+      .get<{ items?: ChapterSummaryDto[] } | ChapterSummaryDto[]>(`/v1/stories/${dto.id}/chapters`)
+      .then((r) => (Array.isArray(r) ? r : (r.items ?? [])))
+      .catch(() => [] as ChapterSummaryDto[]);
 
-      const published = chapters
-        .filter((c) => c.status === "Published")
-        .sort((a, b) => a.orderIndex - b.orderIndex);
+    const published = chapters
+      .filter((c) => c.status === "Published")
+      .sort((a, b) => a.orderIndex - b.orderIndex);
 
-      return {
-        ...summaryToReader(dto),
-        id: dto.id,
-        description: dto.description ?? "",
-        status: dto.status,
-        authorProfileId: dto.authorProfileId ?? null,
-        guestAuthorName: dto.guestAuthorName ?? null,
-        genres: (dto.genres ?? []).map((g) => g.name),
-        chapters: published.map((c) => ({
-          id: c.id,
-          title: c.title,
-          order: Number(c.orderIndex),
-          wordCount: c.wordCount,
-        })),
-      };
-    } catch {
-      // fall through
-    }
+    return {
+      ...summaryToReader(dto),
+      id: dto.id,
+      description: dto.description ?? "",
+      status: dto.status,
+      authorProfileId: dto.authorProfileId ?? null,
+      guestAuthorName: dto.guestAuthorName ?? null,
+      genres: (dto.genres ?? []).map((g) => g.name),
+      chapters: published.map((c) => ({
+        id: c.id,
+        title: c.title,
+        order: Number(c.orderIndex),
+        wordCount: c.wordCount,
+      })),
+    };
+  } catch {
+    return null;
   }
-
-  const seed = seedStories().find((s) => s.slug === slug);
-  if (!seed) return null;
-  return {
-    ...seed,
-    id: slug,
-    status: "Ongoing",
-    authorProfileId: null,
-    guestAuthorName: null,
-    genres: [seed.kicker],
-    chapters: [],
-  };
 }
 
 export async function getChapterContent(
   storySlug: string,
   chapterId: string,
 ): Promise<ReaderChapterContent | null> {
-  if (!useRealApi) return null;
   try {
     const dto = await contentApi.client.get<ChapterDetailDto>(
       `/v1/chapters/${encodeURIComponent(chapterId)}`,
