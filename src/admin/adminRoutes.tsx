@@ -1,0 +1,32 @@
+import { lazyNamed } from "@/utils/lazyNamed";
+import { RequireAuth } from "@/auth/RequireAuth";
+import { AdminLayout } from "./layouts/AdminLayout";
+
+// Pages are code-split; layout + auth guard stay in the main chunk.
+const DashboardPage = lazyNamed(() => import("./pages/DashboardPage"), "DashboardPage");
+const ReviewQueuePage = lazyNamed(() => import("./pages/ReviewQueuePage"), "ReviewQueuePage");
+const ReviewDetailPage = lazyNamed(() => import("./pages/ReviewDetailPage"), "ReviewDetailPage");
+const ReportsQueuePage = lazyNamed(() => import("./pages/ReportsQueuePage"), "ReportsQueuePage");
+const ReportDetailPage = lazyNamed(() => import("./pages/ReportDetailPage"), "ReportDetailPage");
+const StoriesPage = lazyNamed(() => import("./pages/StoriesPage"), "StoriesPage");
+const GenresPage = lazyNamed(() => import("./pages/GenresPage"), "GenresPage");
+
+// Admin console route subtree, mounted at /admin. Gated by RequireAuth
+// (moderators + platform admins only — see src/services/authService.js).
+export const adminRoutes = {
+  path: "admin",
+  element: (
+    <RequireAuth requireAdminConsole>
+      <AdminLayout />
+    </RequireAuth>
+  ),
+  children: [
+    { index: true, element: <DashboardPage /> },
+    { path: "review", element: <ReviewQueuePage /> },
+    { path: "review/:id", element: <ReviewDetailPage /> },
+    { path: "reports", element: <ReportsQueuePage /> },
+    { path: "reports/:id", element: <ReportDetailPage /> },
+    { path: "stories", element: <StoriesPage /> },
+    { path: "genres", element: <GenresPage /> },
+  ],
+};
