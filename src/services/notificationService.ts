@@ -5,6 +5,7 @@
 
 import { notificationApi } from "@/services/api/notificationApi";
 import { contentApi } from "@/services/api/contentApi";
+import { ROUTES } from "@/utils/constants";
 
 export interface AppNotification {
   id: string;
@@ -60,15 +61,20 @@ export async function markAllRead(): Promise<void> {
   await notificationApi.client.post("/v1/notifications/read-all");
 }
 
-// Best-effort route resolution for a notification's refType/refId, used by
-// NotificationBell to navigate on click. The only ref type any real path
-// creates today is "Chapter" (see communityService.replyToComment's dev
-// shim) — refId is a chapter id, so this looks the chapter up to find its
-// story's slug and builds /story/{slug}/chapter/{chapterId}. Returns null
-// for anything it can't resolve (unknown refType, missing data, fetch
-// failure) so the caller can just no-op instead of navigating.
+// Best-effort route resolution for a notification's type/refType/refId, used
+// by NotificationBell to navigate on click. For refType "Chapter" the refId
+// is a chapter id, so this looks the chapter up to find its story's slug.
+//
+// - type "ChapterRejected": the chapter is not published, so the public
+//   reader path /story/{slug}/chapter/{order} would 404. Route the author to
+//   their chapter editor instead: /tac-gia/truyen/{slug}/chuong/{chapterId}.
+// - everything else with refType "Chapter" (e.g. "ChapterApproved", comment
+//   replies): the chapter is public, so build the reader path.
+//
+// Returns null for anything it can't resolve (unknown refType, missing data,
+// fetch failure) so the caller can just no-op instead of navigating.
 export async function resolveNotificationRoute(
-  n: Pick<AppNotification, "refType" | "refId">,
+  n: Pick<AppNotification, "type" | "refType" | "refId">,
 ): Promise<string | null> {
   if (n.refType !== "Chapter" || !n.refId) return null;
   try {
@@ -76,6 +82,9 @@ export async function resolveNotificationRoute(
       `/v1/chapters/${n.refId}`,
     );
     const story = await contentApi.client.get<{ slug: string }>(`/v1/stories/${chapter.storyId}`);
+    if (n.type === "ChapterRejected") {
+      return ROUTES.authorChapter(story.slug, chapter.id);
+    }
     return `/story/${story.slug}/chapter/${chapter.id}`;
   } catch {
     return null;
