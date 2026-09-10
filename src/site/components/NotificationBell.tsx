@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getUnreadCount,
   listMyNotifications,
   markAllRead,
   markRead,
+  resolveNotificationRoute,
   type AppNotification,
 } from "@/services/notificationService";
 
@@ -16,6 +18,7 @@ function timeAgo(iso: string): string {
 }
 
 export function NotificationBell() {
+  const navigate = useNavigate();
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<AppNotification[]>([]);
@@ -43,13 +46,25 @@ export function NotificationBell() {
   };
 
   const onRowClick = (n: AppNotification) => {
-    if (n.isRead) return;
-    markRead(n.id)
-      .then(() => {
-        setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)));
-        setCount((c) => Math.max(0, c - 1));
-      })
-      .catch(() => {});
+    const markThenClose = n.isRead
+      ? Promise.resolve()
+      : markRead(n.id)
+          .then(() => {
+            setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)));
+            setCount((c) => Math.max(0, c - 1));
+          })
+          .catch(() => {});
+
+    markThenClose.then(() => {
+      resolveNotificationRoute(n)
+        .then((path) => {
+          if (path) {
+            setOpen(false);
+            navigate(path);
+          }
+        })
+        .catch(() => {});
+    });
   };
 
   const onMarkAll = () => {

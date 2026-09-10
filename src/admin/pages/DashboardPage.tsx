@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import * as reviewService from "@/services/reviewService";
 import * as reportService from "@/services/reportService";
 import * as storyService from "@/services/storyService";
@@ -18,14 +18,14 @@ import { LABELS, ROUTES } from "@/utils/constants";
 const { Text } = Typography;
 
 export function DashboardPage() {
-  const reviewCounts = useMockQuery(() => reviewService.counts(), []);
-  const reportCounts = useMockQuery(() => reportService.counts(), []);
-  const storyCounts = useMockQuery(() => storyService.counts(), []);
-  const recentReview = useMockQuery(
+  const reviewCounts = useAsyncQuery(() => reviewService.counts(), []);
+  const reportCounts = useAsyncQuery(() => reportService.counts(), []);
+  const storyCounts = useAsyncQuery(() => storyService.counts(), []);
+  const recentReview = useAsyncQuery(
     () => reviewService.listQueue({ status: "all", pageSize: 5 }),
     [],
   );
-  const recentReports = useMockQuery(
+  const recentReports = useAsyncQuery(
     () => reportService.listReports({ status: "all", pageSize: 5 }),
     [],
   );

@@ -23,7 +23,7 @@ import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
 import { StoryDetailContent } from "@/components/StoryDetailContent";
 import { ConfirmActionModal } from "@/admin/components/ConfirmActionModal";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as reviewService from "@/services/reviewService";
 import { compactNumber, formatDate } from "@/utils/format";
@@ -65,7 +65,7 @@ export function ReviewDetailPage() {
   const navigate = useNavigate();
   const { busy, run } = useAsyncRunner();
 
-  const { data: item, loading, error, refetch } = useMockQuery(() => reviewService.get(id), [id]);
+  const { data: item, loading, error, refetch } = useAsyncQuery(() => reviewService.get(id), [id]);
   const [rejectOpen, setRejectOpen] = useState(false);
 
   if (loading) return <Skeleton active paragraph={{ rows: 10 }} />;
@@ -139,6 +139,7 @@ export function ReviewDetailPage() {
                 icon={<PlayCircleOutlined />}
                 disabled={!canStart}
                 loading={busy}
+                data-testid="start-review"
                 onClick={() =>
                   run(() => reviewService.startReview(id), MESSAGES.review.started, refetch)
                 }
@@ -151,6 +152,7 @@ export function ReviewDetailPage() {
                 icon={<CheckOutlined />}
                 disabled={!canDecide}
                 loading={busy}
+                data-testid="approve-publish"
                 onClick={() =>
                   run(() => reviewService.approve(id), MESSAGES.review.approved, () =>
                     navigate(ROUTES.admin.stories),
@@ -164,6 +166,7 @@ export function ReviewDetailPage() {
                 danger
                 icon={<CloseOutlined />}
                 disabled={!canDecide}
+                data-testid="reject"
                 onClick={() => setRejectOpen(true)}
               >
                 Reject

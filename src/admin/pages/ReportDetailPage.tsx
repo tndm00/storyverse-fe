@@ -18,7 +18,7 @@ import { ArrowLeftOutlined } from "@ant-design/icons";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
 import { StoryDetailContent } from "@/components/StoryDetailContent";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as reportService from "@/services/reportService";
 import { LABELS, MESSAGES, MODERATION_ACTION, ROUTES } from "@/utils/constants";
@@ -32,7 +32,7 @@ export function ReportDetailPage() {
   const navigate = useNavigate();
   const { busy, run } = useAsyncRunner();
 
-  const { data: report, loading, error, refetch } = useMockQuery(() => reportService.get(id), [id]);
+  const { data: report, loading, error, refetch } = useAsyncQuery(() => reportService.get(id), [id]);
   const [action, setAction] = useState<ModerationAction | null>(null);
   const [note, setNote] = useState("");
 

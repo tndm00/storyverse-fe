@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { getChapterContent, getStoryDetail } from "../readerService";
 import { saveReadingProgress } from "../libraryService";
 import { NotFoundPage } from "@/components/NotFoundPage";
@@ -12,8 +12,8 @@ export function ChapterReaderPage() {
   const { slug = "", order: chapterId = "" } = useParams();
   const [reporting, setReporting] = useState(false);
 
-  const { data: story } = useMockQuery(() => getStoryDetail(slug), [slug]);
-  const { data: chapter, loading } = useMockQuery(
+  const { data: story } = useAsyncQuery(() => getStoryDetail(slug), [slug]);
+  const { data: chapter, loading } = useAsyncQuery(
     () => getChapterContent(slug, chapterId),
     [slug, chapterId],
   );

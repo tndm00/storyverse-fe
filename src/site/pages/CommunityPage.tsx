@@ -1,4 +1,4 @@
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { browseStories } from "../readerService";
 
 export function CommunityPage() {
@@ -6,7 +6,7 @@ export function CommunityPage() {
   // published stories (Content service paged listing's totalCount). There is
   // no aggregate endpoint yet for storyteller count or comment count, and no
   // "featured contributors" / "discussion board" endpoint at all — see report.
-  const { data: storyCount } = useMockQuery(
+  const { data: storyCount } = useAsyncQuery(
     () => browseStories({ pageSize: 1 }).then((r) => r.totalCount),
     [],
   );

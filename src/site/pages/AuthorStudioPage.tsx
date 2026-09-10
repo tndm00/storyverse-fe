@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { listMyStories } from "../authorService";
 import { AuthorGuard } from "../components/author/AuthorGuard";
 
@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 function StudioBody() {
-  const { data: stories, loading } = useMockQuery(() => listMyStories(), []);
+  const { data: stories, loading } = useAsyncQuery(() => listMyStories(), []);
 
   return (
     <>

@@ -9,7 +9,7 @@ export interface QueryResult<T> {
 
 // Minimal data-fetching hook for the service facades.
 // `asyncFn` is re-run whenever any value in `deps` changes, or on `refetch()`.
-export function useMockQuery<T>(
+export function useAsyncQuery<T>(
   asyncFn: () => Promise<T>,
   deps: DependencyList = [],
 ): QueryResult<T> {

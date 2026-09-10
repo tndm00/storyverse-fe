@@ -29,3 +29,9 @@ pnpm-debug.log*
 # junk / AI session
 *.stackdump
 .claude/
+
+# playwright (e2e-ui)
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import {
@@ -10,8 +10,10 @@ import {
   getMyStory,
   submitChapterForReview,
   setStoryStatus,
+  updateVolume,
   STORY_STATUS_TRANSITIONS,
   type StoryStatus,
+  type VolumeRef,
 } from "../authorService";
 import { AuthorGuard } from "../components/author/AuthorGuard";
 import { ChapterList } from "../components/author/ChapterList";
@@ -24,8 +26,68 @@ const STATUS_LABEL: Record<string, string> = {
   Dropped: "Đã bỏ",
 };
 
+function VolumeRow({ volume, onSaved }: { volume: VolumeRef; onSaved: () => void }) {
+  const { busy, run } = useAsyncRunner();
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(volume.title);
+
+  if (!editing) {
+    return (
+      <li>
+        <span className="cb-trend-left">
+          <span className="cb-trend-rank">{String(volume.orderIndex).padStart(2, "0")}</span>
+          <span className="cb-trend-title">{volume.title}</span>
+        </span>
+        <button
+          type="button"
+          className="cb-btn cb-ghost cb-btn-sm"
+          onClick={() => {
+            setTitle(volume.title);
+            setEditing(true);
+          }}
+        >
+          Sửa tên phần
+        </button>
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <div className="cb-inline-form" style={{ flex: 1 }}>
+        <input className="cb-input" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <button
+          type="button"
+          className="cb-btn cb-btn-sm"
+          disabled={busy || !title.trim()}
+          onClick={() =>
+            run(
+              () => updateVolume(volume.id, { title, orderIndex: volume.orderIndex }),
+              "Đã đổi tên phần",
+              () => {
+                setEditing(false);
+                onSaved();
+              },
+            )
+          }
+        >
+          Lưu
+        </button>
+        <button
+          type="button"
+          className="cb-btn cb-ghost cb-btn-sm"
+          disabled={busy}
+          onClick={() => setEditing(false)}
+        >
+          Huỷ
+        </button>
+      </div>
+    </li>
+  );
+}
+
 function ManageBody({ slug }: { slug: string }) {
-  const { data, loading, error, refetch } = useMockQuery(() => getMyStory(slug), [slug]);
+  const { data, loading, error, refetch } = useAsyncQuery(() => getMyStory(slug), [slug]);
   const { busy, run } = useAsyncRunner();
 
   const [nextStatus, setNextStatus] = useState<StoryStatus | "">("");
@@ -158,12 +220,7 @@ function ManageBody({ slug }: { slug: string }) {
         {volumes.length > 0 ? (
           <ul className="cb-trend">
             {volumes.map((v) => (
-              <li key={v.id}>
-                <span className="cb-trend-left">
-                  <span className="cb-trend-rank">{String(v.orderIndex).padStart(2, "0")}</span>
-                  <span className="cb-trend-title">{v.title}</span>
-                </span>
-              </li>
+              <VolumeRow key={v.id} volume={v} onSaved={refetch} />
             ))}
           </ul>
         ) : null}

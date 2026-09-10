@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { authenticationApi } from "@/services/api/authenticationApi";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { browseStories } from "../readerService";
 import { StoryCard } from "../components/StoryCard";
 import { NotFoundPage } from "@/components/NotFoundPage";
@@ -33,7 +33,7 @@ export function AuthorProfilePage() {
     };
   }, [id]);
 
-  const { data: stories } = useMockQuery(
+  const { data: stories } = useAsyncQuery(
     () => browseStories({ authorProfileId: id, pageSize: 24 }),
     [id],
   );

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAuth } from "@/hooks/useAuth";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import {
   addComment,
@@ -12,6 +12,7 @@ import {
   replyToComment,
   type CommentNode,
 } from "../../communityService";
+import { ReportDialog } from "../ReportDialog";
 
 function timeAgo(iso: string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -23,16 +24,19 @@ function timeAgo(iso: string): string {
 
 function CommentItem({
   node,
+  chapterId,
   currentUserId,
   onChanged,
 }: {
   node: CommentNode;
+  chapterId: string;
   currentUserId: number | null;
   onChanged: () => void;
 }) {
   const { busy, run } = useAsyncRunner();
   const [replying, setReplying] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [draft, setDraft] = useState("");
   const [editDraft, setEditDraft] = useState(node.content);
 
@@ -113,7 +117,20 @@ function CommentItem({
               </button>
             </>
           ) : null}
+          {currentUserId != null && !node.mine ? (
+            <button type="button" onClick={() => setReporting((v) => !v)}>
+              Báo cáo
+            </button>
+          ) : null}
         </div>
+      ) : null}
+
+      {reporting ? (
+        <ReportDialog
+          targetType="Comment"
+          targetId={node.id}
+          onClose={() => setReporting(false)}
+        />
       ) : null}
 
       {replying ? (
@@ -131,7 +148,7 @@ function CommentItem({
             disabled={busy || !draft.trim()}
             onClick={() =>
               run(
-                () => replyToComment(node.id, draft, node.authorUserId, currentUserId),
+                () => replyToComment(node.id, draft, node.authorUserId, currentUserId, chapterId),
                 "Đã gửi trả lời",
                 () => {
                   setDraft("");
@@ -149,7 +166,13 @@ function CommentItem({
       {node.replies.length > 0 ? (
         <ul className="cb-comment-replies">
           {node.replies.map((r) => (
-            <CommentItem key={r.id} node={r} currentUserId={currentUserId} onChanged={onChanged} />
+            <CommentItem
+              key={r.id}
+              node={r}
+              chapterId={chapterId}
+              currentUserId={currentUserId}
+              onChanged={onChanged}
+            />
           ))}
         </ul>
       ) : null}
@@ -163,7 +186,7 @@ export function ChapterComments({ chapterId }: { chapterId: string }) {
   const { busy, run } = useAsyncRunner();
   const [draft, setDraft] = useState("");
 
-  const { data, loading, refetch } = useMockQuery(
+  const { data, loading, refetch } = useAsyncQuery(
     () =>
       listChapterComments(chapterId, currentUserId, {
         pageSize: 50,
@@ -218,7 +241,13 @@ export function ChapterComments({ chapterId }: { chapterId: string }) {
       ) : (
         <ul className="cb-comment-list">
           {data.roots.map((n) => (
-            <CommentItem key={n.id} node={n} currentUserId={currentUserId} onChanged={refetch} />
+            <CommentItem
+              key={n.id}
+              node={n}
+              chapterId={chapterId}
+              currentUserId={currentUserId}
+              onChanged={refetch}
+            />
           ))}
         </ul>
       )}

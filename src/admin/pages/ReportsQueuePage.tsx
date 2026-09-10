@@ -4,7 +4,7 @@ import { Card, Input, Select, Space, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import * as reportService from "@/services/reportService";
 import { DEFAULT_PAGE_SIZE, LABELS, REPORT_REASON, REPORT_STATUS, ROUTES } from "@/utils/constants";
 import type { ReportReason, ReportStatus } from "@/utils/constants";
@@ -24,7 +24,7 @@ export function ReportsQueuePage() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, loading } = useMockQuery(
+  const { data, loading } = useAsyncQuery(
     () => reportService.listReports({ pageNumber: page, pageSize: PAGE_SIZE, status, reason, q }),
     [page, status, reason, q],
   );

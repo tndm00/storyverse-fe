@@ -149,6 +149,22 @@ async function main() {
     assert([].concat(claims.roles).includes("Author"), "token missing Author role");
   });
 
+  await step("auth: get current user (me) matches the token", async () => {
+    const me = await req("authentication", "/v1/auth/me", { token: S.tokenA });
+    assert(Number(me.userId ?? me.id) === S.userA, `me.userId mismatch: ${JSON.stringify(me)}`);
+    assert(me.email === S.emailA, `me.email mismatch, got ${me.email}`);
+    assert([].concat(me.roles).includes("Author"), "me.roles missing Author");
+  });
+
+  await step("auth: get my author profile", async () => {
+    const profile = await req("authentication", "/v1/auth/author-profile", { token: S.tokenA });
+    assert(
+      Number(profile.authorProfileId ?? profile.id) === S.authorProfileId,
+      `authorProfileId mismatch: ${JSON.stringify(profile)}`,
+    );
+    assert(profile.penName === `E2E Author ${ts}`, `penName mismatch: ${profile.penName}`);
+  });
+
   await step("list genres", async () => {
     const rows = await req("content", "/v1/genres");
     assert(rows.length >= 10, `expected >=10 genres, got ${rows.length}`);
@@ -174,6 +190,7 @@ async function main() {
       },
     });
     S.guestStorySlug = d.slug;
+    S.guestStoryId = d.id;
     assert(d.status === "Draft", `expected Draft (pending review), got ${d.status}`);
     // Anonymous by-slug 404s while pending review (same rule as any Draft story) —
     // guestAuthorName is already on the creation response itself.
@@ -182,6 +199,22 @@ async function main() {
       `guestAuthorName not persisted: ${d.guestAuthorName}`,
     );
     return `${d.slug}`;
+  });
+
+  await step("guest publish: guest can never edit (no token rejected)", async () => {
+    // The guest story is owned by AuthorProfileId 0 — no account can ever "be" the
+    // guest, so an edit attempt with no token must be rejected at the auth layer.
+    await req("content", `/v1/stories/${S.guestStoryId}`, {
+      method: "PUT",
+      body: {
+        title: "Chiếm quyền chỉnh sửa",
+        description: "Không nên sửa được.",
+        language: "vi",
+        ageRating: "General",
+        contentType: "Original",
+      },
+      expect: [401],
+    });
   });
 
   await step("quick-publish story", async () => {
@@ -317,6 +350,33 @@ async function main() {
     assert(reply && reply.parentCommentId === S.commentId, "reply not linked to parent");
   });
 
+  await step("delete the reply comment (idempotent)", async () => {
+    const d = await req("community", `/v1/comments/${S.replyId}`, {
+      method: "DELETE",
+      token: S.tokenB,
+    });
+    assert(d.status === "Deleted", `expected Deleted, got ${d.status}`);
+    // Second delete on an already-deleted comment must not throw.
+    const again = await req("community", `/v1/comments/${S.replyId}`, {
+      method: "DELETE",
+      token: S.tokenB,
+    });
+    assert(again.status === "Deleted", `expected still Deleted, got ${again.status}`);
+  });
+
+  await step("admin: hide then unhide a comment", async () => {
+    const hidden = await req("community", `/v1/comments/${S.commentId}/hide`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    assert(hidden.status === "Hidden", `expected Hidden, got ${hidden.status}`);
+    const unhidden = await req("community", `/v1/comments/${S.commentId}/unhide`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    assert(unhidden.status === "Visible", `expected Visible, got ${unhidden.status}`);
+  });
+
   await step("rate the story", async () => {
     const d = await req("community", "/v1/ratings", {
       method: "PUT",
@@ -330,6 +390,18 @@ async function main() {
     assert(mine.score === 4, "my rating not persisted");
     const list = await req("community", `/v1/ratings?story-id=${S.storyId}`);
     assert(list.totalCount >= 1, "ratings list empty");
+  });
+
+  await step("rating: upsert replaces + get-my-rating reflects it", async () => {
+    await req("community", "/v1/ratings", {
+      method: "PUT",
+      token: S.tokenB,
+      body: { storyId: S.storyId, score: 5, reviewText: "Xem lại, hay hơn tôi tưởng." },
+    });
+    const mine = await req("community", `/v1/ratings/mine?story-id=${S.storyId}`, {
+      token: S.tokenB,
+    });
+    assert(mine.score === 5, `expected upserted score 5, got ${mine.score}`);
   });
 
   await step("vote (weekly)", async () => {
@@ -378,6 +450,18 @@ async function main() {
     assert(got.lastChapterId === S.chapter2Id, "reading progress not persisted");
     const cont = await req("library", "/v1/reading-progress/continue-reading", { token: S.tokenB });
     assert(cont.items.length >= 1, "continue-reading empty");
+  });
+
+  await step("library: remove entry", async () => {
+    await req("library", `/v1/library/${S.storyId}`, {
+      method: "DELETE",
+      token: S.tokenB,
+    });
+    const list = await req("library", "/v1/library", { token: S.tokenB });
+    assert(
+      !list.items.some((e) => e.storyId === S.storyId),
+      "story still in library after remove",
+    );
   });
 
   await step("submit report (readerB)", async () => {
@@ -459,6 +543,38 @@ async function main() {
     assert((res.actions || []).length >= 1, "no moderation action recorded");
   });
 
+  await step("moderation: report detail includes action history", async () => {
+    const detail = await req("moderation", `/v1/reports/${S.reportId}`, { token: S.tokenAdmin });
+    assert(detail.status === "Resolved", `expected Resolved, got ${detail.status}`);
+    assert(
+      (detail.actions || []).some((a) => a.action === "Warn"),
+      `expected a Warn action in history, got ${JSON.stringify(detail.actions)}`,
+    );
+  });
+
+  await step("moderation: dismiss a fresh report", async () => {
+    const filed = await req("moderation", "/v1/reports", {
+      method: "POST",
+      token: S.tokenB,
+      body: {
+        targetType: "Story",
+        targetId: S.storyId,
+        reason: "Other",
+        description: "Báo cáo để kiểm thử huỷ.",
+      },
+    });
+    await req("moderation", `/v1/reports/${filed.id}/review`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    const dismissed = await req("moderation", `/v1/reports/${filed.id}/dismiss`, {
+      method: "POST",
+      token: S.tokenAdmin,
+      body: { note: "Không đủ căn cứ." },
+    });
+    assert(dismissed.status === "Dismissed", `expected Dismissed, got ${dismissed.status}`);
+  });
+
   await step("notifications: create + list + count", async () => {
     await req("notification", "/v1/notifications", {
       method: "POST",
@@ -494,6 +610,163 @@ async function main() {
       token: S.tokenB,
     });
     assert(all.count === 0, `expected 0 unread after read-all, got ${all.count}`);
+  });
+
+  await step("author: update story directly (PUT)", async () => {
+    const updated = await req("content", `/v1/stories/${S.storyId}`, {
+      method: "PUT",
+      token: S.tokenA,
+      body: {
+        title: `E2E Truyện ${ts} (đã sửa)`,
+        description: "Mô tả đã được cập nhật qua PUT trực tiếp.",
+        language: "vi",
+        ageRating: "General",
+        contentType: "Original",
+      },
+    });
+    assert(updated.title.endsWith("(đã sửa)"), `title not updated: ${updated.title}`);
+    const reread = await req("content", `/v1/stories/${S.storyId}`);
+    assert(reread.title === updated.title, "updated title did not persist");
+    assert(reread.description.includes("cập nhật"), "updated description did not persist");
+  });
+
+  await step("author: AssignStoryGenres validation errors", async () => {
+    // Duplicate slug in the payload -> FluentValidation failure -> 400.
+    await req("content", `/v1/stories/${S.storyId}/genres`, {
+      method: "PUT",
+      token: S.tokenA,
+      body: {
+        genres: [
+          { genreSlug: S.genreSlug, isPrimary: true },
+          { genreSlug: S.genreSlug, isPrimary: false },
+        ],
+      },
+      expect: [400],
+    });
+    // Two genres both marked primary -> FluentValidation failure -> 400.
+    await req("content", `/v1/stories/${S.storyId}/genres`, {
+      method: "PUT",
+      token: S.tokenA,
+      body: {
+        genres: [
+          { genreSlug: "sang-tac", isPrimary: true },
+          { genreSlug: "chuyen-co-that", isPrimary: true },
+        ],
+      },
+      expect: [400],
+    });
+    // A slug that doesn't exist passes validation shape but fails the
+    // handler's active-genre lookup -> BusinessRuleException -> 422.
+    await req("content", `/v1/stories/${S.storyId}/genres`, {
+      method: "PUT",
+      token: S.tokenA,
+      body: { genres: [{ genreSlug: "khong-ton-tai-genre", isPrimary: true }] },
+      expect: [422],
+    });
+  });
+
+  await step("author: AssignStoryTags", async () => {
+    await req("content", `/v1/stories/${S.storyId}/tags`, {
+      method: "PUT",
+      token: S.tokenA,
+      body: { tags: ["e2e", "kinh-di", "moi"] },
+    });
+    const reread = await req("content", `/v1/stories/${S.storyId}`);
+    assert(reread.tags.includes("kinh-di") && reread.tags.includes("moi"), `tags not updated: ${JSON.stringify(reread.tags)}`);
+  });
+
+  await step("author: illegal ChangeStoryStatus transition", async () => {
+    // Story is Ongoing; Ongoing -> Draft is not in StoryStatusPolicy's allowed
+    // manual transitions -> BusinessRuleException -> 422.
+    await req("content", `/v1/stories/${S.storyId}/status`, {
+      method: "POST",
+      token: S.tokenA,
+      body: { targetStatus: "Draft" },
+      expect: [422],
+    });
+  });
+
+  await step("author: schedule then cancel-schedule a chapter", async () => {
+    const draft = await req("content", `/v1/stories/${S.storyId}/chapters`, {
+      method: "POST",
+      token: S.tokenA,
+      body: {
+        title: "Chương nháp (lịch đăng)",
+        content: "Chương này sẽ được lên lịch rồi huỷ lịch. ".repeat(10),
+        orderIndex: 4,
+        publishImmediately: false,
+      },
+    });
+    S.scheduledChapterId = draft.id;
+    assert(draft.status === "Draft", `expected Draft, got ${draft.status}`);
+
+    const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const scheduled = await req("content", `/v1/chapters/${S.scheduledChapterId}/schedule`, {
+      method: "POST",
+      token: S.tokenA,
+      body: { scheduledAt },
+    });
+    assert(scheduled.status === "Scheduled", `expected Scheduled, got ${scheduled.status}`);
+
+    const cancelled = await req("content", `/v1/chapters/${S.scheduledChapterId}/cancel-schedule`, {
+      method: "POST",
+      token: S.tokenA,
+    });
+    assert(cancelled.status === "Draft", `expected Draft after cancel, got ${cancelled.status}`);
+  });
+
+  await step("author: remove a published chapter", async () => {
+    const d = await req("content", `/v1/stories/${S.storyId}/chapters`, {
+      method: "POST",
+      token: S.tokenA,
+      body: {
+        title: "Chương sẽ bị gỡ",
+        content: "Chương này sẽ được duyệt rồi gỡ bỏ. ".repeat(10),
+        orderIndex: 5,
+        publishImmediately: true,
+      },
+    });
+    const removableChapterId = d.id;
+    assert(d.status === "PendingReview", `expected PendingReview, got ${d.status}`);
+
+    await req("content", `/v1/chapters/${removableChapterId}/review`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    const approved = await req("content", `/v1/chapters/${removableChapterId}/approve`, {
+      method: "POST",
+      token: S.tokenAdmin,
+    });
+    assert(approved.status === "Published", `expected Published, got ${approved.status}`);
+
+    const removed = await req("content", `/v1/chapters/${removableChapterId}/remove`, {
+      method: "POST",
+      token: S.tokenA,
+    });
+    assert(removed.status === "Removed", `expected Removed, got ${removed.status}`);
+  });
+
+  await step("content: direct POST /stories + GET by-id/by-slug cross-check", async () => {
+    const bare = await req("content", "/v1/stories", {
+      method: "POST",
+      token: S.tokenA,
+      body: {
+        title: `E2E Truyện trần ${ts}`,
+        description: "Tạo trực tiếp, không qua quick-publish.",
+        language: "vi",
+        ageRating: "General",
+        contentType: "Original",
+      },
+    });
+    assert(bare.status === "Draft", `expected Draft, got ${bare.status}`);
+    const byId = await req("content", `/v1/stories/${bare.id}`, { token: S.tokenA });
+    assert(byId.id === bare.id, "bare story by-id id mismatch");
+
+    // Same cross-check against the main published story, by both lookups.
+    const bySlug = await req("content", `/v1/stories/by-slug/${S.storySlug}`);
+    const mainById = await req("content", `/v1/stories/${S.storyId}`);
+    assert(bySlug.id === mainById.id, "by-slug/by-id id mismatch for main story");
+    assert(mainById.slug === bySlug.slug, "by-slug/by-id slug mismatch for main story");
   });
 
   await step("admin rejects a chapter, author resubmits", async () => {

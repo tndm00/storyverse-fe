@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { getStoryDetail } from "../readerService";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { StoryEngagementBar } from "../components/story/StoryEngagementBar";
@@ -10,7 +10,7 @@ import { ReportDialog } from "../components/ReportDialog";
 
 export function StoryDetailPage() {
   const { slug = "" } = useParams();
-  const { data, loading } = useMockQuery(() => getStoryDetail(slug), [slug]);
+  const { data, loading } = useAsyncQuery(() => getStoryDetail(slug), [slug]);
   const [reporting, setReporting] = useState(false);
 
   if (loading) return <p className="cb-page-intro">Đang tải…</p>;
@@ -46,8 +46,17 @@ export function StoryDetailPage() {
           {data.genres.length > 0 ? (
             <div className="cb-chips">
               {data.genres.map((g) => (
-                <span className="cb-chip" key={g}>
-                  {g}
+                <Link className="cb-chip" key={g.slug} to={`/browse?genre=${g.slug}`}>
+                  {g.name}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+          {data.tags.length > 0 ? (
+            <div className="cb-chips">
+              {data.tags.map((t) => (
+                <span className="cb-chip" key={t}>
+                  {t}
                 </span>
               ))}
             </div>

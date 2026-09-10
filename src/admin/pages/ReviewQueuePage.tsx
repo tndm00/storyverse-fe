@@ -4,7 +4,7 @@ import { Card, Input, Space, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import * as reviewService from "@/services/reviewService";
 import { formatDate, fromNow } from "@/utils/format";
 import { DEFAULT_PAGE_SIZE, LABELS, ROUTES } from "@/utils/constants";
@@ -22,7 +22,7 @@ export function ReviewQueuePage() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
 
-  const { data, loading } = useMockQuery(
+  const { data, loading } = useAsyncQuery(
     () => reviewService.listQueue({ pageNumber: page, pageSize: PAGE_SIZE, status: "all", q }),
     [page, q],
   );
@@ -92,6 +92,7 @@ export function ReviewQueuePage() {
           onRow={(row) => ({
             onClick: () => navigate(ROUTES.admin.reviewItem(row.id)),
             style: { cursor: "pointer" },
+            "data-testid": `review-row-${row.id}`,
           })}
           pagination={{
             current: page,
