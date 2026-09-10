@@ -25,8 +25,7 @@ function StudioBody() {
           </Link>
         </div>
         <p className="cb-page-intro">
-          Danh sách này được lưu trên trình duyệt này. Truyện đã đăng vẫn hiển thị công khai bình
-          thường.
+          Tất cả truyện thuộc tài khoản của bạn, gồm cả bản nháp chưa đăng.
         </p>
       </section>
 

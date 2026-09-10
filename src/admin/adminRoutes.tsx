@@ -9,6 +9,7 @@ const ReviewQueuePage = lazyNamed(() => import("./pages/ReviewQueuePage"), "Revi
 const ReviewDetailPage = lazyNamed(() => import("./pages/ReviewDetailPage"), "ReviewDetailPage");
 const ReportsQueuePage = lazyNamed(() => import("./pages/ReportsQueuePage"), "ReportsQueuePage");
 const ReportDetailPage = lazyNamed(() => import("./pages/ReportDetailPage"), "ReportDetailPage");
+const CommentsPage = lazyNamed(() => import("./pages/CommentsPage"), "CommentsPage");
 const StoriesPage = lazyNamed(() => import("./pages/StoriesPage"), "StoriesPage");
 const GenresPage = lazyNamed(() => import("./pages/GenresPage"), "GenresPage");
 
@@ -29,6 +30,7 @@ export const adminRoutes = {
     { path: "review/:id", element: <ReviewDetailPage /> },
     { path: "reports", element: <ReportsQueuePage /> },
     { path: "reports/:id", element: <ReportDetailPage /> },
+    { path: "comments", element: <CommentsPage /> },
     { path: "stories", element: <StoriesPage /> },
     { path: "genres", element: <GenresPage /> },
   ],

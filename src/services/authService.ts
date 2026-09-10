@@ -6,16 +6,52 @@
 // exported `canUseAdminConsole`.
 
 import { authenticationApi } from "./api/authenticationApi";
-import type { CurrentUserResponse } from "./api/types";
-import { ADMIN_CONSOLE_ROLES, AUTH_TOKEN_KEY, BEARER_TOKEN_TYPE } from "@/utils/constants";
+import type { CurrentUserResponse, LoginResponse } from "./api/types";
+import {
+  ADMIN_CONSOLE_ROLES,
+  AUTH_REFRESH_TOKEN_KEY,
+  AUTH_TOKEN_KEY,
+  BEARER_TOKEN_TYPE,
+  MESSAGES,
+} from "@/utils/constants";
 import type { AdminUser } from "@/types/domain";
 
 export const AUTHOR_ROLE = "Author";
 
 export interface LoginResult {
   accessToken: string;
+  refreshToken: string | null;
   tokenType: string;
   user: AdminUser;
+}
+
+function persistTokens(tokens: { accessToken: string; refreshToken?: string | null }): void {
+  localStorage.setItem(AUTH_TOKEN_KEY, tokens.accessToken);
+  if (tokens.refreshToken) localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, tokens.refreshToken);
+}
+
+async function resolveSession(tokens: LoginResponse): Promise<LoginResult> {
+  persistTokens(tokens);
+  let me: CurrentUserResponse;
+  try {
+    me = await authenticationApi.me();
+  } catch (err) {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
+    throw err;
+  }
+  return {
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken ?? null,
+    tokenType: tokens.tokenType || BEARER_TOKEN_TYPE,
+    user: {
+      id: String(me.userId),
+      email: me.email,
+      displayName: me.displayName,
+      avatarUrl: me.avatarUrl,
+      roles: rolesFrom(me),
+    },
+  };
 }
 
 // GET /v1/auth/me returns the caller's role names (Reader / Author / Moderator /
@@ -44,30 +80,43 @@ export function canUseAdminConsole(roles: readonly string[] | undefined): boolea
 
 export async function login(email: string, password: string): Promise<LoginResult> {
   const tokens = await authenticationApi.login(email, password);
-  // the api client reads the token from localStorage, so persist it before /me.
-  localStorage.setItem(AUTH_TOKEN_KEY, tokens.accessToken);
+  return resolveSession(tokens);
+}
 
-  let me: CurrentUserResponse;
-  try {
-    me = await authenticationApi.me();
-  } catch (err) {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    throw err;
+// Register now returns a token pair (Batch 3) — self-authenticate. Falls back to
+// an explicit login when an older backend omits the tokens.
+export async function registerAndLogin(input: {
+  email: string;
+  password: string;
+  displayName: string;
+}): Promise<LoginResult> {
+  const res = await authenticationApi.register(input);
+  if (res.accessToken) {
+    return resolveSession(res as LoginResponse);
   }
+  return login(input.email, input.password);
+}
 
-  const roles = rolesFrom(me);
+// Swap the stored refresh token for a fresh access token (picks up new JWT
+// claims such as `author_id` after creating an author profile).
+export async function refreshSession(): Promise<LoginResult> {
+  const refreshToken = localStorage.getItem(AUTH_REFRESH_TOKEN_KEY);
+  if (!refreshToken) throw new Error(MESSAGES.auth.reauthNeeded);
+  const tokens = await authenticationApi.refresh(refreshToken);
+  return resolveSession(tokens);
+}
 
-  return {
-    accessToken: tokens.accessToken,
-    tokenType: tokens.tokenType || BEARER_TOKEN_TYPE,
-    user: {
-      id: String(me.userId),
-      email: me.email,
-      displayName: me.displayName,
-      avatarUrl: me.avatarUrl,
-      roles,
-    },
-  };
+export async function logoutSession(): Promise<void> {
+  const refreshToken = localStorage.getItem(AUTH_REFRESH_TOKEN_KEY);
+  if (refreshToken) {
+    try {
+      await authenticationApi.logout(refreshToken);
+    } catch {
+      /* best-effort — server-side revocation */
+    }
+  }
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
 }
 
 // ---- resolve current user from a stored token (app boot / refresh) ------

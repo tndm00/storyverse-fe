@@ -15,7 +15,7 @@
 import { contentApi } from "@/services/api/contentApi";
 import { authenticationApi } from "@/services/api/authenticationApi";
 import { ApiError } from "@/services/api/client";
-import type { AuthorProfileResponse, RegisterResponse } from "@/services/api/types";
+import type { AuthorProfileResponse } from "@/services/api/types";
 
 // ---- shared enums ----------------------------------------------------------
 
@@ -227,6 +227,25 @@ function validateGenres(genres: GenreSelection[]): void {
   if (genres.filter((g) => g.isPrimary).length !== 1) {
     throw new ApiError("Chọn đúng một thể loại chính.", { code: "validation" });
   }
+  const slugs = genres.map((g) => g.genreSlug);
+  if (new Set(slugs).size !== slugs.length) {
+    throw new ApiError("Thể loại phụ không được trùng thể loại chính.", { code: "validation" });
+  }
+}
+
+// Builds the backend `genres` payload from a primary slug + secondary slugs,
+// dropping any secondary that duplicates the primary.
+export function buildGenreSelection(
+  primarySlug: string,
+  secondarySlugs: string[] = [],
+): GenreSelection[] {
+  const out: GenreSelection[] = [{ genreSlug: primarySlug, isPrimary: true }];
+  for (const slug of secondarySlugs) {
+    if (slug && slug !== primarySlug && !out.some((g) => g.genreSlug === slug)) {
+      out.push({ genreSlug: slug, isPrimary: false });
+    }
+  }
+  return out;
 }
 
 function validateTags(tags: string[]): void {
@@ -298,18 +317,6 @@ export function becomeAuthor(input: {
     bio: trimOpt(input.bio),
     avatarUrl: trimOpt(input.avatarUrl),
     bannerUrl: trimOpt(input.bannerUrl),
-  });
-}
-
-export function register(input: {
-  email: string;
-  password: string;
-  displayName: string;
-}): Promise<RegisterResponse> {
-  return authenticationApi.register({
-    email: input.email.trim(),
-    password: input.password,
-    displayName: input.displayName.trim(),
   });
 }
 
@@ -497,21 +504,49 @@ export async function getMyStory(slug: string): Promise<AuthorStoryView> {
   };
 }
 
-export async function listMyStories(): Promise<AuthorStory[]> {
-  const tracked = readTracked();
-  const results = await Promise.all(
-    tracked.map((t) =>
-      contentApi.client
-        .get<StoryDetailDto>(`/v1/stories/by-slug/${encodeURIComponent(t.slug)}`)
-        .then((dto) => toAuthorStory(dto))
-        .catch(() => null),
-    ),
-  );
-  const alive = results.filter((s): s is AuthorStory => s !== null);
-  // prune slugs that 404'd
-  const aliveSlugs = new Set(alive.map((s) => s.slug));
-  if (aliveSlugs.size !== tracked.length) {
-    writeTracked(tracked.filter((t) => aliveSlugs.has(t.slug)));
+interface StorySummaryDto {
+  id: string;
+  title: string;
+  slug: string;
+  status: StoryStatus;
+  primaryGenre: string | null;
+}
+
+interface PagedDto<T> {
+  items: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+// The author's own stories, drafts included — GET /v1/stories/mine (JWT
+// author_id). Falls back to the localStorage-tracked slug list only if the
+// endpoint is unavailable (older backend).
+export async function listMyStories(): Promise<StoryRef[]> {
+  try {
+    const paged = await contentApi.client.get<PagedDto<StorySummaryDto>>("/v1/stories/mine", {
+      params: { "sort-by": "createdAt", "sort-direction": "desc", "page-size": 100 },
+    });
+    return (paged.items ?? []).map((s) => ({
+      publicId: s.id,
+      slug: s.slug,
+      title: s.title,
+      status: s.status,
+    }));
+  } catch (err) {
+    if (err instanceof ApiError && err.code === "not_implemented") {
+      const tracked = readTracked();
+      const results = await Promise.all(
+        tracked.map((t) =>
+          contentApi.client
+            .get<StoryDetailDto>(`/v1/stories/by-slug/${encodeURIComponent(t.slug)}`)
+            .then((dto) => toStoryRef(dto))
+            .catch(() => null),
+        ),
+      );
+      return results.filter((s): s is StoryRef => s !== null);
+    }
+    throw err;
   }
-  return alive;
 }

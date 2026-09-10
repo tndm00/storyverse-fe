@@ -18,10 +18,18 @@ export interface CurrentUserResponse {
   roles?: string[];
 }
 
+// Register now self-authenticates — the response carries a token pair just like
+// login (Batch 3). Older builds returned only the profile fields, so the token
+// fields are optional for safety.
 export interface RegisterResponse {
   userId: number;
   email: string;
   displayName: string;
+  accessToken?: string;
+  accessTokenExpiresAt?: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
+  tokenType?: string;
 }
 
 export interface AuthorProfileResponse {

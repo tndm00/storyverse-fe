@@ -42,14 +42,18 @@ interface ReportSummaryDto {
   id: string;
   targetType: TargetType;
   targetId: string;
+  targetTitle: string | null;
   reason: ReportReason;
   status: ReportStatus;
+  reporterUserId: number | null;
+  reporterDisplayName: string | null;
   createdAt: string;
   resolvedAt: string | null;
 }
 
 interface ReportDetailDto extends ReportSummaryDto {
   reporterUserId: number;
+  reporterDisplayName: string | null;
   description: string;
   updatedAt: string | null;
   actions: ReportActionDto[];
@@ -65,13 +69,19 @@ interface PagedDto<T> {
 
 const shortId = (id: string) => id.replace(/-/g, "").slice(0, 8);
 
+const targetTitleFor = (d: ReportSummaryDto) =>
+  d.targetTitle ?? `${d.targetType} ${shortId(d.targetId)}`;
+
+const reporterNameFor = (d: { reporterDisplayName: string | null; reporterUserId: number | null }) =>
+  d.reporterDisplayName ?? (d.reporterUserId != null ? `Người dùng #${d.reporterUserId}` : "—");
+
 function summaryToReport(d: ReportSummaryDto): Report {
   return {
     id: d.id,
     targetType: d.targetType,
-    targetRef: { id: d.targetId, title: `${d.targetType} ${shortId(d.targetId)}` },
+    targetRef: { id: d.targetId, title: targetTitleFor(d) },
     reason: d.reason,
-    reporterName: "—",
+    reporterName: reporterNameFor(d),
     note: "",
     status: d.status,
     action: null,
@@ -93,9 +103,9 @@ function detailToReport(d: ReportDetailDto): ReportDetail {
   return {
     id: d.id,
     targetType: d.targetType,
-    targetRef: { id: d.targetId, title: `${d.targetType} ${shortId(d.targetId)}` },
+    targetRef: { id: d.targetId, title: targetTitleFor(d) },
     reason: d.reason,
-    reporterName: `Người dùng #${d.reporterUserId}`,
+    reporterName: reporterNameFor(d),
     note: d.description ?? "",
     status: d.status,
     action: (last?.action as ModerationAction) ?? null,

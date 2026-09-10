@@ -22,6 +22,11 @@ export function NotificationBell() {
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<AppNotification[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const PAGE_SIZE = 8;
 
   const refreshCount = useCallback(() => {
     getUnreadCount()
@@ -39,10 +44,30 @@ export function NotificationBell() {
     const next = !open;
     setOpen(next);
     if (next) {
-      listMyNotifications({ pageSize: 8 })
-        .then((p) => setItems(p.items))
+      setPage(1);
+      listMyNotifications({ pageNumber: 1, pageSize: PAGE_SIZE })
+        .then((p) => {
+          setItems(p.items);
+          setTotalPages(p.totalPages);
+        })
         .catch(() => {});
     }
+  };
+
+  const loadMore = () => {
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    listMyNotifications({ pageNumber: nextPage, pageSize: PAGE_SIZE })
+      .then((p) => {
+        setItems((prev) => {
+          const seen = new Set(prev.map((x) => x.id));
+          return [...prev, ...p.items.filter((x) => !seen.has(x.id))];
+        });
+        setPage(nextPage);
+        setTotalPages(p.totalPages);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
   };
 
   const onRowClick = (n: AppNotification) => {
@@ -116,6 +141,16 @@ export function NotificationBell() {
               </button>
             ))
           )}
+          {page < totalPages ? (
+            <button
+              type="button"
+              className="cb-notif-all"
+              disabled={loadingMore}
+              onClick={loadMore}
+            >
+              {loadingMore ? "Đang tải…" : "Xem thêm"}
+            </button>
+          ) : null}
           {items.some((n) => !n.isRead) ? (
             <button type="button" className="cb-notif-all" onClick={onMarkAll}>
               Đánh dấu tất cả đã đọc

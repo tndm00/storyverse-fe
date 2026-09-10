@@ -33,6 +33,11 @@ export function StoriesPage() {
     [page, status, q, sort],
   );
 
+  const detail = useAsyncQuery(
+    () => (selected ? storyService.get(selected.publicId) : Promise.resolve(null)),
+    [selected?.publicId],
+  );
+
   const onStatus = (value: string) => {
     setPage(1);
     setStatus(value as StatusFilter);
@@ -183,7 +188,7 @@ export function StoriesPage() {
         onClose={() => setSelected(null)}
         extra={<Button onClick={() => setSelected(null)}>Close</Button>}
       >
-        {selected ? <StoryDetailContent story={selected} /> : null}
+        {selected ? <StoryDetailContent story={detail.data ?? selected} /> : null}
       </Drawer>
     </div>
   );

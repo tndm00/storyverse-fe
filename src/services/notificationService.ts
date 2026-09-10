@@ -33,19 +33,34 @@ interface Paged<T> {
 export interface NotificationPage {
   items: AppNotification[];
   totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export async function listMyNotifications(
   opts: { isRead?: boolean; pageNumber?: number; pageSize?: number } = {},
 ): Promise<NotificationPage> {
-  const paged = await notificationApi.client.get<Paged<NotificationDto>>("/v1/notifications", {
-    params: {
-      "is-read": opts.isRead,
-      "page-number": opts.pageNumber ?? 1,
-      "page-size": opts.pageSize ?? 8,
+  const pageSize = opts.pageSize ?? 8;
+  const pageNumber = opts.pageNumber ?? 1;
+  const paged = await notificationApi.client.get<Paged<NotificationDto> & { totalPages?: number }>(
+    "/v1/notifications",
+    {
+      params: {
+        "is-read": opts.isRead,
+        "page-number": pageNumber,
+        "page-size": pageSize,
+      },
     },
-  });
-  return { items: paged.items ?? [], totalCount: paged.totalCount ?? 0 };
+  );
+  const totalCount = paged.totalCount ?? 0;
+  return {
+    items: paged.items ?? [],
+    totalCount,
+    pageNumber: paged.pageNumber ?? pageNumber,
+    pageSize: paged.pageSize ?? pageSize,
+    totalPages: paged.totalPages ?? Math.max(1, Math.ceil(totalCount / pageSize)),
+  };
 }
 
 export async function getUnreadCount(): Promise<number> {

@@ -7,7 +7,10 @@ import { NotFoundPage } from "@/components/NotFoundPage";
 import {
   addChapter,
   addVolume,
+  buildGenreSelection,
   getMyStory,
+  listGenres,
+  setGenres,
   submitChapterForReview,
   setStoryStatus,
   updateVolume,
@@ -83,6 +86,117 @@ function VolumeRow({ volume, onSaved }: { volume: VolumeRef; onSaved: () => void
         </button>
       </div>
     </li>
+  );
+}
+
+function GenreEditor({
+  storyId,
+  current,
+  onSaved,
+}: {
+  storyId: string;
+  current: { name: string; slug: string; isPrimary: boolean }[];
+  onSaved: () => void;
+}) {
+  const { data: options } = useAsyncQuery(() => listGenres(), []);
+  const { busy, run } = useAsyncRunner();
+  const [open, setOpen] = useState(false);
+  const [primary, setPrimary] = useState(
+    () => current.find((g) => g.isPrimary)?.slug ?? current[0]?.slug ?? "",
+  );
+  const [secondary, setSecondary] = useState<string[]>(
+    () => current.filter((g) => !g.isPrimary).map((g) => g.slug),
+  );
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="cb-btn cb-ghost cb-btn-sm"
+        onClick={() => setOpen(true)}
+        style={{ marginTop: 8 }}
+      >
+        Sửa thể loại
+      </button>
+    );
+  }
+
+  const list = options ?? [];
+  return (
+    <div className="cb-form-card" style={{ marginTop: 12 }}>
+      <div className="cb-field">
+        <label className="cb-field-label" htmlFor="ge-primary">
+          Thể loại chính
+        </label>
+        <select
+          className="cb-input"
+          id="ge-primary"
+          value={primary}
+          onChange={(e) => {
+            setPrimary(e.target.value);
+            setSecondary((prev) => prev.filter((s) => s !== e.target.value));
+          }}
+        >
+          {list.map((g) => (
+            <option key={g.slug} value={g.slug}>
+              {g.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="cb-field">
+        <label className="cb-field-label" htmlFor="ge-secondary">
+          Thể loại phụ
+        </label>
+        <select
+          className="cb-input"
+          id="ge-secondary"
+          multiple
+          size={Math.min(6, Math.max(3, list.length))}
+          value={secondary}
+          onChange={(e) =>
+            setSecondary(
+              Array.from(e.target.selectedOptions, (o) => o.value).filter((v) => v !== primary),
+            )
+          }
+        >
+          {list
+            .filter((g) => g.slug !== primary)
+            .map((g) => (
+              <option key={g.slug} value={g.slug}>
+                {g.name}
+              </option>
+            ))}
+        </select>
+      </div>
+      <div className="cb-cta-actions">
+        <button
+          type="button"
+          className="cb-btn cb-ghost cb-btn-sm"
+          disabled={busy}
+          onClick={() => setOpen(false)}
+        >
+          Huỷ
+        </button>
+        <button
+          type="button"
+          className="cb-btn cb-btn-sm"
+          disabled={busy || !primary}
+          onClick={() =>
+            run(
+              () => setGenres(storyId, buildGenreSelection(primary, secondary)),
+              "Đã cập nhật thể loại",
+              () => {
+                setOpen(false);
+                onSaved();
+              },
+            )
+          }
+        >
+          Lưu thể loại
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -171,13 +285,20 @@ function ManageBody({ slug }: { slug: string }) {
         </div>
         <div className="cb-detail-meta">
           <span className="cb-badge">{STATUS_LABEL[story.status] ?? story.status}</span>
-          {story.genres.map((g) => (
-            <span className="cb-chip" key={g.slug}>
-              {g.name}
-              {g.isPrimary ? " ·" : ""}
-            </span>
-          ))}
+          {[...story.genres]
+            .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
+            .map((g) => (
+              <span
+                className={g.isPrimary ? "cb-chip is-primary" : "cb-chip"}
+                key={g.slug}
+                title={g.isPrimary ? "Thể loại chính" : "Thể loại phụ"}
+              >
+                {g.isPrimary ? "★ " : ""}
+                {g.name}
+              </span>
+            ))}
         </div>
+        <GenreEditor storyId={story.publicId} current={story.genres} onSaved={refetch} />
 
         {story.status === "Draft" ? (
           <p className="cb-page-intro">

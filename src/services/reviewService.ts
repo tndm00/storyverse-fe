@@ -5,9 +5,11 @@
 // This is chapter-only — a story goes public the moment its first chapter is
 // approved.
 //
-// Known gaps: no aggregate counts for Approved/Rejected (no listing endpoint
-// for already-decided chapters — both read 0); `q` (free-text) and `type`
-// ("Story" vs "Chapter") filters are ignored (queue is chapter-only).
+// Batch 1 wired the remaining pieces:
+//   GET /v1/chapters/review-counts               — { pending, inReview, approved, rejected }
+//   GET /v1/chapters/reviewed?status=Approved|Rejected — decided chapters (paged, q, type)
+//   GET /v1/chapters/pending-review             — now also accepts q + type
+// The queue is still chapter-only, so `type=Story` returns nothing.
 
 import { contentApi } from "./api/contentApi";
 import { DEFAULT_PAGE_SIZE, MESSAGES } from "@/utils/constants";
@@ -96,7 +98,8 @@ const REVIEW_STATUS_TO_BACKEND: Record<string, string> = {
   Reviewing: "InReview",
 };
 
-function toReviewItem(d: PendingReviewChapterDto): ReviewItem {
+function toReviewItem(d: PendingReviewChapterDto, statusOverride?: ReviewStatus): ReviewItem {
+  const reviewStatus = statusOverride ?? BACKEND_TO_REVIEW_STATUS[d.status] ?? "Pending";
   return {
     id: d.chapterId,
     targetType: "Chapter",
@@ -105,7 +108,7 @@ function toReviewItem(d: PendingReviewChapterDto): ReviewItem {
     authorName: d.guestAuthorName ?? undefined,
     genres: [],
     submittedAt: d.createdAt,
-    reviewStatus: BACKEND_TO_REVIEW_STATUS[d.status] ?? "Pending",
+    reviewStatus,
     assignedTo: d.status === "InReview" ? "Moderator" : null,
     decisionReason: null,
     history: [],
@@ -132,19 +135,39 @@ export async function listQueue({
   pageNumber = 1,
   pageSize = DEFAULT_PAGE_SIZE,
   status = "Pending",
+  q,
+  type,
 }: ReviewQueueParams = {}): Promise<Paged<ReviewItem>> {
-  const backendStatus =
-    status === "all" || status === "Approved" || status === "Rejected"
-      ? undefined
-      : REVIEW_STATUS_TO_BACKEND[status];
+  const typeParam = type && type !== "all" ? type : undefined;
+  const decided = status === "Approved" || status === "Rejected";
 
-  const paged = await contentApi.client.get<PagedDto<PendingReviewChapterDto>>(
-    "/v1/chapters/pending-review",
-    { params: { status: backendStatus, "page-number": pageNumber, "page-size": pageSize } },
-  );
+  const paged = decided
+    ? await contentApi.client.get<PagedDto<PendingReviewChapterDto>>("/v1/chapters/reviewed", {
+        params: {
+          status,
+          q: q || undefined,
+          type: typeParam,
+          "page-number": pageNumber,
+          "page-size": pageSize,
+        },
+      })
+    : await contentApi.client.get<PagedDto<PendingReviewChapterDto>>("/v1/chapters/pending-review", {
+        params: {
+          status:
+            status === "all" ? undefined : REVIEW_STATUS_TO_BACKEND[status as string] ?? undefined,
+          q: q || undefined,
+          type: typeParam,
+          "page-number": pageNumber,
+          "page-size": pageSize,
+        },
+      });
+
+  const override: ReviewStatus | undefined = decided
+    ? (status as ReviewStatus)
+    : undefined;
 
   return {
-    items: paged.items.map(toReviewItem),
+    items: paged.items.map((d) => toReviewItem(d, override)),
     pageNumber: paged.pageNumber,
     pageSize: paged.pageSize,
     totalCount: paged.totalCount,
@@ -152,22 +175,21 @@ export async function listQueue({
   };
 }
 
+interface ReviewCountsDto {
+  pending: number;
+  inReview: number;
+  approved: number;
+  rejected: number;
+}
+
 export async function counts(): Promise<ReviewCounts> {
-  const [pending, reviewing] = await Promise.all([
-    contentApi.client.get<PagedDto<PendingReviewChapterDto>>("/v1/chapters/pending-review", {
-      params: { status: "PendingReview", "page-size": 1 },
-    }),
-    contentApi.client.get<PagedDto<PendingReviewChapterDto>>("/v1/chapters/pending-review", {
-      params: { status: "InReview", "page-size": 1 },
-    }),
-  ]);
-  // No listing endpoint for already-decided chapters — documented gap.
+  const dto = await contentApi.client.get<ReviewCountsDto>("/v1/chapters/review-counts");
   return {
-    Pending: pending.totalCount,
-    Reviewing: reviewing.totalCount,
-    Approved: 0,
-    Rejected: 0,
-    total: pending.totalCount + reviewing.totalCount,
+    Pending: dto.pending ?? 0,
+    Reviewing: dto.inReview ?? 0,
+    Approved: dto.approved ?? 0,
+    Rejected: dto.rejected ?? 0,
+    total: (dto.pending ?? 0) + (dto.inReview ?? 0) + (dto.approved ?? 0) + (dto.rejected ?? 0),
   };
 }
 

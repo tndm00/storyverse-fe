@@ -21,6 +21,11 @@ export const authenticationApi = {
   login: (email: string, password: string) =>
     client.post<LoginResponse>("/v1/auth/login", { email, password }),
 
+  refresh: (refreshToken: string) =>
+    client.post<LoginResponse>("/v1/auth/refresh", { refreshToken }),
+
+  logout: (refreshToken: string) => client.post<void>("/v1/auth/logout", { refreshToken }),
+
   googleLogin: (idToken: string) => client.post<LoginResponse>("/v1/auth/google", { idToken }),
 
   me: () => client.get<CurrentUserResponse>("/v1/auth/me"),

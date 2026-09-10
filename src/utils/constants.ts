@@ -65,6 +65,8 @@ export const ACTION_TAG_COLOR: Record<string, string> = {
 
 export const AUTH_TOKEN_KEY = "sv_admin_token";
 
+export const AUTH_REFRESH_TOKEN_KEY = "sv_admin_refresh_token";
+
 export const BEARER_TOKEN_TYPE = "Bearer";
 
 // Roles allowed into the admin console. Matched loosely (case / separators
@@ -122,6 +124,7 @@ export const ROUTES = {
     dashboard: `/${ADMIN_BASE_PATH}`,
     reviewQueue: `/${ADMIN_BASE_PATH}/review`,
     reports: `/${ADMIN_BASE_PATH}/reports`,
+    comments: `/${ADMIN_BASE_PATH}/comments`,
     stories: `/${ADMIN_BASE_PATH}/stories`,
     genres: `/${ADMIN_BASE_PATH}/genres`,
     reviewItem: (id: string) => `/${ADMIN_BASE_PATH}/review/${id}`,
@@ -136,6 +139,7 @@ export const LABELS = {
   dashboard: "Dashboard",
   reviewQueue: "Review queue",
   reports: "Reports",
+  comments: "Bình luận",
   stories: "Stories",
   genres: "Thể loại",
 } as const;

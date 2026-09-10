@@ -11,7 +11,54 @@
 //   - unwrap ResponseDto -> returns `data` directly
 //   - throw ApiError on transport failure or `success: false`
 
-import { AUTH_TOKEN_KEY, MESSAGES } from "@/utils/constants";
+import { AUTH_REFRESH_TOKEN_KEY, AUTH_TOKEN_KEY, MESSAGES } from "@/utils/constants";
+import { resolveBaseUrl } from "./config";
+
+// Event fired when the access token is rejected (401) and a refresh could not
+// recover the session. AuthProvider listens and clears its state.
+export const AUTH_EXPIRED_EVENT = "sv:auth-expired";
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+// Single-flight refresh — every concurrent 401 awaits the same call. Uses a bare
+// fetch (not an ApiClient) so it can never recurse back through this interceptor.
+async function tryRefreshToken(): Promise<boolean> {
+  const refreshToken = localStorage.getItem(AUTH_REFRESH_TOKEN_KEY);
+  if (!refreshToken) return false;
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const res = await fetch(`${resolveBaseUrl("authentication")}/v1/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ refreshToken }),
+        });
+        if (!res.ok) return false;
+        const env = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+        const data = (env?.data ?? env?.Data ?? env) as Record<string, unknown> | null;
+        const accessToken = data?.accessToken as string | undefined;
+        if (!accessToken) return false;
+        localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
+        const nextRefresh = data?.refreshToken as string | undefined;
+        if (nextRefresh) localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, nextRefresh);
+        return true;
+      } catch {
+        return false;
+      }
+    })().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+function notifyAuthExpired(): void {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+  }
+}
 
 export interface ApiErrorInit {
   code?: string;
@@ -90,7 +137,11 @@ function readKey(obj: unknown, key: string): unknown {
 export function createApiClient(baseUrl: string): ApiClient {
   const root = String(baseUrl).replace(/\/$/, "");
 
-  async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+  async function doRequest<T>(
+    path: string,
+    opts: RequestOptions,
+    allowRefresh: boolean,
+  ): Promise<T> {
     const { method = "GET", body, params, signal } = opts;
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
     let res: Response;
@@ -109,6 +160,13 @@ export function createApiClient(baseUrl: string): ApiClient {
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") throw err;
       throw new ApiError(MESSAGES.api.unreachable(root), { code: "network_error" });
+    }
+
+    // Access token expired — refresh once and retry the original request.
+    if (res.status === 401 && allowRefresh && localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)) {
+      const refreshed = await tryRefreshToken();
+      if (refreshed) return doRequest<T>(path, opts, false);
+      notifyAuthExpired();
     }
 
     const text = await res.text();
@@ -144,6 +202,9 @@ export function createApiClient(baseUrl: string): ApiClient {
     }
     return envelope as T;
   }
+
+  const request = <T,>(path: string, opts: RequestOptions = {}): Promise<T> =>
+    doRequest<T>(path, opts, true);
 
   return {
     baseUrl: root,

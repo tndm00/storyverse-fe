@@ -4,6 +4,7 @@ import { Avatar, Dropdown, Layout, Menu, Typography } from "antd";
 import {
   AppstoreOutlined,
   BookOutlined,
+  CommentOutlined,
   DashboardOutlined,
   FlagOutlined,
   LogoutOutlined,
@@ -33,6 +34,11 @@ const MENU_ITEMS = [
     label: <Link to={ROUTES.admin.reports}>{LABELS.reports}</Link>,
   },
   {
+    key: ROUTES.admin.comments,
+    icon: <CommentOutlined />,
+    label: <Link to={ROUTES.admin.comments}>{LABELS.comments}</Link>,
+  },
+  {
     key: ROUTES.admin.stories,
     icon: <BookOutlined />,
     label: <Link to={ROUTES.admin.stories}>{LABELS.stories}</Link>,
@@ -47,6 +53,7 @@ const MENU_ITEMS = [
 function selectedKey(pathname: string): string {
   if (pathname.startsWith(ROUTES.admin.reviewQueue)) return ROUTES.admin.reviewQueue;
   if (pathname.startsWith(ROUTES.admin.reports)) return ROUTES.admin.reports;
+  if (pathname.startsWith(ROUTES.admin.comments)) return ROUTES.admin.comments;
   if (pathname.startsWith(ROUTES.admin.stories)) return ROUTES.admin.stories;
   if (pathname.startsWith(ROUTES.admin.genres)) return ROUTES.admin.genres;
   return ROUTES.admin.dashboard;

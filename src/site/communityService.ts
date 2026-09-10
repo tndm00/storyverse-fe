@@ -17,6 +17,7 @@ interface CommentDto {
   chapterId: string;
   parentCommentId: string | null;
   authorUserId: number;
+  authorDisplayName: string | null;
   content: string;
   status: "Visible" | "Hidden" | "Deleted";
   likeCount: number;
@@ -28,6 +29,7 @@ interface RatingDto {
   id: string;
   storyId: string;
   userId: number;
+  userDisplayName: string | null;
   score: number;
   reviewText: string | null;
   createdAt: string;
@@ -101,11 +103,16 @@ export interface CastVoteResult extends VoteCount {
 
 // ---- helpers --------------------------------------------------------
 
-function labelFor(userId: number, currentUserId: number | null, currentUserName?: string): string {
+function labelFor(
+  userId: number,
+  currentUserId: number | null,
+  currentUserName?: string,
+  displayName?: string | null,
+): string {
   if (currentUserId != null && userId === currentUserId) {
-    return currentUserName ? `${currentUserName} (bạn)` : "Bạn";
+    return (currentUserName || displayName) ? `${currentUserName || displayName} (bạn)` : "Bạn";
   }
-  return `Người đọc #${userId}`;
+  return displayName ?? `Người đọc #${userId}`;
 }
 
 function toNode(
@@ -117,7 +124,7 @@ function toNode(
     id: dto.id,
     parentId: dto.parentCommentId,
     authorUserId: dto.authorUserId,
-    authorLabel: labelFor(dto.authorUserId, currentUserId, currentUserName),
+    authorLabel: labelFor(dto.authorUserId, currentUserId, currentUserName, dto.authorDisplayName),
     content: dto.content,
     status: dto.status,
     likeCount: dto.likeCount,
@@ -235,7 +242,7 @@ export async function listStoryRatings(
     items: (paged.items ?? []).map((d) => ({
       id: d.id,
       userId: d.userId,
-      authorLabel: labelFor(d.userId, currentUserId),
+      authorLabel: labelFor(d.userId, currentUserId, undefined, d.userDisplayName),
       score: d.score,
       reviewText: d.reviewText ?? "",
       createdAt: d.createdAt,

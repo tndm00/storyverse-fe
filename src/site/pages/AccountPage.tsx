@@ -4,12 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import { canUseAdminConsole, hasRole, AUTHOR_ROLE } from "@/services/authService";
 import { ROUTES } from "@/utils/constants";
-import { register } from "../authorService";
 
 type Mode = "login" | "register";
 
 export function AccountPage() {
-  const { isAuthenticated, user, login, logout } = useAuth();
+  const { isAuthenticated, user, login, register, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { busy, run } = useAsyncRunner();
@@ -74,9 +73,10 @@ export function AccountPage() {
     run(
       async () => {
         if (mode === "register") {
-          await register({ email, password, displayName });
+          await register(email, password, displayName);
+        } else {
+          await login(email, password);
         }
-        await login(email, password);
       },
       mode === "register" ? "Chào mừng bạn đến với Canh Ba" : "Đăng nhập thành công",
       () => navigate(from ?? ROUTES.account, { replace: true }),

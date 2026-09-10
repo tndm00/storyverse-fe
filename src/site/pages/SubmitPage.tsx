@@ -5,6 +5,7 @@ import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import { MESSAGES, ROUTES } from "@/utils/constants";
 import { listGenres } from "../readerService";
 import {
+  buildGenreSelection,
   guestPublish,
   hasAuthorProfile,
   quickPublish,
@@ -39,6 +40,7 @@ export function SubmitPage() {
   const [title, setTitle] = useState("");
   const [penName, setPenName] = useState("");
   const [genreSlug, setGenreSlug] = useState(DEFAULT_GENRE);
+  const [secondaryGenres, setSecondaryGenres] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [content, setContent] = useState("");
@@ -90,7 +92,7 @@ export function SubmitPage() {
         const res = await quickPublish({
           title,
           description,
-          genres: [{ genreSlug, isPrimary: true }],
+          genres: buildGenreSelection(genreSlug, secondaryGenres),
           tags,
           chapterContent: content,
         });
@@ -114,6 +116,7 @@ export function SubmitPage() {
     setTitle("");
     setDescription("");
     setTags([]);
+    setSecondaryGenres([]);
     setContent("");
     if (!isAuthor) setPenName("");
   };
@@ -220,7 +223,7 @@ export function SubmitPage() {
 
               <div className="cb-field">
                 <label className="cb-field-label" htmlFor="s-genre">
-                  Thể loại *
+                  {isAuthor ? "Thể loại chính *" : "Thể loại *"}
                 </label>
                 {genres === null ? (
                   <select className="cb-input" id="s-genre" disabled>
@@ -233,7 +236,10 @@ export function SubmitPage() {
                     className="cb-input"
                     id="s-genre"
                     value={genreSlug}
-                    onChange={(e) => setGenreSlug(e.target.value)}
+                    onChange={(e) => {
+                      setGenreSlug(e.target.value);
+                      setSecondaryGenres((prev) => prev.filter((s) => s !== e.target.value));
+                    }}
                   >
                     {genres.map((g) => (
                       <option key={g.slug} value={g.slug}>
@@ -243,6 +249,36 @@ export function SubmitPage() {
                   </select>
                 )}
               </div>
+
+              {isAuthor && genres && !genresEmpty ? (
+                <div className="cb-field">
+                  <label className="cb-field-label" htmlFor="s-genre2">
+                    Thể loại phụ (tuỳ chọn)
+                  </label>
+                  <select
+                    className="cb-input"
+                    id="s-genre2"
+                    multiple
+                    size={Math.min(6, Math.max(3, genres.length))}
+                    value={secondaryGenres}
+                    onChange={(e) =>
+                      setSecondaryGenres(
+                        Array.from(e.target.selectedOptions, (o) => o.value).filter(
+                          (v) => v !== genreSlug,
+                        ),
+                      )
+                    }
+                  >
+                    {genres
+                      .filter((g) => g.slug !== genreSlug)
+                      .map((g) => (
+                        <option key={g.slug} value={g.slug}>
+                          {g.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              ) : null}
 
               {isAuthor ? (
                 <div className="cb-field">

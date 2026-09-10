@@ -836,6 +836,11 @@ textarea.cb-input {
   border-radius: 999px;
   padding: 3px 12px;
 }
+.cb-chip.is-primary {
+  color: var(--cb-accent-soft);
+  border-color: var(--cb-accent);
+  font-weight: 600;
+}
 
 /* ---------- chapter reader ---------- */
 .cb-reader {

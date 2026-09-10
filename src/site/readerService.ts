@@ -86,6 +86,7 @@ export interface ReaderChapter {
 export interface ReaderGenreChip {
   name: string;
   slug: string;
+  isPrimary: boolean;
 }
 
 export interface ReaderStoryDetail extends ReaderStory {
@@ -264,7 +265,9 @@ export async function getStoryDetail(slug: string): Promise<ReaderStoryDetail | 
       status: dto.status,
       authorProfileId: dto.authorProfileId ?? null,
       guestAuthorName: dto.guestAuthorName ?? null,
-      genres: (dto.genres ?? []).map((g) => ({ name: g.name, slug: g.slug })),
+      genres: [...(dto.genres ?? [])]
+        .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
+        .map((g) => ({ name: g.name, slug: g.slug, isPrimary: g.isPrimary })),
       tags: dto.tags ?? [],
       chapters: published.map((c) => ({
         id: c.id,

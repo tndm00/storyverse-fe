@@ -7,10 +7,12 @@ export interface AuthContextValue {
   booting: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AdminUser>;
+  // Register + self-authenticate from the returned token pair.
+  register: (email: string, password: string, displayName: string) => Promise<AdminUser>;
   logout: () => void;
-  // Re-login with the password from this session's last successful login, to pick
-  // up new JWT claims (the `author_id` claim after creating an author profile).
-  // Rejects with MESSAGES.auth.reauthNeeded if no password is held (page reload).
+  // Exchange the stored refresh token for a fresh access token, to pick up new
+  // JWT claims (the `author_id` claim after creating an author profile).
+  // Rejects with MESSAGES.auth.reauthNeeded if no refresh token is held.
   reauth: () => Promise<AdminUser>;
 }
 

@@ -24,6 +24,9 @@ export const communityApi = {
   deleteComment: (commentId: string) => client.del(`/v1/comments/${commentId}`),
   setCommentVisibility: (commentId: string, hide: boolean) =>
     client.post(`/v1/comments/${commentId}/${hide ? "hide" : "unhide"}`),
+  // Moderator hide/unhide with an audit reason (community.moderate). Batch 2.
+  setCommentModerationVisibility: (commentId: string, hidden: boolean, reason: string) =>
+    client.post(`/v1/comments/${commentId}/moderation-visibility`, { hidden, reason }),
 
   // ---- ratings -------------------------------------------------------
   getStoryRatings: (storyId: string, params?: Query) =>

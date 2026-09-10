@@ -1,10 +1,11 @@
-// Stories management facade — Content service GET /v1/stories.
-// Note: the public listing is published-only (Draft is never returned) and the
-// backend has no counts or get-by-id endpoint yet, so Draft counts read 0 and
-// `get()` is unavailable.
+// Stories management facade — Content service admin endpoints (Batch 1):
+//   GET /v1/stories/admin         — every status, incl. Draft
+//   GET /v1/stories/admin/counts  — { total, byStatus }
+//   GET /v1/stories/{id}          — full detail (admin can read unpublished)
+//
+// Used only by the admin console (StoriesPage, DashboardPage).
 
 import { contentApi } from "./api/contentApi";
-import { ApiError } from "./api/client";
 import { DEFAULT_PAGE_SIZE, STORY_STATUS } from "@/utils/constants";
 import type { StoryStatus } from "@/utils/constants";
 import type { Paged, Story } from "@/types/domain";
@@ -23,12 +24,40 @@ interface StorySummaryDto {
   publishedAt: string | null;
 }
 
+interface StoryGenreDto {
+  name: string;
+  slug: string;
+  isPrimary: boolean;
+}
+
+interface StoryDetailDto extends StorySummaryDto {
+  description: string | null;
+  language: string;
+  followCount: number;
+  guestAuthorName: string | null;
+  createdAt: string;
+  genres: StoryGenreDto[];
+  tags: string[];
+}
+
 interface PagedDto<T> {
   items: T[];
   pageNumber: number;
   pageSize: number;
   totalCount: number;
   totalPages: number;
+}
+
+interface AdminCountsDto {
+  total: number;
+  byStatus: Partial<Record<StoryStatus, number>>;
+}
+
+// primary genre first, then the rest — display order for a genre list.
+function orderedGenreNames(genres: StoryGenreDto[]): string[] {
+  return [...genres]
+    .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
+    .map((g) => g.name);
 }
 
 function summaryToStory(dto: StorySummaryDto): Story {
@@ -54,6 +83,19 @@ function summaryToStory(dto: StorySummaryDto): Story {
   };
 }
 
+function detailToStory(dto: StoryDetailDto): Story {
+  return {
+    ...summaryToStory(dto),
+    description: dto.description ?? "",
+    authorName: dto.guestAuthorName ?? "",
+    language: dto.language ?? "vi",
+    followCount: dto.followCount ?? 0,
+    genres: dto.genres?.length ? orderedGenreNames(dto.genres) : summaryToStory(dto).genres,
+    tags: dto.tags ?? [],
+    createdAt: dto.createdAt ?? dto.publishedAt ?? new Date().toISOString(),
+  };
+}
+
 export type StorySortField = "publishedAt" | "title" | "viewCount" | "ratingAvg";
 
 export interface StoryListParams {
@@ -61,6 +103,8 @@ export interface StoryListParams {
   pageSize?: number;
   status?: StoryStatus | "all";
   q?: string;
+  genreSlug?: string;
+  authorProfileId?: string | number;
   sortBy?: StorySortField;
   sortDir?: "asc" | "desc";
 }
@@ -70,22 +114,20 @@ export type StoryCounts = Record<StoryStatus, number> & { total: number };
 export async function listStories(p: StoryListParams = {}): Promise<Paged<Story>> {
   const pageNumber = p.pageNumber ?? 1;
   const pageSize = p.pageSize ?? DEFAULT_PAGE_SIZE;
-  const paged = await contentApi.client.get<PagedDto<StorySummaryDto>>("/v1/stories", {
+  const paged = await contentApi.client.get<PagedDto<StorySummaryDto>>("/v1/stories/admin", {
     params: {
       "page-number": pageNumber,
       "page-size": pageSize,
       status: p.status && p.status !== "all" ? p.status : undefined,
+      "genre-slug": p.genreSlug,
+      "author-profile-id": p.authorProfileId,
+      q: p.q || undefined,
       "sort-by": p.sortBy ?? "publishedAt",
       "sort-direction": p.sortDir ?? "desc",
     },
   });
-  let items = paged.items.map(summaryToStory);
-  if (p.q) {
-    const needle = p.q.toLowerCase();
-    items = items.filter((s) => s.title.toLowerCase().includes(needle));
-  }
   return {
-    items,
+    items: paged.items.map(summaryToStory),
     pageNumber: paged.pageNumber,
     pageSize: paged.pageSize,
     totalCount: paged.totalCount,
@@ -94,23 +136,13 @@ export async function listStories(p: StoryListParams = {}): Promise<Paged<Story>
 }
 
 export async function counts(): Promise<StoryCounts> {
-  // No dedicated counts endpoint — tally one large published page client-side.
-  const paged = await contentApi.client.get<PagedDto<StorySummaryDto>>("/v1/stories", {
-    params: { "page-number": 1, "page-size": 200 },
-  });
+  const dto = await contentApi.client.get<AdminCountsDto>("/v1/stories/admin/counts");
   const zero = Object.fromEntries(STORY_STATUS.map((s) => [s, 0])) as Record<StoryStatus, number>;
-  for (const item of paged.items) {
-    const s = item.status as StoryStatus;
-    if (s in zero) zero[s] += 1;
-  }
-  return { ...zero, total: paged.totalCount };
+  for (const s of STORY_STATUS) zero[s] = dto.byStatus?.[s] ?? 0;
+  return { ...zero, total: dto.total ?? 0 };
 }
 
-export function get(_publicId: string): Promise<Story> {
-  // Content service exposes only get-by-slug; admin get-by-id is not built yet.
-  return Promise.reject(
-    new ApiError("Xem chi tiết truyện qua API chưa được hỗ trợ (thiếu GET /v1/stories/{id}).", {
-      code: "not_implemented",
-    }),
-  );
+export async function get(publicId: string): Promise<Story> {
+  const dto = await contentApi.client.get<StoryDetailDto>(`/v1/stories/${publicId}`);
+  return detailToStory(dto);
 }
