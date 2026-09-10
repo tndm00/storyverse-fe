@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import {
   castVote,
+  getCurrentVotePeriod,
   getMyRating,
   getVoteCount,
   listStoryRatings,
@@ -12,6 +13,22 @@ import {
   type MyRating,
   type RatingRow,
 } from "../../communityService";
+
+// "Làm mới sau 2 ngày 5 giờ" — coarse countdown to the weekly vote reset.
+function formatResetCountdown(periodEndUtc: string | null): string | null {
+  if (!periodEndUtc) return null;
+  const end = new Date(periodEndUtc).getTime();
+  if (Number.isNaN(end)) return null;
+  const ms = end - Date.now();
+  if (ms <= 0) return "Đang làm mới lượt bình chọn…";
+  const totalMinutes = Math.floor(ms / 60000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return `Làm mới sau ${days} ngày ${hours} giờ`;
+  if (hours > 0) return `Làm mới sau ${hours} giờ ${minutes} phút`;
+  return `Làm mới sau ${minutes} phút`;
+}
 
 function Stars({ value, onPick }: { value: number; onPick?: (n: number) => void }) {
   return (
@@ -47,7 +64,15 @@ export function StoryEngagementBar({
   const [score, setScore] = useState(0);
   const [review, setReview] = useState("");
   const [votes, setVotes] = useState<number | null>(null);
+  const [periodEndUtc, setPeriodEndUtc] = useState<string | null>(null);
+  const [, setNow] = useState(() => Date.now());
   const [reviews, setReviews] = useState<RatingRow[]>([]);
+
+  // Re-render once a minute so the reset countdown stays current.
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const loadReviews = () => {
     listStoryRatings(storyId, currentUserId, { pageSize: 10 })
@@ -58,7 +83,17 @@ export function StoryEngagementBar({
   useEffect(() => {
     let cancelled = false;
     getVoteCount(storyId)
-      .then((v) => !cancelled && setVotes(v.weekVoteCount))
+      .then((v) => {
+        if (cancelled) return;
+        setVotes(v.weekVoteCount);
+        if (v.periodEndUtc) {
+          setPeriodEndUtc(v.periodEndUtc);
+        } else {
+          getCurrentVotePeriod()
+            .then((p) => !cancelled && p && setPeriodEndUtc(p.periodEndUtc))
+            .catch(() => {});
+        }
+      })
       .catch(() => {});
     listStoryRatings(storyId, currentUserId, { pageSize: 10 })
       .then((r) => !cancelled && setReviews(r.items))
@@ -89,6 +124,7 @@ export function StoryEngagementBar({
     run(async () => {
       const r = await castVote(storyId);
       setVotes(r.weekVoteCount);
+      if (r.periodEndUtc) setPeriodEndUtc(r.periodEndUtc);
       if (!r.recorded) throw new Error("Bạn đã bình chọn truyện này trong tuần rồi.");
     }, "Đã ghi nhận bình chọn");
 
@@ -102,6 +138,11 @@ export function StoryEngagementBar({
         <div>
           <div className="cb-field-label">Bình chọn tuần này</div>
           <div className="cb-detail-meta">{votes ?? "—"} lượt</div>
+          {formatResetCountdown(periodEndUtc) ? (
+            <div className="cb-page-intro" style={{ margin: "2px 0 0", fontSize: 12 }}>
+              {formatResetCountdown(periodEndUtc)}
+            </div>
+          ) : null}
         </div>
         <button
           type="button"

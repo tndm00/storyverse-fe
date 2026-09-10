@@ -47,6 +47,14 @@ interface VoteCountDto {
   storyId: string;
   weekKey: string;
   weekVoteCount: number;
+  periodStartUtc?: string | null;
+  periodEndUtc?: string | null;
+}
+
+interface VotePeriodDto {
+  weekKey: string;
+  periodStartUtc: string;
+  periodEndUtc: string;
 }
 
 interface CastVoteDto extends VoteCountDto {
@@ -95,6 +103,14 @@ export interface RatingRow {
 export interface VoteCount {
   weekKey: string;
   weekVoteCount: number;
+  /** ISO instant when the current weekly voting period resets (Mon 00:00 UTC). */
+  periodEndUtc: string | null;
+}
+
+export interface VotePeriod {
+  weekKey: string;
+  periodStartUtc: string;
+  periodEndUtc: string;
 }
 
 export interface CastVoteResult extends VoteCount {
@@ -275,10 +291,34 @@ export async function getVoteCount(storyId: string): Promise<VoteCount> {
   const dto = await communityApi.client.get<VoteCountDto>("/v1/votes/count", {
     params: { "story-id": storyId },
   });
-  return { weekKey: dto.weekKey, weekVoteCount: dto.weekVoteCount };
+  return {
+    weekKey: dto.weekKey,
+    weekVoteCount: dto.weekVoteCount,
+    periodEndUtc: dto.periodEndUtc ?? null,
+  };
 }
 
 export async function castVote(storyId: string): Promise<CastVoteResult> {
   const dto = await communityApi.client.post<CastVoteDto>("/v1/votes", { storyId });
-  return { weekKey: dto.weekKey, weekVoteCount: dto.weekVoteCount, recorded: dto.recorded };
+  return {
+    weekKey: dto.weekKey,
+    weekVoteCount: dto.weekVoteCount,
+    periodEndUtc: dto.periodEndUtc ?? null,
+    recorded: dto.recorded,
+  };
+}
+
+// Current weekly voting window. Used as a fallback for the reset countdown when
+// the vote-count response predates the periodEndUtc field.
+export async function getCurrentVotePeriod(): Promise<VotePeriod | null> {
+  try {
+    const dto = await communityApi.client.get<VotePeriodDto>("/v1/votes/current-period");
+    return {
+      weekKey: dto.weekKey,
+      periodStartUtc: dto.periodStartUtc,
+      periodEndUtc: dto.periodEndUtc,
+    };
+  } catch {
+    return null;
+  }
 }

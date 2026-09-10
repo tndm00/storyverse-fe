@@ -57,8 +57,11 @@ export interface LibraryItem {
   storyId: string;
   shelf: Shelf;
   addedAt: string;
+  updatedAt: string | null;
   story: { title: string; slug: string } | null;
 }
+
+export type LibrarySort = "added" | "updated" | "title" | "progress";
 
 export interface ContinueItem {
   storyId: string;
@@ -107,10 +110,72 @@ export async function listLibrary(
       storyId: e.storyId,
       shelf: e.shelfStatus,
       addedAt: e.addedAt,
+      updatedAt: e.updatedAt,
       story: stories.get(e.storyId) ?? null,
     })),
     totalCount: paged.totalCount ?? 0,
   };
+}
+
+// Per-shelf totals for the library tab badges. One lightweight page-size-1 call
+// per shelf; failures count as 0.
+export async function listShelfCounts(): Promise<Record<Shelf, number> & { all: number }> {
+  const results = await Promise.all(
+    SHELVES.map((s) =>
+      libraryApi.client
+        .get<Paged<LibraryEntryDto>>("/v1/library", {
+          params: { "shelf-status": s.value, "page-number": 1, "page-size": 1 },
+        })
+        .then((p) => [s.value, p.totalCount ?? 0] as const)
+        .catch(() => [s.value, 0] as const),
+    ),
+  );
+  const byShelf = Object.fromEntries(results) as Record<Shelf, number>;
+  return { ...byShelf, all: Object.values(byShelf).reduce((a, b) => a + b, 0) };
+}
+
+// storyId -> reading progress percent (0..100). Used only as a client-side sort
+// key on the library page; stories with no tracked progress are absent.
+export async function readingProgressMap(): Promise<Map<string, number>> {
+  try {
+    const paged = await libraryApi.client.get<Paged<ReadingProgressDto>>(
+      "/v1/reading-progress/continue-reading",
+      { params: { "page-number": 1, "page-size": 100 } },
+    );
+    return new Map((paged.items ?? []).map((e) => [e.storyId, e.scrollPercent ?? 0]));
+  } catch {
+    return new Map();
+  }
+}
+
+// Client-side ordering for a single shelf's entries.
+export function sortLibraryItems(
+  items: LibraryItem[],
+  sort: LibrarySort,
+  progress?: Map<string, number>,
+): LibraryItem[] {
+  const copy = [...items];
+  switch (sort) {
+    case "title":
+      return copy.sort((a, b) =>
+        (a.story?.title ?? "").localeCompare(b.story?.title ?? "", "vi"),
+      );
+    case "updated":
+      return copy.sort(
+        (a, b) =>
+          new Date(b.updatedAt ?? b.addedAt).getTime() -
+          new Date(a.updatedAt ?? a.addedAt).getTime(),
+      );
+    case "progress":
+      return copy.sort(
+        (a, b) => (progress?.get(b.storyId) ?? 0) - (progress?.get(a.storyId) ?? 0),
+      );
+    case "added":
+    default:
+      return copy.sort(
+        (a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+      );
+  }
 }
 
 export async function getEntryForStory(storyId: string): Promise<LibraryItem | null> {
@@ -125,6 +190,7 @@ export async function getEntryForStory(storyId: string): Promise<LibraryItem | n
     storyId: hit.storyId,
     shelf: hit.shelfStatus,
     addedAt: hit.addedAt,
+    updatedAt: hit.updatedAt,
     story: null,
   };
 }

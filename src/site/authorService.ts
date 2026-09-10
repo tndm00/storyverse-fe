@@ -148,6 +148,8 @@ export interface AuthorStoryView {
   story: AuthorStory;
   volumes: VolumeRef[];
   chapters: AuthorChapter[];
+  /** true when the signed-in author owns this story (reorder/edit affordances). */
+  isOwner: boolean;
 }
 
 export interface QuickPublishInput {
@@ -486,22 +488,55 @@ export async function getMyStory(slug: string): Promise<AuthorStoryView> {
   const story = await contentApi.client.get<StoryDetailDto>(
     `/v1/stories/by-slug/${encodeURIComponent(slug)}`,
   );
-  const [volumes, chapters] = await Promise.all([
+  const [volumes, chapters, myProfile] = await Promise.all([
     contentApi.client
       .get<VolumeDto[]>(`/v1/stories/${story.id}/volumes`)
       .catch(() => [] as VolumeDto[]),
     contentApi.client
       .get<ChapterSummaryDto[]>(`/v1/stories/${story.id}/chapters`)
       .catch(() => [] as ChapterSummaryDto[]),
+    authenticationApi.getMyAuthorProfile().catch(() => null),
   ]);
 
   return {
     story: toAuthorStory(story),
+    isOwner: myProfile != null && myProfile.authorProfileId === story.authorProfileId,
     volumes: (volumes ?? [])
       .map((v) => ({ id: v.id, title: v.title, orderIndex: v.orderIndex }))
       .sort((a, b) => a.orderIndex - b.orderIndex),
     chapters: (chapters ?? []).map(toAuthorChapter).sort((a, b) => a.orderIndex - b.orderIndex),
   };
+}
+
+// ---- reorder (Content service; owner or content.moderate only) ----------
+// The id array must be exactly the members of the scope — the backend rejects a
+// partial/extra/duplicated set with 400.
+
+export async function reorderVolumes(
+  storyId: string,
+  orderedVolumeIds: string[],
+): Promise<VolumeRef[]> {
+  const dtos = await contentApi.client.put<VolumeDto[]>(
+    `/v1/stories/${storyId}/volumes/order`,
+    { orderedVolumeIds },
+  );
+  return (dtos ?? [])
+    .map((v) => ({ id: v.id, title: v.title, orderIndex: v.orderIndex }))
+    .sort((a, b) => a.orderIndex - b.orderIndex);
+}
+
+export async function reorderStoryChapters(
+  storyId: string,
+  orderedChapterIds: string[],
+): Promise<void> {
+  await contentApi.client.put(`/v1/stories/${storyId}/chapters/order`, { orderedChapterIds });
+}
+
+export async function reorderVolumeChapters(
+  volumeId: string,
+  orderedChapterIds: string[],
+): Promise<void> {
+  await contentApi.client.put(`/v1/volumes/${volumeId}/chapters/order`, { orderedChapterIds });
 }
 
 interface StorySummaryDto {

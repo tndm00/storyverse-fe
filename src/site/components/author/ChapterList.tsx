@@ -12,24 +12,33 @@ const STATUS_LABEL: Record<string, string> = {
   Removed: "Đã gỡ",
 };
 
+// The "no volume" bucket key — matches the group whose chapters have no volumeId.
+export const NO_VOLUME_KEY = "none";
+
 // Chapters grouped by volume ("Phần"). The "no volume" bucket comes first, then
 // each volume by orderIndex. Draft/Rejected rows get a "Gửi duyệt" action.
+// When `onReorder` is set (story owner), each row gets ▲▼ controls that reorder
+// chapters within their own group and emit the new id order for that group.
 export function ChapterList({
   storySlug,
   volumes,
   chapters,
   onSubmitForReview,
   submittingId,
+  onReorder,
+  reorderBusy = false,
 }: {
   storySlug: string;
   volumes: VolumeRef[];
   chapters: AuthorChapter[];
   onSubmitForReview: (chapterId: string) => void;
   submittingId: string | null;
+  onReorder?: (groupKey: string, orderedChapterIds: string[]) => void;
+  reorderBusy?: boolean;
 }) {
   const groups: { key: string; title: string; items: AuthorChapter[] }[] = [
     {
-      key: "none",
+      key: NO_VOLUME_KEY,
       title: "Không thuộc phần nào",
       items: chapters.filter((c) => !c.volumeId),
     },
@@ -44,13 +53,24 @@ export function ChapterList({
     return <p className="cb-page-intro">Truyện chưa có chương nào.</p>;
   }
 
+  const move = (groupItems: AuthorChapter[], groupKey: string, index: number, delta: number) => {
+    const next = [...groupItems];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    onReorder?.(
+      groupKey,
+      next.map((c) => c.id),
+    );
+  };
+
   return (
     <div className="cb-chapter-groups">
       {groups.map((g) => (
         <div className="cb-chapter-group" key={g.key}>
           <h3 className="cb-chapter-group-title">{g.title}</h3>
           <ul className="cb-trend">
-            {g.items.map((c) => (
+            {g.items.map((c, i) => (
               <li key={c.id}>
                 <Link to={ROUTES.authorChapter(storySlug, c.id)} className="cb-trend-left">
                   <span className="cb-trend-rank">
@@ -59,6 +79,28 @@ export function ChapterList({
                   <span className="cb-trend-title">{c.title}</span>
                 </Link>
                 <span className="cb-chapter-row-actions">
+                  {onReorder ? (
+                    <span className="cb-reorder">
+                      <button
+                        type="button"
+                        className="cb-btn cb-ghost cb-btn-sm"
+                        disabled={reorderBusy || i === 0}
+                        aria-label={`Chuyển "${c.title}" lên trên`}
+                        onClick={() => move(g.items, g.key, i, -1)}
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        className="cb-btn cb-ghost cb-btn-sm"
+                        disabled={reorderBusy || i === g.items.length - 1}
+                        aria-label={`Chuyển "${c.title}" xuống dưới`}
+                        onClick={() => move(g.items, g.key, i, 1)}
+                      >
+                        ▼
+                      </button>
+                    </span>
+                  ) : null}
                   <span
                     className={`cb-badge cb-badge-${c.status.toLowerCase()}`}
                     title={c.status === "Rejected" ? (c.rejectionReason ?? undefined) : undefined}

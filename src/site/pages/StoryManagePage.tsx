@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { App } from "antd";
 import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
@@ -10,16 +11,20 @@ import {
   buildGenreSelection,
   getMyStory,
   listGenres,
+  reorderStoryChapters,
+  reorderVolumeChapters,
+  reorderVolumes,
   setGenres,
   submitChapterForReview,
   setStoryStatus,
   updateVolume,
   STORY_STATUS_TRANSITIONS,
+  type AuthorChapter,
   type StoryStatus,
   type VolumeRef,
 } from "../authorService";
 import { AuthorGuard } from "../components/author/AuthorGuard";
-import { ChapterList } from "../components/author/ChapterList";
+import { ChapterList, NO_VOLUME_KEY } from "../components/author/ChapterList";
 
 const STATUS_LABEL: Record<string, string> = {
   Draft: "Nháp",
@@ -29,7 +34,17 @@ const STATUS_LABEL: Record<string, string> = {
   Dropped: "Đã bỏ",
 };
 
-function VolumeRow({ volume, onSaved }: { volume: VolumeRef; onSaved: () => void }) {
+function VolumeRow({
+  volume,
+  displayIndex,
+  onSaved,
+  reorder,
+}: {
+  volume: VolumeRef;
+  displayIndex: number;
+  onSaved: () => void;
+  reorder?: { isFirst: boolean; isLast: boolean; busy: boolean; move: (delta: number) => void };
+}) {
   const { busy, run } = useAsyncRunner();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(volume.title);
@@ -38,19 +53,43 @@ function VolumeRow({ volume, onSaved }: { volume: VolumeRef; onSaved: () => void
     return (
       <li>
         <span className="cb-trend-left">
-          <span className="cb-trend-rank">{String(volume.orderIndex).padStart(2, "0")}</span>
+          <span className="cb-trend-rank">{String(displayIndex + 1).padStart(2, "0")}</span>
           <span className="cb-trend-title">{volume.title}</span>
         </span>
-        <button
-          type="button"
-          className="cb-btn cb-ghost cb-btn-sm"
-          onClick={() => {
-            setTitle(volume.title);
-            setEditing(true);
-          }}
-        >
-          Sửa tên phần
-        </button>
+        <span className="cb-chapter-row-actions">
+          {reorder ? (
+            <span className="cb-reorder">
+              <button
+                type="button"
+                className="cb-btn cb-ghost cb-btn-sm"
+                disabled={reorder.busy || reorder.isFirst}
+                aria-label={`Chuyển phần "${volume.title}" lên trên`}
+                onClick={() => reorder.move(-1)}
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                className="cb-btn cb-ghost cb-btn-sm"
+                disabled={reorder.busy || reorder.isLast}
+                aria-label={`Chuyển phần "${volume.title}" xuống dưới`}
+                onClick={() => reorder.move(1)}
+              >
+                ▼
+              </button>
+            </span>
+          ) : null}
+          <button
+            type="button"
+            className="cb-btn cb-ghost cb-btn-sm"
+            onClick={() => {
+              setTitle(volume.title);
+              setEditing(true);
+            }}
+          >
+            Sửa tên phần
+          </button>
+        </span>
       </li>
     );
   }
@@ -203,6 +242,7 @@ function GenreEditor({
 function ManageBody({ slug }: { slug: string }) {
   const { data, loading, error, refetch } = useAsyncQuery(() => getMyStory(slug), [slug]);
   const { busy, run } = useAsyncRunner();
+  const { message } = App.useApp();
 
   const [nextStatus, setNextStatus] = useState<StoryStatus | "">("");
   const [volTitle, setVolTitle] = useState("");
@@ -212,11 +252,64 @@ function ManageBody({ slug }: { slug: string }) {
   const [chPublish, setChPublish] = useState(true);
   const [publishingId, setPublishingId] = useState<string | null>(null);
 
+  // Local copies so ▲▼ reorder can update optimistically and revert on failure.
+  const [volumes, setVolumes] = useState<VolumeRef[]>([]);
+  const [chapters, setChapters] = useState<AuthorChapter[]>([]);
+  const [reorderBusy, setReorderBusy] = useState(false);
+  useEffect(() => {
+    if (data) {
+      setVolumes(data.volumes);
+      setChapters(data.chapters);
+    }
+  }, [data]);
+
   if (loading) return <p className="cb-page-intro">Đang tải…</p>;
   if (error || !data) return <NotFoundPage />;
 
-  const { story, volumes, chapters } = data;
+  const { story, isOwner } = data;
   const transitions = STORY_STATUS_TRANSITIONS[story.status] ?? [];
+
+  const moveVolume = async (index: number, delta: number) => {
+    const next = [...volumes];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    const prev = volumes;
+    setVolumes(next);
+    setReorderBusy(true);
+    try {
+      setVolumes(await reorderVolumes(story.publicId, next.map((v) => v.id)));
+      message.success("Đã lưu thứ tự phần");
+    } catch (e) {
+      setVolumes(prev);
+      message.error(e instanceof Error ? e.message : "Không lưu được thứ tự phần");
+    } finally {
+      setReorderBusy(false);
+    }
+  };
+
+  const handleChapterReorder = async (groupKey: string, orderedIds: string[]) => {
+    const inGroup = (c: AuthorChapter) =>
+      groupKey === NO_VOLUME_KEY ? !c.volumeId : c.volumeId === groupKey;
+    const byId = new Map(chapters.map((c) => [c.id, c]));
+    const reordered = orderedIds.map((id) => byId.get(id)).filter((c): c is AuthorChapter => !!c);
+    let k = 0;
+    const next = chapters.map((c) => (inGroup(c) ? reordered[k++] : c));
+    const prev = chapters;
+    setChapters(next);
+    setReorderBusy(true);
+    try {
+      if (groupKey === NO_VOLUME_KEY) await reorderStoryChapters(story.publicId, orderedIds);
+      else await reorderVolumeChapters(groupKey, orderedIds);
+      message.success("Đã lưu thứ tự chương");
+      refetch();
+    } catch (e) {
+      setChapters(prev);
+      message.error(e instanceof Error ? e.message : "Không lưu được thứ tự chương");
+    } finally {
+      setReorderBusy(false);
+    }
+  };
 
   const doStatus = () => {
     if (!nextStatus) return;
@@ -340,10 +433,30 @@ function ManageBody({ slug }: { slug: string }) {
         </p>
         {volumes.length > 0 ? (
           <ul className="cb-trend">
-            {volumes.map((v) => (
-              <VolumeRow key={v.id} volume={v} onSaved={refetch} />
+            {volumes.map((v, i) => (
+              <VolumeRow
+                key={v.id}
+                volume={v}
+                displayIndex={i}
+                onSaved={refetch}
+                reorder={
+                  isOwner && volumes.length > 1
+                    ? {
+                        isFirst: i === 0,
+                        isLast: i === volumes.length - 1,
+                        busy: reorderBusy,
+                        move: (delta) => moveVolume(i, delta),
+                      }
+                    : undefined
+                }
+              />
             ))}
           </ul>
+        ) : null}
+        {isOwner && volumes.length > 1 ? (
+          <p className="cb-page-intro" style={{ marginTop: 6, fontSize: 12 }}>
+            Dùng ▲▼ để đổi thứ tự phần.
+          </p>
         ) : null}
         <div className="cb-inline-form">
           <input
@@ -373,7 +486,14 @@ function ManageBody({ slug }: { slug: string }) {
           chapters={chapters}
           onSubmitForReview={doSubmitForReview}
           submittingId={publishingId}
+          onReorder={isOwner ? handleChapterReorder : undefined}
+          reorderBusy={reorderBusy}
         />
+        {isOwner ? (
+          <p className="cb-page-intro" style={{ marginTop: 6, fontSize: 12 }}>
+            Dùng ▲▼ để đổi thứ tự chương trong cùng một phần.
+          </p>
+        ) : null}
 
         <div className="cb-form-card" style={{ marginTop: 20 }}>
           <h3 style={{ fontSize: 15, marginBottom: 12 }}>Thêm chương</h3>
