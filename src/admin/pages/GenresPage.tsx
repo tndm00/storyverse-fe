@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert, Button, Card, Form, InputNumber, Input, Modal, Space, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as genreService from "@/services/genreService";
 import type { Genre } from "@/services/genreService";
@@ -14,7 +14,7 @@ interface FormValues {
 }
 
 export function GenresPage() {
-  const { data, loading, refetch } = useMockQuery(() => genreService.listAll(), []);
+  const { data, loading, refetch } = useAsyncQuery(() => genreService.listAll(), []);
   const { busy, run } = useAsyncRunner();
   const [editing, setEditing] = useState<Genre | "new" | null>(null);
   const [form] = Form.useForm<FormValues>();

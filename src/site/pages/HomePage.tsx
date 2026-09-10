@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { listStories, trendingStories, type ReaderStory } from "../readerService";
 
 function Card({ story, variant }: { story: ReaderStory; variant: "feature" | "side" }) {
@@ -39,11 +39,11 @@ function toEditions(stories: ReaderStory[]): Edition[] {
 }
 
 export function HomePage() {
-  const { data: stories } = useMockQuery(
+  const { data: stories } = useAsyncQuery(
     () => listStories({ sort: "publishedAt", pageSize: 12 }),
     [],
   );
-  const { data: trending } = useMockQuery(() => trendingStories(5), []);
+  const { data: trending } = useAsyncQuery(() => trendingStories(5), []);
 
   const editions = useMemo(() => toEditions(stories ?? []), [stories]);
   const [edition, setEdition] = useState(0);

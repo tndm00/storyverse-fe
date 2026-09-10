@@ -33,6 +33,7 @@ export const contentApi = {
   listStoryVolumes: (storyId: Id) => client.get(`/v1/stories/${storyId}/volumes`),
   createStoryVolume: (storyId: Id, body: Body) =>
     client.post(`/v1/stories/${storyId}/volumes`, body),
+  updateVolume: (volumeId: Id, body: Body) => client.put(`/v1/volumes/${volumeId}`, body),
 
   // ---- chapters ------------------------------------------------------
   listStoryChapters: (storyId: Id, params?: Query) =>

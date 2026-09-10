@@ -83,12 +83,18 @@ export interface ReaderChapter {
   wordCount: number;
 }
 
+export interface ReaderGenreChip {
+  name: string;
+  slug: string;
+}
+
 export interface ReaderStoryDetail extends ReaderStory {
   id: string;
   status: string;
   authorProfileId: number | null;
   guestAuthorName: string | null;
-  genres: string[];
+  genres: ReaderGenreChip[];
+  tags: string[];
   chapters: ReaderChapter[];
 }
 
@@ -258,7 +264,8 @@ export async function getStoryDetail(slug: string): Promise<ReaderStoryDetail | 
       status: dto.status,
       authorProfileId: dto.authorProfileId ?? null,
       guestAuthorName: dto.guestAuthorName ?? null,
-      genres: (dto.genres ?? []).map((g) => g.name),
+      genres: (dto.genres ?? []).map((g) => ({ name: g.name, slug: g.slug })),
+      tags: dto.tags ?? [],
       chapters: published.map((c) => ({
         id: c.id,
         title: c.title,

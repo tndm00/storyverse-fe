@@ -11,6 +11,7 @@ import {
   rememberStory,
   type AuthorStory,
 } from "../authorService";
+import { TagInput } from "../components/author/TagInput";
 
 const DEFAULT_GENRE = "sang-tac";
 
@@ -39,6 +40,7 @@ export function SubmitPage() {
   const [penName, setPenName] = useState("");
   const [genreSlug, setGenreSlug] = useState(DEFAULT_GENRE);
   const [description, setDescription] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [content, setContent] = useState("");
 
   useEffect(() => {
@@ -89,7 +91,7 @@ export function SubmitPage() {
           title,
           description,
           genres: [{ genreSlug, isPrimary: true }],
-          tags: [],
+          tags,
           chapterContent: content,
         });
         rememberStory(res.story);
@@ -111,6 +113,7 @@ export function SubmitPage() {
     setPublished(null);
     setTitle("");
     setDescription("");
+    setTags([]);
     setContent("");
     if (!isAuthor) setPenName("");
   };
@@ -240,6 +243,17 @@ export function SubmitPage() {
                   </select>
                 )}
               </div>
+
+              {isAuthor ? (
+                <div className="cb-field">
+                  <label className="cb-field-label" htmlFor="s-tags">
+                    Thẻ (tuỳ chọn)
+                  </label>
+                  <div id="s-tags">
+                    <TagInput value={tags} onChange={setTags} />
+                  </div>
+                </div>
+              ) : null}
 
               <div className="cb-field">
                 <label className="cb-field-label" htmlFor="s-desc">

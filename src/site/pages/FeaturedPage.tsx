@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { listStories, trendingStories, type ReaderStory } from "../readerService";
 
 function PickCard({ story }: { story: ReaderStory }) {
@@ -25,8 +25,8 @@ function PickCard({ story }: { story: ReaderStory }) {
 export function FeaturedPage() {
   // Highest-rated stories from the Content service; the top one is the spotlight,
   // the rest fill the grid below it.
-  const { data: picks } = useMockQuery(() => listStories({ sort: "ratingAvg", pageSize: 7 }), []);
-  const { data: trending } = useMockQuery(() => trendingStories(5), []);
+  const { data: picks } = useAsyncQuery(() => listStories({ sort: "ratingAvg", pageSize: 7 }), []);
+  const { data: trending } = useAsyncQuery(() => trendingStories(5), []);
 
   const spotlight = picks && picks.length > 0 ? picks[0] : null;
   const grid = picks && picks.length > 1 ? picks.slice(1) : [];

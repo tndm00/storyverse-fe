@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAuth } from "@/hooks/useAuth";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import {
   listContinueReading,
@@ -15,7 +15,7 @@ import {
 import { useState } from "react";
 
 function ContinueReading() {
-  const { data } = useMockQuery(() => listContinueReading({ pageSize: 6 }), []);
+  const { data } = useAsyncQuery(() => listContinueReading({ pageSize: 6 }), []);
   if (!data || data.length === 0) return null;
   return (
     <section className="cb-section" style={{ paddingTop: 0 }}>
@@ -47,7 +47,7 @@ function ContinueReading() {
 function Shelves() {
   const { busy, run } = useAsyncRunner();
   const [tab, setTab] = useState<Shelf | "all">("all");
-  const { data, loading, refetch } = useMockQuery(
+  const { data, loading, refetch } = useAsyncQuery(
     () => listLibrary(tab === "all" ? undefined : tab, { pageSize: 50 }),
     [tab],
   );

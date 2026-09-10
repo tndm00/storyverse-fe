@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button, Card, Drawer, Input, Select, Space, Table, Typography } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import type { FilterValue, SorterResult } from "antd/es/table/interface";
+import type { FilterValue, SorterResult, TableCurrentDataSource } from "antd/es/table/interface";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
 import { StoryDetailContent } from "@/components/StoryDetailContent";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import * as storyService from "@/services/storyService";
 import type { StorySortField } from "@/services/storyService";
 import { DEFAULT_PAGE_SIZE, LABELS, STORY_STATUS } from "@/utils/constants";
@@ -28,7 +28,7 @@ export function StoriesPage() {
   });
   const [selected, setSelected] = useState<Story | null>(null);
 
-  const { data, loading } = useMockQuery(
+  const { data, loading } = useAsyncQuery(
     () => storyService.listStories({ pageNumber: page, pageSize: PAGE_SIZE, status, q, ...sort }),
     [page, status, q, sort],
   );
@@ -46,7 +46,12 @@ export function StoriesPage() {
     _pagination: TablePaginationConfig,
     _filters: Record<string, FilterValue | null>,
     sorter: SorterResult<Story> | SorterResult<Story>[],
+    extra: TableCurrentDataSource<Story>,
   ) => {
+    // AntD Table re-passes the *current* sorter on every change, including a
+    // plain page-change click — only react here when the user actually
+    // triggered a new sort, or a page click gets silently reset back to 1.
+    if (extra.action !== "sort") return;
     const s = Array.isArray(sorter) ? sorter[0] : sorter;
     if (s?.field) {
       setSort({

@@ -404,6 +404,17 @@ export async function addVolume(storyId: string, input: AddVolumeInput): Promise
   return { id: dto.id, title: dto.title, orderIndex: dto.orderIndex };
 }
 
+export async function updateVolume(
+  volumeId: string,
+  input: { title: string; orderIndex: number },
+): Promise<VolumeRef> {
+  const dto = await contentApi.client.put<VolumeDto>(`/v1/volumes/${volumeId}`, {
+    title: input.title.trim(),
+    orderIndex: input.orderIndex,
+  });
+  return { id: dto.id, title: dto.title, orderIndex: dto.orderIndex };
+}
+
 export async function addChapter(storyId: string, input: AddChapterInput): Promise<AuthorChapter> {
   const dto = await contentApi.client.post<ChapterDetailDto>(`/v1/stories/${storyId}/chapters`, {
     title: input.title.trim(),

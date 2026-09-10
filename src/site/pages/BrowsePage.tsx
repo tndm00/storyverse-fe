@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useSearchParams } from "react-router-dom";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { browseStories, listGenres, type StorySort } from "../readerService";
 import { StoryCard } from "../components/StoryCard";
 
@@ -17,8 +18,9 @@ const STATUSES = [
 ];
 
 export function BrowsePage() {
+  const [searchParams] = useSearchParams();
   const [genres, setGenres] = useState<{ name: string; slug: string }[]>([]);
-  const [genreSlug, setGenreSlug] = useState("");
+  const [genreSlug, setGenreSlug] = useState(() => searchParams.get("genre") ?? "");
   const [status, setStatus] = useState("");
   const [sort, setSort] = useState<StorySort>("publishedAt");
   const [page, setPage] = useState(1);
@@ -33,7 +35,7 @@ export function BrowsePage() {
     setPage(1);
   }, [genreSlug, status, sort]);
 
-  const { data, loading } = useMockQuery(
+  const { data, loading } = useAsyncQuery(
     () =>
       browseStories({
         genreSlug: genreSlug || undefined,

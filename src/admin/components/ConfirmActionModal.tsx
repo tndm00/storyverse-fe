@@ -45,7 +45,11 @@ export function ConfirmActionModal({
       open={open}
       title={title}
       okText={okText}
-      okButtonProps={{ danger: okType === "danger", disabled: invalid }}
+      okButtonProps={{
+        danger: okType === "danger",
+        disabled: invalid,
+        "data-testid": "confirm-reject",
+      }}
       confirmLoading={confirmLoading}
       onOk={() => {
         setTouched(true);
@@ -66,6 +70,7 @@ export function ConfirmActionModal({
         onChange={(e) => setReason(e.target.value)}
         onBlur={() => setTouched(true)}
         placeholder="This note is shown to the author and kept in the moderation history."
+        data-testid="reason-input"
       />
       {touched && invalid ? (
         <Alert

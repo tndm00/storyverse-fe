@@ -167,11 +167,15 @@ export async function replyToComment(
   content: string,
   parentAuthorUserId?: number,
   currentUserId?: number | null,
+  chapterId?: string,
 ): Promise<void> {
   await communityApi.client.post(`/v1/comments/${parentId}/replies`, { content: content.trim() });
 
   // Dev stand-in for the missing "CommentReplied" event consumer: notify the
   // parent's author so the notification bell has something real to show.
+  // refType/refId point at the *chapter* (not the comment — there's no
+  // get-comment-by-id endpoint to resolve back to a chapter/story from a
+  // comment id) so the bell can navigate straight to it.
   if (parentAuthorUserId != null && currentUserId != null && parentAuthorUserId !== currentUserId) {
     try {
       await notificationApi.createNotification({
@@ -179,8 +183,8 @@ export async function replyToComment(
         type: "CommentReply",
         title: "Có người trả lời bình luận của bạn",
         body: content.trim().slice(0, 140),
-        refType: "Comment",
-        refId: parentId,
+        refType: chapterId ? "Chapter" : undefined,
+        refId: chapterId,
       });
     } catch {
       /* best-effort */

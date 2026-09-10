@@ -100,6 +100,7 @@ export function AdminLayout() {
           }}
         >
           <Dropdown
+            trigger={["click"]}
             menu={{
               items: [
                 {

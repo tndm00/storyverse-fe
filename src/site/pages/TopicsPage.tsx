@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
-import { useMockQuery } from "@/hooks/useMockQuery";
+import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { listGenres, listStories, type GenreOption } from "../readerService";
 
 function TagIcon() {
@@ -26,7 +26,7 @@ export function TopicsPage() {
       .catch(() => setGenres([]));
   }, []);
 
-  const { data: stories } = useMockQuery(
+  const { data: stories } = useAsyncQuery(
     () => (active ? listStories({ genreSlug: active, pageSize: 20 }) : Promise.resolve([])),
     [active],
   );

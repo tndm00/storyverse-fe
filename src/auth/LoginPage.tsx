@@ -77,6 +77,7 @@ export function LoginPage() {
               prefix={<UserOutlined />}
               placeholder={DEMO_CREDENTIALS.email}
               autoComplete="username"
+              data-testid="login-email"
             />
           </Form.Item>
           <Form.Item
@@ -88,10 +89,17 @@ export function LoginPage() {
               prefix={<LockOutlined />}
               placeholder="••••••••"
               autoComplete="current-password"
+              data-testid="login-password"
             />
           </Form.Item>
           <Form.Item style={{ marginBottom: 8 }}>
-            <Button type="primary" htmlType="submit" block loading={loading}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={loading}
+              data-testid="login-submit"
+            >
               Sign in
             </Button>
           </Form.Item>
