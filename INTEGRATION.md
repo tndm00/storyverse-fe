@@ -178,20 +178,12 @@ pwsh story-be-prj/deploy/dev-run.ps1
 
 ## Still deferred (documented gaps, not blocking)
 
-- **No general event bus/consumer.** Chapter approve/reject now produces real
+- **No general event bus/consumer.** Chapter approve/reject produces real
   notifications (Content → Notification over HTTP, `X-Service-Token` service auth;
   recipient user id resolved via `GET /v1/auth/internal/author-profiles/{id}`).
   Comment-reply notifications are still the FE dev-shim in `communityService`.
-- Comments/ratings expose only numeric user ids → shown as `Người đọc #<id>`.
-- Report summaries carry no target title / reporter name → `<Type> <id8>` / `Người dùng #<id>`.
-- Moderation queue has no free-text search — admin `q` box is a no-op in API mode.
-- No `Role.Moderator` grant path — the reports queue uses `admin@storyverse.local`.
-- Moderation decisions are audit-only (Hide/Remove not applied to the content).
-- `reviewService` has no aggregate counts for already-decided chapters (no listing
-  endpoint for them) — Dashboard/queue "Approved"/"Rejected" counts always show `0`.
-- `reviewService.listQueue`'s free-text `q` and `type` ("Story" vs "Chapter")
-  filters are mock-mode-only — ignored against the real API (queue is chapter-only).
-- Auth: no token-refresh endpoint (re-login after author-profile stays).
-- Scheduled-chapter auto-publisher (no background job).
-- `GET /v1/stories/mine` (author's own incl. drafts), admin all-status list, story
-  counts endpoint.
+- Admin comment list (`GET /v1/comments/admin`) has no `story-id` filter — `Comment`
+  stores only `ChapterId` (chapters live in Content), so admin filters by chapter /
+  author / status / text only.
+- `type` ("Story" vs "Chapter") on the review queue is chapter-only by design —
+  `type=Story` returns an empty page.
