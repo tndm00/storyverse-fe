@@ -56,7 +56,7 @@ export function NotificationBell() {
           .catch(() => {});
 
     markThenClose.then(() => {
-      resolveNotificationRoute(n)
+      resolveNotificationRoute({ type: n.type, refType: n.refType, refId: n.refId })
         .then((path) => {
           if (path) {
             setOpen(false);

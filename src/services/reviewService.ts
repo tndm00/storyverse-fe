@@ -12,7 +12,13 @@
 import { contentApi } from "./api/contentApi";
 import { DEFAULT_PAGE_SIZE, MESSAGES } from "@/utils/constants";
 import type { ReviewStatus } from "@/utils/constants";
-import type { Chapter, Paged, ReviewItem, ReviewItemDetail } from "@/types/domain";
+import type {
+  Chapter,
+  HistoryEntry,
+  Paged,
+  ReviewItem,
+  ReviewItemDetail,
+} from "@/types/domain";
 
 export interface ReviewQueueParams {
   pageNumber?: number;
@@ -39,6 +45,14 @@ interface PendingReviewChapterDto {
   createdAt: string;
 }
 
+interface ChapterReviewActionDto {
+  id: string;
+  moderatorUserId: number;
+  action: string;
+  note: string | null;
+  createdAt: string;
+}
+
 interface ChapterDetailDto {
   id: string;
   storyId: string;
@@ -51,6 +65,16 @@ interface ChapterDetailDto {
   publishedAt: string | null;
   createdAt: string;
   rejectionReason: string | null;
+  reviewActions?: ChapterReviewActionDto[];
+}
+
+function toHistoryEntry(a: ChapterReviewActionDto): HistoryEntry {
+  return {
+    at: a.createdAt,
+    actor: `Moderator #${a.moderatorUserId}`,
+    action: a.action,
+    note: a.note ?? null,
+  };
 }
 
 interface PagedDto<T> {
@@ -161,7 +185,7 @@ export function get(reviewId: string): Promise<ReviewItemDetail> {
       reviewStatus: BACKEND_TO_REVIEW_STATUS[d.status] ?? ("Pending" as ReviewStatus),
       assignedTo: d.status === "InReview" ? "Moderator" : null,
       decisionReason: d.rejectionReason,
-      history: [],
+      history: (d.reviewActions ?? []).map(toHistoryEntry),
       target: toChapter(d),
     }));
 }
