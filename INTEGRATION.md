@@ -178,9 +178,10 @@ pwsh story-be-prj/deploy/dev-run.ps1
 
 ## Still deferred (documented gaps, not blocking)
 
-- **No notification producer** — no event bus/consumer. The feed only fills via
-  `POST /v1/notifications` (E2E script + the dev reply-shim in `communityService`).
-- `POST /v1/notifications` is open to any authed user (backend TODO: service auth).
+- **No general event bus/consumer.** Chapter approve/reject now produces real
+  notifications (Content → Notification over HTTP, `X-Service-Token` service auth;
+  recipient user id resolved via `GET /v1/auth/internal/author-profiles/{id}`).
+  Comment-reply notifications are still the FE dev-shim in `communityService`.
 - Comments/ratings expose only numeric user ids → shown as `Người đọc #<id>`.
 - Report summaries carry no target title / reporter name → `<Type> <id8>` / `Người dùng #<id>`.
 - Moderation queue has no free-text search — admin `q` box is a no-op in API mode.
