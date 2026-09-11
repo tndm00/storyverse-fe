@@ -83,18 +83,18 @@ function ListSection({
 
 export function HomePage() {
   const { data: stories, loading } = useAsyncQuery(
-    () => listStories({ sort: "publishedAt", pageSize: 12 }),
+    () => listStories({ sort: "publishedAt", pageSize: 11 }),
     [],
   );
   const { data: hotStories, loading: hotLoading } = useAsyncQuery(
-    () => listStories({ sort: "viewCount", pageSize: 4 }),
+    () => listStories({ sort: "viewCount", pageSize: 10 }),
     [],
   );
 
   const editions = useMemo(() => toEditions(stories ?? []), [stories]);
   // Reuse the hero fetch for "Truyện ma mới": the hero shows stories[0] as its
   // feature, so the grid below picks up from stories[1] to avoid duplicates.
-  const newStories = useMemo(() => (stories ?? []).slice(1, 5), [stories]);
+  const newStories = useMemo(() => (stories ?? []).slice(1, 11), [stories]);
   const [edition, setEdition] = useState(0);
 
   const count = editions.length;
