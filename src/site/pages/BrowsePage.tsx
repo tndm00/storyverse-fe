@@ -106,7 +106,7 @@ export function BrowsePage() {
               ))}
             </div>
             {data.totalPages > 1 ? (
-              <div className="cb-dots" style={{ marginTop: 24 }}>
+              <div className="cb-pagination" style={{ marginTop: 24 }}>
                 <button
                   type="button"
                   className="cb-btn cb-ghost cb-btn-sm"

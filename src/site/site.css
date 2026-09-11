@@ -311,6 +311,17 @@
   gap: 16px;
 }
 
+/* Prev/Next text-button pager (e.g. /browse) — deliberately separate from
+   .cb-dots, whose `button` rule forces a fixed 22x22px circle meant for the
+   hero carousel's dot/arrow icons and breaks real-text buttons. */
+.cb-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 22px;
+}
+
 .cb-dots {
   display: flex;
   align-items: center;
