@@ -247,6 +247,45 @@ export function approve(reviewId: string, _note?: string): Promise<ReviewItem> {
   }));
 }
 
+// ---- rejected queue (dedicated admin page) --------------------------
+//
+// GET /v1/chapters/reviewed?status=Rejected returns PendingReviewChapterDto
+// rows, which carry no rejection reason or decision timestamp — only the
+// per-chapter GET /{id}/for-review detail does (rejectionReason + the
+// review-action timeline). So the dedicated Rejected queue enriches each
+// listed row with one detail call to surface "why" and "when" in the table.
+export interface RejectedItem extends ReviewItem {
+  rejectedAt: string | null;
+}
+
+export async function listRejected(
+  params: Omit<ReviewQueueParams, "status"> = {},
+): Promise<Paged<RejectedItem>> {
+  const paged = await listQueue({ ...params, status: "Rejected" });
+
+  const items = await Promise.all(
+    paged.items.map(async (item): Promise<RejectedItem> => {
+      try {
+        const detail = await get(item.id);
+        const rejectedAction = [...detail.history]
+          .reverse()
+          .find((h) => /reject/i.test(h.action));
+        return {
+          ...item,
+          decisionReason: detail.decisionReason,
+          rejectedAt: rejectedAction?.at ?? null,
+        };
+      } catch {
+        // Detail lookup failed (e.g. chapter removed since) — still show the
+        // row from the list, just without the enrichment.
+        return { ...item, rejectedAt: null };
+      }
+    }),
+  );
+
+  return { ...paged, items };
+}
+
 export function reject(reviewId: string, reason: string): Promise<ReviewItem> {
   if (!reason) return Promise.reject(new Error(MESSAGES.review.reasonRequired));
   return contentApi.client

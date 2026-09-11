@@ -123,6 +123,7 @@ export const ROUTES = {
   admin: {
     dashboard: `/${ADMIN_BASE_PATH}`,
     reviewQueue: `/${ADMIN_BASE_PATH}/review`,
+    rejectedQueue: `/${ADMIN_BASE_PATH}/review/rejected`,
     reports: `/${ADMIN_BASE_PATH}/reports`,
     comments: `/${ADMIN_BASE_PATH}/comments`,
     stories: `/${ADMIN_BASE_PATH}/stories`,
@@ -138,6 +139,7 @@ export const ROUTES = {
 export const LABELS = {
   dashboard: "Dashboard",
   reviewQueue: "Review queue",
+  rejectedQueue: "Bị từ chối",
   reports: "Reports",
   comments: "Bình luận",
   stories: "Stories",
@@ -173,6 +175,9 @@ export const MESSAGES = {
     started: "Review started",
     approved: "Approved & published",
     rejected: "Submission rejected",
+    reapproveConfirmTitle: "Duyệt lại chương này?",
+    reapproveConfirmContent: "Chương sẽ chuyển thẳng sang Published, bỏ qua trạng thái Bị từ chối.",
+    reapproved: "Đã duyệt lại và xuất bản",
   },
   report: {
     notFound: "Report not found.",

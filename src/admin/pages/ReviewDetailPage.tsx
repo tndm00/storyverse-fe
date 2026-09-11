@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  App,
   Button,
   Card,
   Col,
@@ -63,6 +64,7 @@ function ChapterContent({ chapter }: { chapter: Chapter | null }) {
 export function ReviewDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const { modal } = App.useApp();
   const { busy, run } = useAsyncRunner();
 
   const { data: item, loading, error, refetch } = useAsyncQuery(() => reviewService.get(id), [id]);
@@ -85,6 +87,16 @@ export function ReviewDetailPage() {
 
   const canStart = item.reviewStatus === "Pending";
   const canDecide = item.reviewStatus === "Reviewing";
+  const canReapprove = item.reviewStatus === "Rejected";
+
+  const reapprove = () => {
+    modal.confirm({
+      title: MESSAGES.review.reapproveConfirmTitle,
+      content: MESSAGES.review.reapproveConfirmContent,
+      okText: "Duyệt lại",
+      onOk: () => run(() => reviewService.approve(id), MESSAGES.review.reapproved, refetch),
+    });
+  };
 
   return (
     <div>
@@ -96,9 +108,22 @@ export function ReviewDetailPage() {
         ]}
         subtitle={`${item.targetType} · submitted by ${item.authorName || "—"}`}
         extra={
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTES.admin.reviewQueue)}>
-            Back
-          </Button>
+          <Space>
+            {canReapprove ? (
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                loading={busy}
+                data-testid="reapprove"
+                onClick={reapprove}
+              >
+                Duyệt lại
+              </Button>
+            ) : null}
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTES.admin.reviewQueue)}>
+              Back
+            </Button>
+          </Space>
         }
       />
 

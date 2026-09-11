@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Card, Input, Select, Space, Table, Typography } from "antd";
+import { Button, Card, Input, Select, Space, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
@@ -84,6 +84,11 @@ export function ReviewQueuePage() {
       <AppPageHeader
         title={LABELS.reviewQueue}
         subtitle="Chapters submitted by authors, awaiting a publish decision"
+        extra={
+          <Button onClick={() => navigate(ROUTES.admin.rejectedQueue)}>
+            {LABELS.rejectedQueue}
+          </Button>
+        }
       />
 
       <Card

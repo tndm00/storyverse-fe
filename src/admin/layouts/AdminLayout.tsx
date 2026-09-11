@@ -4,6 +4,7 @@ import { Avatar, Dropdown, Layout, Menu, Typography } from "antd";
 import {
   AppstoreOutlined,
   BookOutlined,
+  CloseCircleOutlined,
   CommentOutlined,
   DashboardOutlined,
   FlagOutlined,
@@ -29,6 +30,11 @@ const MENU_ITEMS = [
     label: <Link to={ROUTES.admin.reviewQueue}>{LABELS.reviewQueue}</Link>,
   },
   {
+    key: ROUTES.admin.rejectedQueue,
+    icon: <CloseCircleOutlined />,
+    label: <Link to={ROUTES.admin.rejectedQueue}>{LABELS.rejectedQueue}</Link>,
+  },
+  {
     key: ROUTES.admin.reports,
     icon: <FlagOutlined />,
     label: <Link to={ROUTES.admin.reports}>{LABELS.reports}</Link>,
@@ -51,6 +57,7 @@ const MENU_ITEMS = [
 ];
 
 function selectedKey(pathname: string): string {
+  if (pathname.startsWith(ROUTES.admin.rejectedQueue)) return ROUTES.admin.rejectedQueue;
   if (pathname.startsWith(ROUTES.admin.reviewQueue)) return ROUTES.admin.reviewQueue;
   if (pathname.startsWith(ROUTES.admin.reports)) return ROUTES.admin.reports;
   if (pathname.startsWith(ROUTES.admin.comments)) return ROUTES.admin.comments;
