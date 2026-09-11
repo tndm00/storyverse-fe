@@ -30,16 +30,15 @@ interface Edition {
 
 function toEditions(stories: ReaderStory[]): Edition[] {
   const out: Edition[] = [];
-  for (let i = 0; i + 2 < stories.length + 1 && out.length < 4; i += 3) {
+  for (let i = 0; i < stories.length && out.length < 4; i += 3) {
     const chunk = stories.slice(i, i + 3);
-    if (chunk.length < 1) break;
     out.push({ feature: chunk[0], side: chunk.slice(1) });
   }
   return out;
 }
 
 export function HomePage() {
-  const { data: stories } = useAsyncQuery(
+  const { data: stories, loading } = useAsyncQuery(
     () => listStories({ sort: "publishedAt", pageSize: 12 }),
     [],
   );
@@ -122,8 +121,10 @@ export function HomePage() {
               </div>
             ) : null}
           </>
-        ) : (
+        ) : loading ? (
           <p className="cb-page-intro">Đang tải truyện…</p>
+        ) : (
+          <p className="cb-page-intro">Chưa có truyện nào. Hãy là người đầu tiên đăng!</p>
         )}
       </section>
 
