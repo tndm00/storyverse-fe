@@ -239,9 +239,16 @@
 .cb-section-head .cb-see-all {
   font-size: 13px;
   color: var(--cb-muted);
+  border: 1px solid var(--cb-border);
+  border-radius: 999px;
+  padding: 5px 14px;
+  transition:
+    border-color 0.3s ease,
+    color 0.3s ease;
 }
 .cb-section-head .cb-see-all:hover {
   color: var(--cb-accent-soft);
+  border-color: var(--cb-accent);
 }
 
 .cb-trend {
