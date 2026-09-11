@@ -46,13 +46,7 @@ export function StoryDetailPage() {
           {data.genres.length > 0 ? (
             <div className="cb-chips">
               {data.genres.map((g) => (
-                <Link
-                  className={g.isPrimary ? "cb-chip is-primary" : "cb-chip"}
-                  key={g.slug}
-                  to={`/browse?genre=${g.slug}`}
-                  title={g.isPrimary ? "Thể loại chính" : "Thể loại phụ"}
-                >
-                  {g.isPrimary ? "★ " : ""}
+                <Link className="cb-chip" key={g.slug} to={`/browse?genre=${g.slug}`}>
                   {g.name}
                 </Link>
               ))}

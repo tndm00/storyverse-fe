@@ -143,9 +143,6 @@ function GenreEditor({
   const [primary, setPrimary] = useState(
     () => current.find((g) => g.isPrimary)?.slug ?? current[0]?.slug ?? "",
   );
-  const [secondary, setSecondary] = useState<string[]>(
-    () => current.filter((g) => !g.isPrimary).map((g) => g.slug),
-  );
 
   if (!open) {
     return (
@@ -165,47 +162,19 @@ function GenreEditor({
     <div className="cb-form-card" style={{ marginTop: 12 }}>
       <div className="cb-field">
         <label className="cb-field-label" htmlFor="ge-primary">
-          Thể loại chính
+          Thể loại
         </label>
         <select
           className="cb-input"
           id="ge-primary"
           value={primary}
-          onChange={(e) => {
-            setPrimary(e.target.value);
-            setSecondary((prev) => prev.filter((s) => s !== e.target.value));
-          }}
+          onChange={(e) => setPrimary(e.target.value)}
         >
           {list.map((g) => (
             <option key={g.slug} value={g.slug}>
               {g.name}
             </option>
           ))}
-        </select>
-      </div>
-      <div className="cb-field">
-        <label className="cb-field-label" htmlFor="ge-secondary">
-          Thể loại phụ
-        </label>
-        <select
-          className="cb-input"
-          id="ge-secondary"
-          multiple
-          size={Math.min(6, Math.max(3, list.length))}
-          value={secondary}
-          onChange={(e) =>
-            setSecondary(
-              Array.from(e.target.selectedOptions, (o) => o.value).filter((v) => v !== primary),
-            )
-          }
-        >
-          {list
-            .filter((g) => g.slug !== primary)
-            .map((g) => (
-              <option key={g.slug} value={g.slug}>
-                {g.name}
-              </option>
-            ))}
         </select>
       </div>
       <div className="cb-cta-actions">
@@ -223,7 +192,7 @@ function GenreEditor({
           disabled={busy || !primary}
           onClick={() =>
             run(
-              () => setGenres(storyId, buildGenreSelection(primary, secondary)),
+              () => setGenres(storyId, buildGenreSelection(primary, [])),
               "Đã cập nhật thể loại",
               () => {
                 setOpen(false);
@@ -378,18 +347,11 @@ function ManageBody({ slug }: { slug: string }) {
         </div>
         <div className="cb-detail-meta">
           <span className="cb-badge">{STATUS_LABEL[story.status] ?? story.status}</span>
-          {[...story.genres]
-            .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
-            .map((g) => (
-              <span
-                className={g.isPrimary ? "cb-chip is-primary" : "cb-chip"}
-                key={g.slug}
-                title={g.isPrimary ? "Thể loại chính" : "Thể loại phụ"}
-              >
-                {g.isPrimary ? "★ " : ""}
-                {g.name}
-              </span>
-            ))}
+          {story.genres.map((g) => (
+            <span className="cb-chip" key={g.slug}>
+              {g.name}
+            </span>
+          ))}
         </div>
         <GenreEditor storyId={story.publicId} current={story.genres} onSaved={refetch} />
 

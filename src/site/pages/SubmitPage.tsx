@@ -40,7 +40,6 @@ export function SubmitPage() {
   const [title, setTitle] = useState("");
   const [penName, setPenName] = useState("");
   const [genreSlug, setGenreSlug] = useState(DEFAULT_GENRE);
-  const [secondaryGenres, setSecondaryGenres] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [content, setContent] = useState("");
@@ -92,7 +91,7 @@ export function SubmitPage() {
         const res = await quickPublish({
           title,
           description,
-          genres: buildGenreSelection(genreSlug, secondaryGenres),
+          genres: buildGenreSelection(genreSlug, []),
           tags,
           chapterContent: content,
         });
@@ -116,7 +115,6 @@ export function SubmitPage() {
     setTitle("");
     setDescription("");
     setTags([]);
-    setSecondaryGenres([]);
     setContent("");
     if (!isAuthor) setPenName("");
   };
@@ -140,12 +138,17 @@ export function SubmitPage() {
           <h2 style={{ fontSize: 18 }}>Đã gửi duyệt</h2>
           <p>
             Truyện {published.title} đã được gửi và đang chờ duyệt. Truyện sẽ hiển thị công khai sau
-            khi được kiểm duyệt.
+            khi được kiểm duyệt
+            {isAuthor
+              ? " — theo dõi trạng thái ở trang “Truyện của tôi”."
+              : " — vì bạn đăng ẩn danh nên hãy lưu lại tên truyện, chưa có cách quay lại xem trạng thái."}
           </p>
           <div className="cb-cta-actions" style={{ justifyContent: "center", flexWrap: "wrap" }}>
-            <Link to={ROUTES.story(published.slug)} className="cb-btn cb-ghost">
-              Xem truyện
-            </Link>
+            {published.status !== "Draft" ? (
+              <Link to={ROUTES.story(published.slug)} className="cb-btn cb-ghost">
+                Xem truyện
+              </Link>
+            ) : null}
             {isAuthor ? (
               <Link to={ROUTES.authorStory(published.slug)} className="cb-btn cb-ghost">
                 Thêm chương / phần
@@ -223,7 +226,7 @@ export function SubmitPage() {
 
               <div className="cb-field">
                 <label className="cb-field-label" htmlFor="s-genre">
-                  {isAuthor ? "Thể loại chính *" : "Thể loại *"}
+                  Thể loại *
                 </label>
                 {genres === null ? (
                   <select className="cb-input" id="s-genre" disabled>
@@ -236,10 +239,7 @@ export function SubmitPage() {
                     className="cb-input"
                     id="s-genre"
                     value={genreSlug}
-                    onChange={(e) => {
-                      setGenreSlug(e.target.value);
-                      setSecondaryGenres((prev) => prev.filter((s) => s !== e.target.value));
-                    }}
+                    onChange={(e) => setGenreSlug(e.target.value)}
                   >
                     {genres.map((g) => (
                       <option key={g.slug} value={g.slug}>
@@ -249,36 +249,6 @@ export function SubmitPage() {
                   </select>
                 )}
               </div>
-
-              {isAuthor && genres && !genresEmpty ? (
-                <div className="cb-field">
-                  <label className="cb-field-label" htmlFor="s-genre2">
-                    Thể loại phụ (tuỳ chọn)
-                  </label>
-                  <select
-                    className="cb-input"
-                    id="s-genre2"
-                    multiple
-                    size={Math.min(6, Math.max(3, genres.length))}
-                    value={secondaryGenres}
-                    onChange={(e) =>
-                      setSecondaryGenres(
-                        Array.from(e.target.selectedOptions, (o) => o.value).filter(
-                          (v) => v !== genreSlug,
-                        ),
-                      )
-                    }
-                  >
-                    {genres
-                      .filter((g) => g.slug !== genreSlug)
-                      .map((g) => (
-                        <option key={g.slug} value={g.slug}>
-                          {g.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              ) : null}
 
               {isAuthor ? (
                 <div className="cb-field">
