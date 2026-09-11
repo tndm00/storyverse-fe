@@ -74,6 +74,7 @@ export interface ReaderStory {
   reads: string;
   ratingLabel: string;
   letter: string;
+  publishedAt: string | null;
 }
 
 export interface ReaderChapter {
@@ -130,12 +131,14 @@ function summaryToReader(dto: StorySummaryDto): ReaderStory {
     reads: readsLabel(dto.viewCount),
     ratingLabel: ratingLabel(dto.ratingAvg, dto.ratingCount),
     letter: (dto.title.trim()[0] || "•").toUpperCase(),
+    publishedAt: dto.publishedAt,
   };
 }
 
 // ---- API -------------------------------------------------------------
 
-export type StorySort = "publishedAt" | "viewCount" | "ratingAvg";
+export type StorySort = "publishedAt" | "viewCount" | "ratingAvg" | "commentCount";
+
 
 export interface GenreOption {
   name: string;

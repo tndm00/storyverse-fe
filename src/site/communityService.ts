@@ -308,6 +308,57 @@ export async function castVote(storyId: string): Promise<CastVoteResult> {
   };
 }
 
+// ---- recent comments (platform-wide) --------------------------------
+
+interface RecentCommentDto {
+  commentId: string;
+  chapterId: string;
+  content: string;
+  authorDisplayName: string | null;
+  createdAt: string;
+  storyId: string | null;
+  storySlug: string | null;
+  storyTitle: string | null;
+  chapterTitle: string | null;
+}
+
+export interface RecentComment {
+  commentId: string;
+  chapterId: string;
+  content: string;
+  authorLabel: string;
+  createdAt: string;
+  storyId: string | null;
+  storySlug: string | null;
+  storyTitle: string | null;
+  chapterTitle: string | null;
+}
+
+// Newest comments across the whole platform ("Truyện ma mới bình luận"
+// widget). Story/chapter context can be null if server-side enrichment
+// failed for that row — callers should render such rows as plain text
+// (no link) rather than fail the whole list.
+export async function listRecentComments(limit = 15): Promise<RecentComment[]> {
+  try {
+    const rows = await communityApi.client.get<RecentCommentDto[]>("/v1/comments/recent", {
+      params: { limit },
+    });
+    return (rows ?? []).map((d) => ({
+      commentId: d.commentId,
+      chapterId: d.chapterId,
+      content: d.content,
+      authorLabel: d.authorDisplayName ?? "Người đọc ẩn danh",
+      createdAt: d.createdAt,
+      storyId: d.storyId,
+      storySlug: d.storySlug,
+      storyTitle: d.storyTitle,
+      chapterTitle: d.chapterTitle,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 // Current weekly voting window. Used as a fallback for the reset countdown when
 // the vote-count response predates the periodEndUtc field.
 export async function getCurrentVotePeriod(): Promise<VotePeriod | null> {
