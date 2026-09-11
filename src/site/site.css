@@ -215,6 +215,7 @@
 .cb-hero-grid {
   display: grid;
   grid-template-columns: 1.3fr 1fr;
+  align-items: start;
   gap: 16px;
 }
 
@@ -310,10 +311,32 @@
 .cb-card .cb-body {
   padding: 16px 18px 18px;
 }
+/* Text-only card (no cover-image area — see .cb-body-head below for why):
+   kicker + rating share one row instead of the rating badge floating over
+   a now-removed media section. */
+.cb-body-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.cb-rating-badge {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  background: rgba(208, 145, 93, 0.12);
+  border: 1px solid rgba(222, 216, 207, 0.15);
+  border-radius: 4px;
+  font-size: 12px;
+  color: #cbbfae;
+}
 .cb-card .cb-kicker {
   font-size: 12px;
   color: var(--cb-accent-soft);
   margin-bottom: 6px;
+}
+.cb-body-head .cb-kicker {
+  margin-bottom: 0;
 }
 .cb-card h3 {
   font-family: "Spectral", serif;
@@ -572,7 +595,7 @@
 /* ---------- Nổi bật ---------- */
 .cb-spotlight {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   border: 1px solid var(--cb-border);
   border-radius: var(--cb-radius);
   overflow: hidden;
@@ -628,6 +651,7 @@
 .cb-featured-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  align-items: start;
   gap: 16px;
   margin-top: 24px;
 }
