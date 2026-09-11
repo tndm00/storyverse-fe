@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
-import { listStories, trendingStories, type ReaderStory } from "../readerService";
+import { listStories, type ReaderStory } from "../readerService";
+import { StoryCard } from "../components/StoryCard";
 
 function Card({ story, variant }: { story: ReaderStory; variant: "feature" | "side" }) {
   return (
@@ -37,14 +38,58 @@ function toEditions(stories: ReaderStory[]): Edition[] {
   return out;
 }
 
+function GridSection({
+  emoji,
+  title,
+  seeAllHref,
+  loading,
+  stories,
+}: {
+  emoji: string;
+  title: string;
+  seeAllHref: string;
+  loading: boolean;
+  stories: ReaderStory[];
+}) {
+  return (
+    <section className="cb-section" style={{ paddingTop: 0 }}>
+      <div className="cb-section-head">
+        <h2>
+          {emoji} {title}
+        </h2>
+        <Link to={seeAllHref} className="cb-see-all">
+          Xem tất cả
+        </Link>
+      </div>
+      {loading ? (
+        <p className="cb-page-intro">Đang tải truyện…</p>
+      ) : stories.length === 0 ? (
+        <p className="cb-page-intro">Chưa có truyện nào ở mục này.</p>
+      ) : (
+        <div className="cb-featured-grid">
+          {stories.map((s) => (
+            <StoryCard key={s.slug} story={s} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function HomePage() {
   const { data: stories, loading } = useAsyncQuery(
     () => listStories({ sort: "publishedAt", pageSize: 12 }),
     [],
   );
-  const { data: trending } = useAsyncQuery(() => trendingStories(5), []);
+  const { data: hotStories, loading: hotLoading } = useAsyncQuery(
+    () => listStories({ sort: "viewCount", pageSize: 4 }),
+    [],
+  );
 
   const editions = useMemo(() => toEditions(stories ?? []), [stories]);
+  // Reuse the hero fetch for "Truyện ma mới": the hero shows stories[0] as its
+  // feature, so the grid below picks up from stories[1] to avoid duplicates.
+  const newStories = useMemo(() => (stories ?? []).slice(1, 5), [stories]);
   const [edition, setEdition] = useState(0);
 
   const count = editions.length;
@@ -128,25 +173,21 @@ export function HomePage() {
         )}
       </section>
 
-      <section className="cb-section">
-        <div className="cb-section-head">
-          <h2>Đang được đọc nhiều</h2>
-          <Link to={ROUTES.featured} className="cb-see-all">
-            Xem tất cả
-          </Link>
-        </div>
-        <ul className="cb-trend">
-          {(trending ?? []).map((item, i) => (
-            <li key={item.slug}>
-              <Link to={ROUTES.story(item.slug)} className="cb-trend-left">
-                <span className="cb-trend-rank">{String(i + 1).padStart(2, "0")}</span>
-                <span className="cb-trend-title">{item.title}</span>
-              </Link>
-              <span className="cb-trend-views">{item.reads}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <GridSection
+        emoji="🔥"
+        title="Truyện ma hot"
+        seeAllHref={`${ROUTES.browse}?sort=viewCount`}
+        loading={hotLoading}
+        stories={hotStories ?? []}
+      />
+
+      <GridSection
+        emoji="🕯️"
+        title="Truyện ma mới"
+        seeAllHref={`${ROUTES.browse}?sort=publishedAt`}
+        loading={loading}
+        stories={newStories}
+      />
 
       <section className="cb-section" style={{ paddingTop: 0 }}>
         <div className="cb-cta-band">

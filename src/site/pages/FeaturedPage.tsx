@@ -1,26 +1,8 @@
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
-import { listStories, trendingStories, type ReaderStory } from "../readerService";
-
-function PickCard({ story }: { story: ReaderStory }) {
-  return (
-    <Link to={ROUTES.story(story.slug)} className="cb-card cb-grid-item">
-      <div className="cb-media">
-        {story.ratingLabel ? <span className="cb-readchip">{story.ratingLabel}</span> : null}
-        <span className="cb-dropcap" aria-hidden="true">
-          {story.letter}
-        </span>
-      </div>
-      <div className="cb-body">
-        <div className="cb-kicker">{story.kicker}</div>
-        <h3>{story.title}</h3>
-        {story.description ? <p className="cb-excerpt">{story.description}</p> : null}
-        <div className="cb-meta">{story.reads}</div>
-      </div>
-    </Link>
-  );
-}
+import { listStories, trendingStories } from "../readerService";
+import { StoryCard } from "../components/StoryCard";
 
 export function FeaturedPage() {
   // Highest-rated stories from the Content service; the top one is the spotlight,
@@ -71,7 +53,7 @@ export function FeaturedPage() {
 
         <div className="cb-featured-grid">
           {grid.map((story) => (
-            <PickCard key={story.slug} story={story} />
+            <StoryCard key={story.slug} story={story} />
           ))}
         </div>
       </section>

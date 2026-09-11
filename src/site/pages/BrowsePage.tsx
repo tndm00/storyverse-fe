@@ -22,7 +22,12 @@ export function BrowsePage() {
   const [genres, setGenres] = useState<{ name: string; slug: string }[]>([]);
   const [genreSlug, setGenreSlug] = useState(() => searchParams.get("genre") ?? "");
   const [status, setStatus] = useState("");
-  const [sort, setSort] = useState<StorySort>("publishedAt");
+  const [sort, setSort] = useState<StorySort>(() => {
+    const fromUrl = searchParams.get("sort");
+    return fromUrl === "viewCount" || fromUrl === "ratingAvg" || fromUrl === "publishedAt"
+      ? fromUrl
+      : "publishedAt";
+  });
   const [page, setPage] = useState(1);
 
   useEffect(() => {
