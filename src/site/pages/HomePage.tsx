@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { listStories, type ReaderStory } from "../readerService";
-import { StoryCard } from "../components/StoryCard";
 
 function Card({ story, variant }: { story: ReaderStory; variant: "feature" | "side" }) {
   return (
@@ -38,7 +37,7 @@ function toEditions(stories: ReaderStory[]): Edition[] {
   return out;
 }
 
-function GridSection({
+function ListSection({
   emoji,
   title,
   seeAllHref,
@@ -66,11 +65,17 @@ function GridSection({
       ) : stories.length === 0 ? (
         <p className="cb-page-intro">Chưa có truyện nào ở mục này.</p>
       ) : (
-        <div className="cb-featured-grid">
-          {stories.map((s) => (
-            <StoryCard key={s.slug} story={s} />
+        <ul className="cb-trend">
+          {stories.map((s, i) => (
+            <li key={s.slug}>
+              <Link to={ROUTES.story(s.slug)} className="cb-trend-left">
+                <span className="cb-trend-rank">{String(i + 1).padStart(2, "0")}</span>
+                <span className="cb-trend-title">{s.title}</span>
+              </Link>
+              <span className="cb-trend-views">{s.reads}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </section>
   );
@@ -173,7 +178,7 @@ export function HomePage() {
         )}
       </section>
 
-      <GridSection
+      <ListSection
         emoji="🔥"
         title="Truyện ma hot"
         seeAllHref={`${ROUTES.browse}?sort=viewCount`}
@@ -181,7 +186,7 @@ export function HomePage() {
         stories={hotStories ?? []}
       />
 
-      <GridSection
+      <ListSection
         emoji="🕯️"
         title="Truyện ma mới"
         seeAllHref={`${ROUTES.browse}?sort=publishedAt`}
