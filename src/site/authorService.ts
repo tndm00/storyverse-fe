@@ -487,6 +487,12 @@ export async function setStoryStatus(storyId: string, target: StoryStatus): Prom
   await contentApi.client.post(`/v1/stories/${storyId}/status`, { targetStatus: target });
 }
 
+// Permanently deletes a Draft story (owner or content.moderate only). The
+// backend rejects with a business-rule error (422/400) if status != Draft.
+export async function deleteStory(storyId: string): Promise<void> {
+  await contentApi.client.del(`/v1/stories/${storyId}`);
+}
+
 // ---- reads for the workspace -------------------------------------
 
 export async function getChapter(chapterId: string): Promise<{

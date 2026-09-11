@@ -455,6 +455,17 @@
   border-color: var(--cb-accent);
   color: var(--cb-accent-soft);
 }
+.cb-btn.cb-btn-danger {
+  background: #d4380d;
+  color: #fff;
+}
+.cb-btn.cb-btn-danger:hover {
+  background: #ff4d4f;
+}
+.cb-btn.cb-btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .cb-cta-band {
   border: 1px solid var(--cb-border);

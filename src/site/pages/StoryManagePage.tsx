@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { App } from "antd";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
@@ -9,6 +9,8 @@ import {
   addChapter,
   addVolume,
   buildGenreSelection,
+  deleteStory,
+  forgetStory,
   getMyStory,
   listGenres,
   reorderStoryChapters,
@@ -211,7 +213,9 @@ function GenreEditor({
 function ManageBody({ slug }: { slug: string }) {
   const { data, loading, error, refetch } = useAsyncQuery(() => getMyStory(slug), [slug]);
   const { busy, run } = useAsyncRunner();
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
+  const navigate = useNavigate();
+  const [deleting, setDeleting] = useState(false);
 
   const [nextStatus, setNextStatus] = useState<StoryStatus | "">("");
   const [volTitle, setVolTitle] = useState("");
@@ -324,6 +328,29 @@ function ManageBody({ slug }: { slug: string }) {
     );
   };
 
+  const doDelete = () => {
+    modal.confirm({
+      title: "Xoá truyện?",
+      content: `Xoá vĩnh viễn truyện "${story.title}", không thể hoàn tác. Toàn bộ phần và chương của truyện sẽ mất theo.`,
+      okText: "Xoá vĩnh viễn",
+      okType: "danger",
+      cancelText: "Huỷ",
+      onOk: async () => {
+        setDeleting(true);
+        try {
+          await deleteStory(story.publicId);
+          forgetStory(story.slug);
+          message.success("Đã xoá truyện");
+          navigate(ROUTES.authorStudio);
+        } catch (e) {
+          message.error(e instanceof Error ? e.message : "Không xoá được truyện");
+        } finally {
+          setDeleting(false);
+        }
+      },
+    });
+  };
+
   const doSubmitForReview = (chapterId: string) => {
     setPublishingId(chapterId);
     run(
@@ -356,10 +383,21 @@ function ManageBody({ slug }: { slug: string }) {
         <GenreEditor storyId={story.publicId} current={story.genres} onSaved={refetch} />
 
         {story.status === "Draft" ? (
-          <p className="cb-page-intro">
-            Truyện đang là nháp và chưa hiển thị công khai. Gửi duyệt chương đầu tiên — truyện sẽ
-            hiển thị công khai ngay sau khi được kiểm duyệt.
-          </p>
+          <>
+            <p className="cb-page-intro">
+              Truyện đang là nháp và chưa hiển thị công khai. Gửi duyệt chương đầu tiên — truyện sẽ
+              hiển thị công khai ngay sau khi được kiểm duyệt.
+            </p>
+            <button
+              type="button"
+              className="cb-btn cb-btn-danger cb-btn-sm"
+              style={{ marginTop: 8 }}
+              disabled={deleting}
+              onClick={doDelete}
+            >
+              Xoá truyện
+            </button>
+          </>
         ) : transitions.length > 0 ? (
           <div className="cb-inline-form">
             <select

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Card, Drawer, Input, Select, Space, Table, Typography } from "antd";
+import { App, Button, Card, Drawer, Input, Select, Space, Table, Typography } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import type { FilterValue, SorterResult, TableCurrentDataSource } from "antd/es/table/interface";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
@@ -27,8 +27,10 @@ export function StoriesPage() {
     sortDir: "desc",
   });
   const [selected, setSelected] = useState<Story | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { modal, message } = App.useApp();
 
-  const { data, loading } = useAsyncQuery(
+  const { data, loading, refetch } = useAsyncQuery(
     () => storyService.listStories({ pageNumber: page, pageSize: PAGE_SIZE, status, q, ...sort }),
     [page, status, q, sort],
   );
@@ -37,6 +39,29 @@ export function StoriesPage() {
     () => (selected ? storyService.get(selected.publicId) : Promise.resolve(null)),
     [selected?.publicId],
   );
+
+  const doDelete = (story: Story) => {
+    modal.confirm({
+      title: "Xoá truyện?",
+      content: `Xoá vĩnh viễn truyện "${story.title}", không thể hoàn tác.`,
+      okText: "Xoá vĩnh viễn",
+      okType: "danger",
+      cancelText: "Huỷ",
+      onOk: async () => {
+        setDeleting(true);
+        try {
+          await storyService.deleteStory(story.publicId);
+          message.success("Đã xoá truyện");
+          setSelected(null);
+          refetch();
+        } catch (e) {
+          message.error(e instanceof Error ? e.message : "Không xoá được truyện");
+        } finally {
+          setDeleting(false);
+        }
+      },
+    });
+  };
 
   const onStatus = (value: string) => {
     setPage(1);
@@ -186,7 +211,16 @@ export function StoriesPage() {
         open={Boolean(selected)}
         title={selected?.title}
         onClose={() => setSelected(null)}
-        extra={<Button onClick={() => setSelected(null)}>Close</Button>}
+        extra={
+          <Space>
+            {selected?.status === "Draft" ? (
+              <Button danger loading={deleting} onClick={() => selected && doDelete(selected)}>
+                Xoá
+              </Button>
+            ) : null}
+            <Button onClick={() => setSelected(null)}>Close</Button>
+          </Space>
+        }
       >
         {selected ? <StoryDetailContent story={detail.data ?? selected} /> : null}
       </Drawer>
