@@ -1,9 +1,9 @@
 // Admin comment-moderation facade — Community service.
 //
-// BACKEND GAP: there is no global "list all comments" endpoint for moderators.
-// `GET /v1/comments` requires a `chapter-id`. So the admin page lists comments
-// for one chapter at a time (id pasted / navigated in). If a platform-wide
-// comment feed is added later, swap `listChapterComments` for it here.
+// GET /v1/comments/admin is the platform-wide moderation feed (status/q/chapter-id/
+// author-user-id filters, sort, paging) — used by the admin Comments page. The older
+// per-chapter `listChapterComments` (GET /v1/comments?chapter-id=) is kept for any
+// call site that still wants a single chapter's thread.
 //
 // Hide/unhide uses POST /v1/comments/{id}/moderation-visibility { hidden, reason }
 // (community.moderate — available to Moderator + PlatformAdmin via JWT).
@@ -72,6 +72,43 @@ export async function listChapterComments(
   const paged = await communityApi.client.get<PagedDto<CommentDto>>("/v1/comments", {
     params: {
       "chapter-id": chapterId.trim(),
+      "page-number": pageNumber,
+      "page-size": pageSize,
+    },
+  });
+  return {
+    items: (paged.items ?? []).map(toAdminComment),
+    pageNumber: paged.pageNumber ?? pageNumber,
+    pageSize: paged.pageSize ?? pageSize,
+    totalCount: paged.totalCount ?? 0,
+    totalPages: paged.totalPages ?? 1,
+  };
+}
+
+export type AdminCommentStatusFilter = "Visible" | "Hidden" | "Deleted" | "all";
+
+export interface ListAdminCommentsParams {
+  status?: AdminCommentStatusFilter;
+  q?: string;
+  chapterId?: string;
+  authorUserId?: number;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export async function listAdmin(params: ListAdminCommentsParams = {}): Promise<AdminCommentPage> {
+  const pageNumber = params.pageNumber ?? 1;
+  const pageSize = params.pageSize ?? 20;
+  const paged = await communityApi.client.get<PagedDto<CommentDto>>("/v1/comments/admin", {
+    params: {
+      status: params.status ?? "all",
+      q: params.q?.trim() || undefined,
+      "chapter-id": params.chapterId?.trim() || undefined,
+      "author-user-id": params.authorUserId,
+      "sort-by": params.sortBy,
+      "sort-direction": params.sortDirection,
       "page-number": pageNumber,
       "page-size": pageSize,
     },

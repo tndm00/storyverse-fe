@@ -865,6 +865,22 @@ textarea.cb-input {
   margin: 0 0 1.4em;
 }
 
+.cb-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: var(--cb-radius);
+  font-size: 14px;
+}
+.cb-alert-info {
+  background: color-mix(in srgb, var(--cb-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cb-accent) 40%, transparent);
+  color: var(--cb-text, inherit);
+}
+
 /* reader view-scoped colour themes (do not affect the site theme) */
 .cb-reader[data-reader-theme="dark"],
 .cb-reader[data-reader-theme="sepia"] {

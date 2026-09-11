@@ -71,6 +71,7 @@ interface ChapterDetailDto {
   wordCount: number;
   status: ChapterStatus;
   publishedAt: string | null;
+  scheduledAt: string | null;
   rejectionReason: string | null;
 }
 
@@ -453,6 +454,31 @@ export async function submitChapterForReview(chapterId: string): Promise<void> {
   await contentApi.client.post(`/v1/chapters/${chapterId}/submit-for-review`);
 }
 
+// Schedules a Draft chapter to auto-publish at a future time (ChapterStatusPolicy:
+// Draft -> Scheduled only). The backend's ScheduledChapterPublisher background job
+// flips it to Published once `scheduledAt` arrives — scheduled chapters skip the
+// moderator review queue entirely.
+export async function scheduleChapter(
+  chapterId: string,
+  scheduledAtIso: string,
+): Promise<{ status: ChapterStatus; scheduledAt: string | null }> {
+  const dto = await contentApi.client.post<ChapterDetailDto & { scheduledAt: string | null }>(
+    `/v1/chapters/${chapterId}/schedule`,
+    { scheduledAt: scheduledAtIso },
+  );
+  return { status: dto.status, scheduledAt: dto.scheduledAt ?? null };
+}
+
+// Cancels a chapter's schedule, returning it to Draft (owner only).
+export async function cancelSchedule(
+  chapterId: string,
+): Promise<{ status: ChapterStatus }> {
+  const dto = await contentApi.client.post<ChapterDetailDto>(
+    `/v1/chapters/${chapterId}/cancel-schedule`,
+  );
+  return { status: dto.status };
+}
+
 export async function removeChapter(chapterId: string): Promise<void> {
   await contentApi.client.post(`/v1/chapters/${chapterId}/remove`);
 }
@@ -470,6 +496,7 @@ export async function getChapter(chapterId: string): Promise<{
   orderIndex: number;
   volumeId: string | null;
   status: ChapterStatus;
+  scheduledAt: string | null;
   rejectionReason: string | null;
 }> {
   const dto = await contentApi.client.get<ChapterDetailDto>(`/v1/chapters/${chapterId}`);
@@ -480,6 +507,7 @@ export async function getChapter(chapterId: string): Promise<{
     orderIndex: Number(dto.orderIndex),
     volumeId: dto.volumeId,
     status: dto.status,
+    scheduledAt: dto.scheduledAt ?? null,
     rejectionReason: dto.rejectionReason ?? null,
   };
 }

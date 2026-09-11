@@ -1,41 +1,51 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Alert, Button, Card, Input, Space, Table, Tag, Typography } from "antd";
+import { Alert, Button, Card, Input, Select, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { ConfirmActionModal } from "@/admin/components/ConfirmActionModal";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as commentService from "@/services/commentModerationService";
-import type { AdminComment } from "@/services/commentModerationService";
+import type { AdminComment, AdminCommentStatusFilter } from "@/services/commentModerationService";
 import { DEFAULT_PAGE_SIZE, LABELS } from "@/utils/constants";
 import { formatDate, fromNow, truncate } from "@/utils/format";
 
 const { Text, Paragraph } = Typography;
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
-// NOTE: the Community service has no platform-wide comment feed — comments are
-// listed one chapter at a time (paste / link a chapter id). TODO: switch to a
-// global admin feed if the backend adds one.
+const STATUS_OPTIONS: { value: AdminCommentStatusFilter; label: string }[] = [
+  { value: "all", label: "Tất cả trạng thái" },
+  { value: "Visible", label: "Hiển thị" },
+  { value: "Hidden", label: "Đã ẩn" },
+  { value: "Deleted", label: "Đã xoá" },
+];
+
 export function CommentsPage() {
-  const [params, setParams] = useSearchParams();
-  const chapterId = params.get("chapter-id") ?? "";
-  const [draftId, setDraftId] = useState(chapterId);
+  const [status, setStatus] = useState<AdminCommentStatusFilter>("all");
+  const [q, setQ] = useState("");
+  const [draftQ, setDraftQ] = useState("");
+  const [chapterId, setChapterId] = useState("");
+  const [draftChapterId, setDraftChapterId] = useState("");
   const [page, setPage] = useState(1);
   const { busy, run } = useAsyncRunner();
   const [target, setTarget] = useState<{ comment: AdminComment; hide: boolean } | null>(null);
 
   const { data, loading, error, refetch } = useAsyncQuery(
     () =>
-      chapterId
-        ? commentService.listChapterComments(chapterId, { pageNumber: page, pageSize: PAGE_SIZE })
-        : Promise.resolve(null),
-    [chapterId, page],
+      commentService.listAdmin({
+        status,
+        q: q || undefined,
+        chapterId: chapterId || undefined,
+        pageNumber: page,
+        pageSize: PAGE_SIZE,
+      }),
+    [status, q, chapterId, page],
   );
 
-  const applyChapterId = () => {
+  const applyFilters = () => {
     setPage(1);
-    setParams(draftId.trim() ? { "chapter-id": draftId.trim() } : {});
+    setQ(draftQ.trim());
+    setChapterId(draftChapterId.trim());
   };
 
   const columns: ColumnsType<AdminComment> = [
@@ -50,6 +60,9 @@ export function CommentsPage() {
               ↳ trả lời
             </Text>
           ) : null}
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            Chương: {row.chapterId}
+          </Text>
         </Space>
       ),
     },
@@ -93,36 +106,47 @@ export function CommentsPage() {
 
   return (
     <div>
-      <AppPageHeader
-        title={LABELS.comments}
-        subtitle="Ẩn / hiện bình luận vi phạm theo từng chương"
-      />
+      <AppPageHeader title={LABELS.comments} subtitle="Ẩn / hiện bình luận vi phạm toàn nền tảng" />
 
       <Card
         title={
           <Space wrap>
             <Input
-              placeholder="Chapter ID (GUID)"
-              style={{ width: 320 }}
-              value={draftId}
-              onChange={(e) => setDraftId(e.target.value)}
-              onPressEnter={applyChapterId}
+              placeholder="Tìm nội dung bình luận"
+              style={{ width: 240 }}
+              value={draftQ}
+              onChange={(e) => setDraftQ(e.target.value)}
+              onPressEnter={applyFilters}
             />
-            <Button type="primary" onClick={applyChapterId}>
-              Tải bình luận
+            <Input
+              placeholder="Lọc theo Chapter ID (tuỳ chọn)"
+              style={{ width: 260 }}
+              value={draftChapterId}
+              onChange={(e) => setDraftChapterId(e.target.value)}
+              onPressEnter={applyFilters}
+            />
+            <Select
+              style={{ width: 170 }}
+              value={status}
+              options={STATUS_OPTIONS}
+              onChange={(v) => {
+                setStatus(v);
+                setPage(1);
+              }}
+            />
+            <Button type="primary" onClick={applyFilters}>
+              Tìm
             </Button>
           </Space>
         }
       >
-        {!chapterId ? (
+        {error ? (
           <Alert
-            type="info"
+            type="error"
             showIcon
-            message="Nhập ID chương để xem bình luận"
-            description="Community service chưa có API liệt kê toàn bộ bình luận cho quản trị — hiện lọc theo từng chương."
+            message="Không tải được bình luận"
+            description={error.message}
           />
-        ) : error ? (
-          <Alert type="error" showIcon message="Không tải được bình luận" description={error.message} />
         ) : (
           <Table
             rowKey="id"

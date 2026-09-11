@@ -3,17 +3,20 @@ import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { getChapterContent, getStoryDetail } from "../readerService";
-import { saveReadingProgress } from "../libraryService";
+import { getReadingProgress, saveReadingProgress } from "../libraryService";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { ChapterComments } from "../components/chapter/ChapterComments";
 import { ReportDialog } from "../components/ReportDialog";
 import { ReadingSettingsPanel } from "../reader/ReadingSettingsPanel";
 import { FONT_SIZES, LINE_HEIGHTS, WIDTHS, useReadingSettings } from "../reader/readingSettings";
+import { useAuth } from "@/hooks/useAuth";
 
 export function ChapterReaderPage() {
   const { slug = "", order: chapterId = "" } = useParams();
+  const { isAuthenticated } = useAuth();
   const [reporting, setReporting] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [resumeChapterId, setResumeChapterId] = useState<string | null>(null);
   const { settings, update, reset } = useReadingSettings();
 
   const { data: story } = useAsyncQuery(() => getStoryDetail(slug), [slug]);
@@ -37,6 +40,31 @@ export function ChapterReaderPage() {
       saveReadingProgress(story.id, chapterId).catch(() => {});
     }
   }, [story?.id, chapterId]);
+
+  // Reading progress: check for a saved position in a *different* chapter of
+  // this story, once per story/chapter view — surfaced as a dismissable banner
+  // rather than a silent redirect. 404 (never read before) is ignored.
+  useEffect(() => {
+    setResumeChapterId(null);
+    if (!isAuthenticated || !story?.id) return;
+    let cancelled = false;
+    getReadingProgress(story.id)
+      .then((progress) => {
+        if (cancelled || !progress) return;
+        if (progress.lastChapterId && progress.lastChapterId !== chapterId) {
+          setResumeChapterId(progress.lastChapterId);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, story?.id, chapterId]);
+
+  const resumeChapter = useMemo(
+    () => story?.chapters.find((c) => c.id === resumeChapterId) ?? null,
+    [story, resumeChapterId],
+  );
 
   if (loading) return <p className="cb-page-intro">Đang tải chương…</p>;
   if (!chapter) return <NotFoundPage />;
@@ -89,6 +117,21 @@ export function ChapterReaderPage() {
           />
         ) : null}
       </div>
+
+      {resumeChapter ? (
+        <div className="cb-alert cb-alert-info" style={{ marginBottom: 16 }}>
+          <span>
+            Bạn đang đọc dở Chương {resumeChapter.order}. {resumeChapter.title}
+          </span>
+          <Link
+            to={ROUTES.chapter(slug, resumeChapter.id)}
+            className="cb-btn cb-btn-sm"
+            onClick={() => setResumeChapterId(null)}
+          >
+            Tiếp tục đọc
+          </Link>
+        </div>
+      ) : null}
 
       <div className="cb-reader-body" dangerouslySetInnerHTML={{ __html: chapter.html }} />
 

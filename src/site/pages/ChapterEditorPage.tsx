@@ -4,9 +4,11 @@ import { ROUTES } from "@/utils/constants";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import {
+  cancelSchedule,
   getChapter,
   getMyStory,
   removeChapter,
+  scheduleChapter,
   submitChapterForReview,
   updateChapter,
   type ChapterStatus,
@@ -37,6 +39,8 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
   const [status, setStatus] = useState<ChapterStatus>("Draft");
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [volumes, setVolumes] = useState<VolumeRef[]>([]);
+  const [scheduledAt, setScheduledAt] = useState<string | null>(null);
+  const [scheduleDraft, setScheduleDraft] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +54,7 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
         setStatus(ch.status);
         setRejectionReason(ch.rejectionReason);
         setVolumes(view.volumes);
+        setScheduledAt(ch.scheduledAt);
         setLoaded(true);
       })
       .catch(() => {
@@ -89,6 +94,37 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
 
   const doRemove = () => run(() => removeChapter(chapterId), "Đã gỡ chương", backToStory);
 
+  const scheduleDate = scheduleDraft ? new Date(scheduleDraft) : null;
+  const scheduleIsFuture = scheduleDate !== null && scheduleDate.getTime() > Date.now();
+
+  const doSchedule = () => {
+    if (!scheduleDate || !scheduleIsFuture) return;
+    const iso = scheduleDate.toISOString();
+    let result: { status: ChapterStatus; scheduledAt: string | null } | null = null;
+    run(
+      () => scheduleChapter(chapterId, iso).then((r) => (result = r)),
+      "Đã đặt lịch đăng",
+      () => {
+        if (!result) return;
+        setStatus(result.status);
+        setScheduledAt(result.scheduledAt);
+        setScheduleDraft("");
+      },
+    );
+  };
+
+  const doCancelSchedule = () => {
+    let result: { status: ChapterStatus } | null = null;
+    run(
+      () => cancelSchedule(chapterId).then((r) => (result = r)),
+      "Đã huỷ lịch đăng",
+      () => {
+        setStatus(result?.status ?? "Draft");
+        setScheduledAt(null);
+      },
+    );
+  };
+
   return (
     <section className="cb-section">
       <div className="cb-section-head">
@@ -107,6 +143,55 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
         <p className="cb-genre-empty" style={{ marginTop: 12 }}>
           Bị từ chối: {rejectionReason}
         </p>
+      ) : null}
+
+      {status === "Scheduled" ? (
+        <div className="cb-form-card" style={{ marginTop: 12 }}>
+          <p style={{ margin: 0 }}>
+            Đã đặt lịch đăng lúc{" "}
+            <strong>{scheduledAt ? new Date(scheduledAt).toLocaleString("vi-VN") : "—"}</strong>.
+            Chương sẽ tự động xuất bản khi tới giờ.
+          </p>
+          <button
+            type="button"
+            className="cb-btn cb-ghost"
+            style={{ marginTop: 8 }}
+            disabled={busy}
+            onClick={doCancelSchedule}
+          >
+            Huỷ lịch đăng
+          </button>
+        </div>
+      ) : null}
+
+      {status === "Draft" || status === "Rejected" ? (
+        <div className="cb-form-card" style={{ marginTop: 12 }}>
+          <div className="cb-field">
+            <label className="cb-field-label" htmlFor="ec-schedule">
+              Đặt lịch đăng (tuỳ chọn)
+            </label>
+            <input
+              className="cb-input"
+              id="ec-schedule"
+              type="datetime-local"
+              value={scheduleDraft}
+              onChange={(e) => setScheduleDraft(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            className="cb-btn cb-ghost"
+            disabled={busy || !scheduleDraft || !scheduleIsFuture}
+            onClick={doSchedule}
+          >
+            Đặt lịch đăng
+          </button>
+          {scheduleDraft && !scheduleIsFuture ? (
+            <p className="cb-genre-empty" style={{ marginTop: 8 }}>
+              Thời điểm đặt lịch phải ở tương lai.
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="cb-form-card" style={{ marginTop: 16 }}>
