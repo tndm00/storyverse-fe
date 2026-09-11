@@ -158,6 +158,17 @@ export function StoriesPage() {
       sorter: true,
       render: (v: string | null) => formatDateShort(v),
     },
+    {
+      title: "",
+      key: "actions",
+      width: 90,
+      render: (_, row) =>
+        row.status === "Draft" ? (
+          <Button danger size="small" loading={deleting} onClick={() => doDelete(row)}>
+            Xoá
+          </Button>
+        ) : null,
+    },
   ];
 
   return (

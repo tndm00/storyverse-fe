@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { App } from "antd";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
-import { listMyStories } from "../authorService";
+import { deleteStory, listMyStories, type StoryRef } from "../authorService";
 import { AuthorGuard } from "../components/author/AuthorGuard";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -13,7 +15,31 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 function StudioBody() {
-  const { data: stories, loading } = useAsyncQuery(() => listMyStories(), []);
+  const { data: stories, loading, refetch } = useAsyncQuery(() => listMyStories(), []);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { modal, message } = App.useApp();
+
+  const onDelete = (story: StoryRef) => {
+    modal.confirm({
+      title: "Xoá truyện?",
+      content: `Xoá vĩnh viễn truyện "${story.title}", không thể hoàn tác. Toàn bộ phần và chương của truyện sẽ mất theo.`,
+      okText: "Xoá vĩnh viễn",
+      okType: "danger",
+      cancelText: "Huỷ",
+      onOk: async () => {
+        setDeletingId(story.publicId);
+        try {
+          await deleteStory(story.publicId);
+          message.success("Đã xoá truyện");
+          refetch();
+        } catch (e) {
+          message.error(e instanceof Error ? e.message : "Không xoá được truyện");
+        } finally {
+          setDeletingId(null);
+        }
+      },
+    });
+  };
 
   return (
     <>
@@ -41,7 +67,19 @@ function StudioBody() {
                 <Link to={ROUTES.authorStory(s.slug)} className="cb-trend-left">
                   <span className="cb-trend-title">{s.title}</span>
                 </Link>
-                <span className="cb-badge">{STATUS_LABEL[s.status] ?? s.status}</span>
+                <span className="cb-chapter-row-actions">
+                  <span className="cb-badge">{STATUS_LABEL[s.status] ?? s.status}</span>
+                  {s.status === "Draft" ? (
+                    <button
+                      type="button"
+                      className="cb-btn cb-btn-danger cb-btn-sm"
+                      disabled={deletingId === s.publicId}
+                      onClick={() => onDelete(s)}
+                    >
+                      Xoá
+                    </button>
+                  ) : null}
+                </span>
               </li>
             ))}
           </ul>
