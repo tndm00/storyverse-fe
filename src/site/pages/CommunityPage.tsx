@@ -6,6 +6,8 @@ import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { browseStories, type StorySort } from "../readerService";
 import { listRecentComments } from "../communityService";
 
+const vi = new Intl.NumberFormat("vi-VN");
+
 const TABS: { value: StorySort; label: string }[] = [
   { value: "publishedAt", label: "Mới đăng" },
   { value: "viewCount", label: "Xem nhiều" },
@@ -80,7 +82,13 @@ export function CommunityPage() {
                 <Link to={ROUTES.story(s.slug)} className="cb-trend-left">
                   <span className="cb-trend-title">{s.title}</span>
                 </Link>
-                <span className="cb-trend-views">{fromNowVi(s.publishedAt)}</span>
+                <span className="cb-trend-views">
+                  {sort === "viewCount"
+                    ? s.reads
+                    : sort === "commentCount"
+                      ? `${vi.format(s.commentCount)} bình luận`
+                      : fromNowVi(s.publishedAt)}
+                </span>
               </li>
             ))}
           </ul>
@@ -117,20 +125,6 @@ export function CommunityPage() {
             ))}
           </ul>
         )}
-      </section>
-
-      <section className="cb-section" style={{ paddingTop: 0 }}>
-        <div className="cb-cta-band">
-          <div>
-            <h2>Muốn góp mặt trong cộng đồng?</h2>
-            <p>Tham gia để bình luận, theo dõi người kể yêu thích và nhận thông báo truyện mới.</p>
-          </div>
-          <div className="cb-cta-actions">
-            <button type="button" className="cb-btn">
-              Tham gia cộng đồng
-            </button>
-          </div>
-        </div>
       </section>
     </>
   );
