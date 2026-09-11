@@ -64,12 +64,17 @@ export function CommunityPage() {
           <span className="cb-trend-sub">{storyCount} truyện</span>
         </div>
 
-        {storiesLoading ? (
+        {storiesLoading && !page ? (
           <p className="cb-page-intro">Đang tải truyện…</p>
         ) : stories.length === 0 ? (
           <p className="cb-page-intro">Chưa có truyện nào.</p>
         ) : (
-          <ul className="cb-trend">
+          // Switching tabs re-fetches (storiesLoading flips true) but the
+          // previous page's items stay in `page` until the new ones land —
+          // keep rendering them, just dimmed, instead of swapping the whole
+          // list for a loading line (that unmount/remount is what caused the
+          // jarring flicker/height-jump when clicking between tabs).
+          <ul className="cb-trend" style={storiesLoading ? { opacity: 0.5 } : undefined}>
             {stories.map((s) => (
               <li key={s.slug}>
                 <Link to={ROUTES.story(s.slug)} className="cb-trend-left">
