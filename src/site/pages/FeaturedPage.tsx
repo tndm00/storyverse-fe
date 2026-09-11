@@ -2,16 +2,11 @@ import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { listStories, trendingStories } from "../readerService";
-import { StoryCard } from "../components/StoryCard";
+import { StoryListRow } from "../components/StoryListRow";
 
 export function FeaturedPage() {
-  // Highest-rated stories from the Content service; the top one is the spotlight,
-  // the rest fill the grid below it.
-  const { data: picks } = useAsyncQuery(() => listStories({ sort: "ratingAvg", pageSize: 7 }), []);
-  const { data: trending } = useAsyncQuery(() => trendingStories(5), []);
-
-  const spotlight = picks && picks.length > 0 ? picks[0] : null;
-  const grid = picks && picks.length > 1 ? picks.slice(1) : [];
+  const { data: picks } = useAsyncQuery(() => listStories({ sort: "ratingAvg", pageSize: 10 }), []);
+  const { data: trending } = useAsyncQuery(() => trendingStories(10), []);
 
   return (
     <>
@@ -25,34 +20,20 @@ export function FeaturedPage() {
       </section>
 
       <section className="cb-section" style={{ paddingTop: 0 }}>
-        {spotlight ? (
-          <div className="cb-spotlight">
-            <div className="cb-spotlight-content">
-              <div className="cb-body-head">
-                <span className="cb-kicker">{spotlight.kicker}</span>
-                {spotlight.ratingLabel ? (
-                  <span className="cb-rating-badge">{spotlight.ratingLabel}</span>
-                ) : null}
-              </div>
-              <h2>{spotlight.title}</h2>
-              {spotlight.description ? <p className="cb-excerpt">{spotlight.description}</p> : null}
-              <div className="cb-meta">{spotlight.reads}</div>
-              <Link to={ROUTES.story(spotlight.slug)} className="cb-btn">
-                Đọc ngay
-              </Link>
-            </div>
-          </div>
-        ) : picks === null ? (
-          <p className="cb-page-intro">Đang tải truyện…</p>
-        ) : (
-          <p className="cb-page-intro">Chưa có truyện nào được đánh giá.</p>
-        )}
-
-        <div className="cb-featured-grid">
-          {grid.map((story) => (
-            <StoryCard key={story.slug} story={story} />
-          ))}
+        <div className="cb-section-head">
+          <h2>Đánh giá cao</h2>
         </div>
+        {picks === null ? (
+          <p className="cb-page-intro">Đang tải truyện…</p>
+        ) : picks.length === 0 ? (
+          <p className="cb-page-intro">Chưa có truyện nào được đánh giá.</p>
+        ) : (
+          <ul className="cb-trend">
+            {picks.map((s) => (
+              <StoryListRow key={s.slug} story={s} />
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="cb-section" style={{ paddingTop: 0 }}>

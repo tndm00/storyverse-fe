@@ -212,210 +212,13 @@
   margin: 10px 0 0;
 }
 
-.cb-hero-grid {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  align-items: start;
-  gap: 16px;
-}
-
-.cb-card {
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius);
-  background: var(--cb-raised);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition:
-    border-color 0.3s ease,
-    transform 0.3s ease;
-}
-.cb-card:hover {
-  border-color: var(--cb-accent);
-  transform: translateY(-2px);
-}
-
-.cb-card .cb-media {
-  position: relative;
-  background:
-    radial-gradient(120% 90% at 15% 10%, rgba(208, 145, 93, 0.18), transparent 55%),
-    linear-gradient(200deg, #2a2320 0%, #14100e 60%, #0b0908 100%);
-  padding: 22px 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-/* No story has a real cover image yet — deterministic per-story tint
-   (storyVisuals.gradientVariant) so cards don't all look identical. */
-.cb-card .cb-media[data-variant="1"] {
-  background:
-    radial-gradient(120% 90% at 85% 10%, rgba(93, 130, 208, 0.16), transparent 55%),
-    linear-gradient(200deg, #201f2a 0%, #100e14 60%, #08080b 100%);
-}
-.cb-card .cb-media[data-variant="2"] {
-  background:
-    radial-gradient(120% 90% at 15% 90%, rgba(139, 93, 208, 0.16), transparent 55%),
-    linear-gradient(200deg, #241f2a 0%, #130e14 60%, #09080b 100%);
-}
-.cb-card .cb-media[data-variant="3"] {
-  background:
-    radial-gradient(120% 90% at 85% 90%, rgba(93, 208, 165, 0.14), transparent 55%),
-    linear-gradient(200deg, #1e2a24 0%, #0e1411 60%, #080b09 100%);
-}
-.cb-card.cb-feature .cb-media {
-  min-height: 220px;
-}
-.cb-card.cb-side .cb-media {
-  min-height: 110px;
-}
-
-.cb-dropcap {
-  font-family: "Spectral", serif;
-  font-weight: 700;
-  color: rgba(222, 216, 207, 0.5);
-  line-height: 1;
-}
-.cb-card.cb-feature .cb-dropcap {
-  font-size: 64px;
-}
-.cb-card.cb-side .cb-dropcap {
-  font-size: 40px;
-}
-
-/* Genre-icon placeholder — replaces the plain first-letter .cb-dropcap so an
-   uncovered story reads as "a horror story about X" instead of a stray
-   letter that looks like a broken image. */
-.cb-genre-icon {
-  line-height: 1;
-  filter: grayscale(15%) opacity(0.85);
-}
-.cb-card.cb-feature .cb-genre-icon {
-  font-size: 56px;
-}
-.cb-card.cb-side .cb-genre-icon {
-  font-size: 34px;
-}
-
-.cb-readchip {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  padding: 3px 8px;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(222, 216, 207, 0.15);
-  border-radius: 4px;
-  font-size: 12px;
-  color: #cbbfae;
-}
-
-.cb-card .cb-body {
-  padding: 16px 18px 18px;
-}
-/* Text-only card (no cover-image area — see .cb-body-head below for why):
-   kicker + rating share one row instead of the rating badge floating over
-   a now-removed media section. */
-.cb-body-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.cb-rating-badge {
-  flex-shrink: 0;
-  padding: 2px 7px;
-  background: rgba(208, 145, 93, 0.12);
-  border: 1px solid rgba(222, 216, 207, 0.15);
-  border-radius: 4px;
-  font-size: 12px;
-  color: #cbbfae;
-}
-.cb-card .cb-kicker {
-  font-size: 12px;
-  color: var(--cb-accent-soft);
-  margin-bottom: 6px;
-}
-.cb-body-head .cb-kicker {
-  margin-bottom: 0;
-}
-.cb-card h3 {
-  font-family: "Spectral", serif;
-  font-size: 17px;
-  line-height: 1.4;
-  color: var(--cb-text);
-}
-.cb-card.cb-feature h3 {
-  font-size: 20px;
-}
-.cb-card .cb-excerpt {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--cb-muted);
-  line-height: 1.55;
-}
-.cb-card .cb-meta {
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--cb-muted);
-}
-
-.cb-side-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Prev/Next text-button pager (e.g. /browse) — deliberately separate from
-   .cb-dots, whose `button` rule forces a fixed 22x22px circle meant for the
-   hero carousel's dot/arrow icons and breaks real-text buttons. */
+/* Prev/Next text-button pager (e.g. /browse). */
 .cb-pagination {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
   margin-top: 22px;
-}
-
-.cb-dots {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 22px;
-}
-.cb-dots button {
-  width: 22px;
-  height: 22px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--cb-muted);
-  padding: 0;
-}
-.cb-dots .cb-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--cb-border);
-  transition: all 0.3s ease;
-}
-.cb-dots button.is-active .cb-dot {
-  background: var(--cb-accent);
-  width: 16px;
-  border-radius: 4px;
-}
-.cb-dots .cb-arrow {
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--cb-border);
-  border-radius: 50%;
-}
-.cb-dots .cb-arrow:hover {
-  border-color: var(--cb-accent);
-  color: var(--cb-accent-soft);
 }
 
 /* ---------- section: trending ---------- */
@@ -476,6 +279,14 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.cb-trend-kicker {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border: 1px solid var(--cb-border);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--cb-accent-soft);
 }
 .cb-trend a:hover .cb-trend-title {
   color: var(--cb-accent-soft);
@@ -590,85 +401,6 @@
 .cb-trend-sub {
   font-size: 13px;
   color: var(--cb-muted);
-}
-
-/* ---------- Nổi bật ---------- */
-.cb-spotlight {
-  display: grid;
-  grid-template-columns: 1fr;
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius);
-  overflow: hidden;
-  background: var(--cb-raised);
-}
-.cb-spotlight .cb-media {
-  min-height: 100%;
-  padding: 26px;
-  position: relative;
-  background:
-    radial-gradient(120% 90% at 15% 10%, rgba(208, 145, 93, 0.18), transparent 55%),
-    linear-gradient(200deg, #2a2320 0%, #14100e 60%, #0b0908 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-.cb-spotlight .cb-dropcap {
-  font-size: 76px;
-}
-.cb-spotlight .cb-genre-icon {
-  font-size: 64px;
-}
-.cb-spotlight-content {
-  padding: 28px 30px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.cb-spotlight-content .cb-kicker {
-  font-size: 12px;
-  color: var(--cb-accent-soft);
-  margin-bottom: 8px;
-}
-.cb-spotlight-content h2 {
-  font-size: 24px;
-  line-height: 1.35;
-  color: var(--cb-text);
-}
-.cb-spotlight-content .cb-excerpt {
-  margin-top: 12px;
-  color: var(--cb-muted);
-}
-.cb-spotlight-content .cb-meta {
-  margin-top: 14px;
-  font-size: 13px;
-  color: var(--cb-muted);
-}
-.cb-spotlight-content .cb-btn {
-  margin-top: 18px;
-  align-self: flex-start;
-}
-
-.cb-featured-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  align-items: start;
-  gap: 16px;
-  margin-top: 24px;
-}
-/* Denser variant for lists sized to page nicely in 2 rows (e.g. /browse at
-   pageSize 12). Falls back to the same 2-col/1-col responsive breakpoints as
-   .cb-featured-grid since those target the base class too. */
-.cb-featured-grid.cb-grid-dense {
-  grid-template-columns: repeat(6, 1fr);
-}
-.cb-card.cb-grid-item .cb-media {
-  min-height: 110px;
-}
-.cb-card.cb-grid-item .cb-dropcap {
-  font-size: 40px;
-}
-.cb-card.cb-grid-item .cb-genre-icon {
-  font-size: 34px;
 }
 
 /* ---------- Theo chủ đề ---------- */
@@ -1483,20 +1215,11 @@ textarea.cb-input {
   .canhba .cb-nav-toggle {
     display: flex;
   }
-  .canhba .cb-hero-grid {
-    grid-template-columns: 1fr;
-  }
-  .canhba .cb-featured-grid {
-    grid-template-columns: 1fr 1fr;
-  }
   .canhba .cb-topic-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .canhba .cb-contributor-grid {
     grid-template-columns: 1fr 1fr;
-  }
-  .canhba .cb-spotlight {
-    grid-template-columns: 1fr;
   }
   .canhba .cb-submit-grid {
     grid-template-columns: 1fr;
@@ -1514,7 +1237,6 @@ textarea.cb-input {
     flex-direction: column;
     align-items: flex-start;
   }
-  .canhba .cb-featured-grid,
   .canhba .cb-topic-grid,
   .canhba .cb-contributor-grid {
     grid-template-columns: 1fr;

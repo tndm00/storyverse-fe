@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { authenticationApi } from "@/services/api/authenticationApi";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { browseStories } from "../readerService";
-import { StoryCard } from "../components/StoryCard";
+import { StoryListRow } from "../components/StoryListRow";
 import { NotFoundPage } from "@/components/NotFoundPage";
 
 interface PublicAuthor {
@@ -64,11 +64,11 @@ export function AuthorProfilePage() {
         {!stories || stories.items.length === 0 ? (
           <p className="cb-page-intro">Tác giả chưa có truyện công khai nào.</p>
         ) : (
-          <div className="cb-featured-grid">
+          <ul className="cb-trend">
             {stories.items.map((s) => (
-              <StoryCard key={s.slug} story={s} />
+              <StoryListRow key={s.slug} story={s} />
             ))}
-          </div>
+          </ul>
         )}
       </section>
     </>

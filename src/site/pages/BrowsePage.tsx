@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { browseStories, listGenres, type StorySort } from "../readerService";
-import { StoryCard } from "../components/StoryCard";
+import { StoryListRow } from "../components/StoryListRow";
 
 const SORTS: { value: StorySort; label: string }[] = [
   { value: "publishedAt", label: "Mới nhất" },
@@ -47,7 +47,7 @@ export function BrowsePage() {
         status: status || undefined,
         sort,
         pageNumber: page,
-        pageSize: 12,
+        pageSize: 20,
       }),
     [genreSlug, status, sort, page],
   );
@@ -100,11 +100,11 @@ export function BrowsePage() {
           <p className="cb-page-intro">Không có truyện nào khớp bộ lọc.</p>
         ) : (
           <>
-            <div className="cb-featured-grid cb-grid-dense">
+            <ul className="cb-trend">
               {data.items.map((s) => (
-                <StoryCard key={s.slug} story={s} />
+                <StoryListRow key={s.slug} story={s} />
               ))}
-            </div>
+            </ul>
             {data.totalPages > 1 ? (
               <div className="cb-pagination" style={{ marginTop: 24 }}>
                 <button
