@@ -3,6 +3,7 @@ import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { listStories, trendingStories } from "../readerService";
 import { StoryCard } from "../components/StoryCard";
+import { genreIcon, gradientVariant } from "../storyVisuals";
 
 export function FeaturedPage() {
   // Highest-rated stories from the Content service; the top one is the spotlight,
@@ -27,12 +28,12 @@ export function FeaturedPage() {
       <section className="cb-section" style={{ paddingTop: 0 }}>
         {spotlight ? (
           <div className="cb-spotlight">
-            <div className="cb-media">
+            <div className="cb-media" data-variant={gradientVariant(spotlight.slug)}>
               {spotlight.ratingLabel ? (
                 <span className="cb-readchip">{spotlight.ratingLabel}</span>
               ) : null}
-              <span className="cb-dropcap" aria-hidden="true">
-                {spotlight.letter}
+              <span className="cb-genre-icon" aria-hidden="true">
+                {genreIcon(spotlight.kicker)}
               </span>
             </div>
             <div className="cb-spotlight-content">

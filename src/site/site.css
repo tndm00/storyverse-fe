@@ -244,6 +244,23 @@
   flex-direction: column;
   justify-content: flex-end;
 }
+/* No story has a real cover image yet — deterministic per-story tint
+   (storyVisuals.gradientVariant) so cards don't all look identical. */
+.cb-card .cb-media[data-variant="1"] {
+  background:
+    radial-gradient(120% 90% at 85% 10%, rgba(93, 130, 208, 0.16), transparent 55%),
+    linear-gradient(200deg, #201f2a 0%, #100e14 60%, #08080b 100%);
+}
+.cb-card .cb-media[data-variant="2"] {
+  background:
+    radial-gradient(120% 90% at 15% 90%, rgba(139, 93, 208, 0.16), transparent 55%),
+    linear-gradient(200deg, #241f2a 0%, #130e14 60%, #09080b 100%);
+}
+.cb-card .cb-media[data-variant="3"] {
+  background:
+    radial-gradient(120% 90% at 85% 90%, rgba(93, 208, 165, 0.14), transparent 55%),
+    linear-gradient(200deg, #1e2a24 0%, #0e1411 60%, #080b09 100%);
+}
 .cb-card.cb-feature .cb-media {
   min-height: 220px;
 }
@@ -262,6 +279,20 @@
 }
 .cb-card.cb-side .cb-dropcap {
   font-size: 40px;
+}
+
+/* Genre-icon placeholder — replaces the plain first-letter .cb-dropcap so an
+   uncovered story reads as "a horror story about X" instead of a stray
+   letter that looks like a broken image. */
+.cb-genre-icon {
+  line-height: 1;
+  filter: grayscale(15%) opacity(0.85);
+}
+.cb-card.cb-feature .cb-genre-icon {
+  font-size: 56px;
+}
+.cb-card.cb-side .cb-genre-icon {
+  font-size: 34px;
 }
 
 .cb-readchip {
@@ -561,6 +592,9 @@
 .cb-spotlight .cb-dropcap {
   font-size: 76px;
 }
+.cb-spotlight .cb-genre-icon {
+  font-size: 64px;
+}
 .cb-spotlight-content {
   padding: 28px 30px;
   display: flex;
@@ -608,6 +642,9 @@
 }
 .cb-card.cb-grid-item .cb-dropcap {
   font-size: 40px;
+}
+.cb-card.cb-grid-item .cb-genre-icon {
+  font-size: 34px;
 }
 
 /* ---------- Theo chủ đề ---------- */
