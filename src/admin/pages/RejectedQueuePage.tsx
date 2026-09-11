@@ -16,9 +16,10 @@ const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 // Dedicated admin page for chapters a moderator rejected — separate from the
 // open queue (ReviewQueuePage) since a rejected chapter has already left the
-// review workflow. Lets a moderator re-approve straight from the list
-// (backend approve now accepts Rejected -> Published) instead of hunting the
-// item down in the mixed queue's status dropdown.
+// review workflow. Backend approve only runs on InReview chapters, so
+// re-reviewing a Rejected one requires startReview() first to move it back
+// to InReview; the moderator then approves/rejects it normally from the
+// Review Queue.
 export function RejectedQueuePage() {
   const navigate = useNavigate();
   const { modal } = App.useApp();
@@ -27,7 +28,7 @@ export function RejectedQueuePage() {
   const [page, setPage] = useState(1);
   const [reapprovingId, setReapprovingId] = useState<string | null>(null);
 
-  const { data, loading, refetch } = useAsyncQuery(
+  const { data, loading } = useAsyncQuery(
     () => reviewService.listRejected({ pageNumber: page, pageSize: PAGE_SIZE, q }),
     [page, q],
   );
@@ -47,13 +48,13 @@ export function RejectedQueuePage() {
           <Text type="secondary">{MESSAGES.review.reapproveConfirmContent}</Text>
         </>
       ),
-      okText: "Duyệt lại",
+      okText: "Đưa về hàng đợi",
       onOk: () => {
         setReapprovingId(row.id);
         return run(
-          () => reviewService.approve(row.id),
+          () => reviewService.startReview(row.id),
           MESSAGES.review.reapproved,
-          refetch,
+          () => navigate(ROUTES.admin.reviewQueue),
         ).finally(() => setReapprovingId(null));
       },
     });
@@ -108,7 +109,7 @@ export function RejectedQueuePage() {
           }}
           data-testid={`reapprove-${row.id}`}
         >
-          Duyệt lại
+          Đưa về hàng đợi duyệt
         </Button>
       ),
     },
@@ -118,7 +119,7 @@ export function RejectedQueuePage() {
     <div>
       <AppPageHeader
         title={LABELS.rejectedQueue}
-        subtitle="Chương đã bị từ chối — duyệt lại để xuất bản ngay, bỏ qua bước gửi lại của tác giả"
+        subtitle="Chương đã bị từ chối — đưa về hàng đợi duyệt để xử lý lại, bỏ qua bước gửi lại của tác giả"
         extra={
           <Button onClick={() => navigate(ROUTES.admin.reviewQueue)}>{LABELS.reviewQueue}</Button>
         }

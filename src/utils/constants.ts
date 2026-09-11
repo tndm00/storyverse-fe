@@ -175,9 +175,10 @@ export const MESSAGES = {
     started: "Review started",
     approved: "Approved & published",
     rejected: "Submission rejected",
-    reapproveConfirmTitle: "Duyệt lại chương này?",
-    reapproveConfirmContent: "Chương sẽ chuyển thẳng sang Published, bỏ qua trạng thái Bị từ chối.",
-    reapproved: "Đã duyệt lại và xuất bản",
+    reapproveConfirmTitle: "Đưa chương này về hàng đợi duyệt?",
+    reapproveConfirmContent:
+      "Chương sẽ chuyển từ Bị từ chối về Đang chờ duyệt. Bạn sẽ Duyệt/Từ chối lại từ Hàng đợi duyệt.",
+    reapproved: "Đã đưa chương về hàng đợi duyệt",
   },
   report: {
     notFound: "Report not found.",

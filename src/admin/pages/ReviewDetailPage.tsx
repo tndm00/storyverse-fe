@@ -93,8 +93,11 @@ export function ReviewDetailPage() {
     modal.confirm({
       title: MESSAGES.review.reapproveConfirmTitle,
       content: MESSAGES.review.reapproveConfirmContent,
-      okText: "Duyệt lại",
-      onOk: () => run(() => reviewService.approve(id), MESSAGES.review.reapproved, refetch),
+      okText: "Đưa về hàng đợi",
+      onOk: () =>
+        run(() => reviewService.startReview(id), MESSAGES.review.reapproved, () =>
+          navigate(ROUTES.admin.reviewQueue),
+        ),
     });
   };
 
@@ -117,7 +120,7 @@ export function ReviewDetailPage() {
                 data-testid="reapprove"
                 onClick={reapprove}
               >
-                Duyệt lại
+                Đưa về hàng đợi duyệt
               </Button>
             ) : null}
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTES.admin.reviewQueue)}>
