@@ -98,15 +98,15 @@ export const ADMIN_BASE_PATH = "console-7f2k";
 export const ROUTES = {
   // public reader site
   home: "/",
-  browse: "/browse",
-  featured: "/featured",
-  topics: "/topics",
-  community: "/community",
-  submit: "/submit",
-  library: "/library",
-  story: (slug: string) => `/story/${slug}`,
-  chapter: (slug: string, order: string | number) => `/story/${slug}/chapter/${order}`,
-  author: (id: string | number) => `/author/${id}`,
+  browse: "/kham-pha",
+  featured: "/noi-bat",
+  topics: "/theo-chu-de",
+  community: "/cong-dong",
+  submit: "/dang-truyen",
+  library: "/tu-truyen",
+  story: (slug: string) => `/truyen/${slug}`,
+  chapter: (slug: string, order: string | number) => `/truyen/${slug}/chuong/${order}`,
+  author: (id: string | number) => `/nguoi-ke/${id}`,
 
   // reader-site account + author workspace
   account: "/tai-khoan",
