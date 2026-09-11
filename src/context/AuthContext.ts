@@ -7,6 +7,8 @@ export interface AuthContextValue {
   booting: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AdminUser>;
+  // Sign in with a Google ID token (Google Identity Services credential).
+  loginWithGoogle: (idToken: string) => Promise<AdminUser>;
   // Register + self-authenticate from the returned token pair.
   register: (email: string, password: string, displayName: string) => Promise<AdminUser>;
   logout: () => void;

@@ -83,6 +83,14 @@ export async function login(email: string, password: string): Promise<LoginResul
   return resolveSession(tokens);
 }
 
+// Sign in with a Google ID token (JWT credential from Google Identity
+// Services). The backend validates it and returns the same LoginResponseDto
+// shape as a normal email/password login.
+export async function loginWithGoogle(idToken: string): Promise<LoginResult> {
+  const tokens = await authenticationApi.googleLogin(idToken);
+  return resolveSession(tokens);
+}
+
 // Register now returns a token pair (Batch 3) — self-authenticate. Falls back to
 // an explicit login when an older backend omits the tokens.
 export async function registerAndLogin(input: {

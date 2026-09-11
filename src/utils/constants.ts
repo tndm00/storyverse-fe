@@ -160,6 +160,7 @@ export const SITE_LABELS = {
 export const MESSAGES = {
   auth: {
     invalidCredentials: "Invalid email or password.",
+    googleLoginFailed: "Đăng nhập bằng Google thất bại. Vui lòng thử lại.",
     notAllowed: "This account is not allowed in the admin console.",
     sessionExpired: "Session expired.",
     invalidSession: "Invalid session.",
