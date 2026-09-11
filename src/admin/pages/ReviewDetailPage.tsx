@@ -181,11 +181,7 @@ export function ReviewDetailPage() {
                 disabled={!canDecide}
                 loading={busy}
                 data-testid="approve-publish"
-                onClick={() =>
-                  run(() => reviewService.approve(id), MESSAGES.review.approved, () =>
-                    navigate(ROUTES.admin.stories),
-                  )
-                }
+                onClick={() => run(() => reviewService.approve(id), MESSAGES.review.approved, refetch)}
               >
                 Approve &amp; publish
               </Button>
