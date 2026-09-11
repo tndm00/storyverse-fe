@@ -47,7 +47,7 @@ export function BrowsePage() {
         status: status || undefined,
         sort,
         pageNumber: page,
-        pageSize: 24,
+        pageSize: 12,
       }),
     [genreSlug, status, sort, page],
   );
@@ -100,7 +100,7 @@ export function BrowsePage() {
           <p className="cb-page-intro">Không có truyện nào khớp bộ lọc.</p>
         ) : (
           <>
-            <div className="cb-featured-grid">
+            <div className="cb-featured-grid cb-grid-dense">
               {data.items.map((s) => (
                 <StoryCard key={s.slug} story={s} />
               ))}

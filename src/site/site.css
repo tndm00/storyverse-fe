@@ -586,6 +586,12 @@
   gap: 16px;
   margin-top: 24px;
 }
+/* Denser variant for lists sized to page nicely in 2 rows (e.g. /browse at
+   pageSize 12). Falls back to the same 2-col/1-col responsive breakpoints as
+   .cb-featured-grid since those target the base class too. */
+.cb-featured-grid.cb-grid-dense {
+  grid-template-columns: repeat(6, 1fr);
+}
 .cb-card.cb-grid-item .cb-media {
   min-height: 110px;
 }
