@@ -17,12 +17,20 @@
   --cb-shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.45);
 
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background: var(--cb-surface);
   color: var(--cb-text);
   font-family: "Be Vietnam Pro", system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.62;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Pins the footer to the bottom of the viewport on short pages (e.g. the
+   Submit success card) instead of leaving a blank gap below it. */
+.canhba > main {
+  flex: 1 0 auto;
 }
 
 :root[data-cb-theme="light"] .canhba {
@@ -602,6 +610,8 @@
   background: var(--cb-raised);
   padding: 26px;
   box-shadow: var(--cb-shadow-soft);
+  margin-left: auto;
+  margin-right: auto;
 }
 .cb-field {
   margin-bottom: 16px;
