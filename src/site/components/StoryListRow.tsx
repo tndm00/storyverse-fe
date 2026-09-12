@@ -16,6 +16,7 @@ export function StoryListRow({ story }: { story: ReaderStory }) {
       <span className="cb-trend-views">
         {story.reads}
         {story.ratingLabel ? ` · ${story.ratingLabel}` : ""}
+        {story.chapterCount > 1 ? ` · ${story.chapterCount} chương` : ""}
       </span>
     </li>
   );

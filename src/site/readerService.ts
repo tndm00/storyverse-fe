@@ -19,6 +19,7 @@ interface StorySummaryDto {
   ratingAvg: number;
   ratingCount: number;
   commentCount?: number;
+  chapterCount?: number;
   publishedAt: string | null;
 }
 
@@ -78,6 +79,7 @@ export interface ReaderStory {
   letter: string;
   viewCount: number;
   commentCount: number;
+  chapterCount: number;
   publishedAt: string | null;
 }
 
@@ -139,6 +141,7 @@ function summaryToReader(dto: StorySummaryDto): ReaderStory {
     letter: (dto.title.trim()[0] || "•").toUpperCase(),
     viewCount: dto.viewCount,
     commentCount: dto.commentCount ?? 0,
+    chapterCount: dto.chapterCount ?? 0,
     publishedAt: dto.publishedAt,
   };
 }
