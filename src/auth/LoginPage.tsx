@@ -4,9 +4,9 @@ import { Alert, Button, Card, Form, Input, Typography } from "antd";
 import { LockOutlined, SafetyCertificateOutlined, UserOutlined } from "@ant-design/icons";
 import { useAuth } from "@/hooks/useAuth";
 import { canUseAdminConsole } from "@/services/authService";
-import { DEMO_CREDENTIALS, MESSAGES, ROUTES } from "@/utils/constants";
+import { MESSAGES, ROUTES } from "@/utils/constants";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 export function LoginPage() {
   const { isAuthenticated, login, logout } = useAuth();
@@ -60,11 +60,7 @@ export function LoginPage() {
           <Alert style={{ marginBottom: 16 }} type="error" showIcon message={error} />
         ) : null}
 
-        <Form
-          layout="vertical"
-          onFinish={onFinish}
-          initialValues={{ email: DEMO_CREDENTIALS.email, password: "" }}
-        >
+        <Form layout="vertical" onFinish={onFinish}>
           <Form.Item
             label="Email"
             name="email"
@@ -75,7 +71,7 @@ export function LoginPage() {
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder={DEMO_CREDENTIALS.email}
+              placeholder="you@example.com"
               autoComplete="username"
               data-testid="login-email"
             />
@@ -104,10 +100,6 @@ export function LoginPage() {
             </Button>
           </Form.Item>
         </Form>
-
-        <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 0, textAlign: "center" }}>
-          Demo: <code>{DEMO_CREDENTIALS.email}</code> / <code>{DEMO_CREDENTIALS.password}</code>
-        </Paragraph>
       </Card>
     </div>
   );

@@ -74,9 +74,6 @@ export const BEARER_TOKEN_TYPE = "Bearer";
 // names ("PlatformAdmin") pass — see src/services/authService.ts.
 export const ADMIN_CONSOLE_ROLES = ["PlatformAdmin", "Moderator"] as const;
 
-// Shown on the login screen (seeded backend admin account).
-export const DEMO_CREDENTIALS = { email: "admin@storyverse.local", password: "admin123" };
-
 // ---------------------------------------------------------------------------
 // Pagination / timing
 // ---------------------------------------------------------------------------
