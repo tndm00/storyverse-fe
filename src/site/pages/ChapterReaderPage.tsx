@@ -82,13 +82,13 @@ export function ChapterReaderPage() {
             className="cb-btn cb-ghost cb-btn-sm"
             onClick={() => setReporting((v) => !v)}
           >
-            Báo cáo chương
+            {isStandalone ? "Báo cáo truyện" : "Báo cáo chương"}
           </button>
         </div>
         {reporting ? (
           <ReportDialog
-            targetType="Chapter"
-            targetId={chapterId}
+            targetType={isStandalone ? "Story" : "Chapter"}
+            targetId={isStandalone ? (story?.id ?? chapterId) : chapterId}
             onClose={() => setReporting(false)}
           />
         ) : null}
