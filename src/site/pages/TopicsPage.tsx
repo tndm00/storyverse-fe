@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { listGenres, listStories, type GenreOption } from "../readerService";
 
 function TagIcon() {
@@ -32,6 +33,13 @@ export function TopicsPage() {
   );
 
   const activeGenre = genres?.find((g) => g.slug === active);
+
+  useDocumentMeta(
+    activeGenre ? `Truyện ma thể loại ${activeGenre.name}` : "Theo chủ đề",
+    activeGenre
+      ? `Đọc truyện ma thể loại ${activeGenre.name} trên Truyện ma Canh Ba.`
+      : "Chọn một thể loại để xem những câu chuyện ma cùng loại.",
+  );
 
   return (
     <>

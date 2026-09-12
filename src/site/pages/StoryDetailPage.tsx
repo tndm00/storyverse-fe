@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { getStoryDetail } from "../readerService";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { StoryEngagementBar } from "../components/story/StoryEngagementBar";
@@ -13,13 +14,36 @@ export function StoryDetailPage() {
   const { data, loading } = useAsyncQuery(() => getStoryDetail(slug), [slug]);
   const [reporting, setReporting] = useState(false);
 
+  const description = data?.description || `Đọc truyện ma "${data?.title ?? ""}" trên Truyện ma Canh Ba.`;
+  useDocumentMeta(data?.title ?? "", data ? description : undefined);
+
   if (loading) return <p className="cb-page-intro">Đang tải…</p>;
   if (!data) return <NotFoundPage />;
 
   const firstChapter = data.chapters[0];
+  const authorName = data.guestAuthorName ?? data.authorPenName ?? undefined;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Book",
+    name: data.title,
+    description: data.description || undefined,
+    inLanguage: "vi",
+    genre: data.genres.map((g) => g.name),
+    ...(authorName ? { author: { "@type": "Person", name: authorName } } : {}),
+    ...(data.ratingLabel.includes("★")
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: data.ratingLabel.replace(" ★", ""),
+            bestRating: "5",
+          },
+        }
+      : {}),
+  };
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <section className="cb-section">
         <div className="cb-hero-head">
           <div className="cb-kicker">{data.kicker}</div>

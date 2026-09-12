@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { listStories, trendingStories } from "../readerService";
 import { StoryListRow } from "../components/StoryListRow";
 
 export function FeaturedPage() {
   const { data: picks } = useAsyncQuery(() => listStories({ sort: "ratingAvg", pageSize: 10 }), []);
   const { data: trending } = useAsyncQuery(() => trendingStories(10), []);
+
+  useDocumentMeta("Truyện ma nổi bật", "Những truyện ma được đánh giá cao và đọc nhiều nhất trên Truyện ma Canh Ba.");
 
   return (
     <>

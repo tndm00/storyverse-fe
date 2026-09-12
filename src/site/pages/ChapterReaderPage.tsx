@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { getChapterContent, getStoryDetail } from "../readerService";
 import { getReadingProgress, saveReadingProgress } from "../libraryService";
 import { NotFoundPage } from "@/components/NotFoundPage";
@@ -60,6 +61,14 @@ export function ChapterReaderPage() {
   const resumeChapter = useMemo(
     () => story?.chapters.find((c) => c.id === resumeChapterId) ?? null,
     [story, resumeChapterId],
+  );
+
+  useDocumentMeta(
+    chapter && story
+      ? chapter.order <= 1
+        ? story.title
+        : `Chương ${chapter.order}: ${chapter.title} — ${story.title}`
+      : "",
   );
 
   if (loading) return <p className="cb-page-intro">Đang tải chương…</p>;

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /console-7f2k
+Disallow: /login
+Disallow: /tai-khoan
+
+Sitemap: https://truyenmacanh3.com/sitemap.xml

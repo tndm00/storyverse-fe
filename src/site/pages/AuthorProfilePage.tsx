@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { authenticationApi } from "@/services/api/authenticationApi";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { browseStories } from "../readerService";
 import { StoryListRow } from "../components/StoryListRow";
 import { NotFoundPage } from "@/components/NotFoundPage";
@@ -36,6 +37,11 @@ export function AuthorProfilePage() {
   const { data: stories } = useAsyncQuery(
     () => browseStories({ authorProfileId: id, pageSize: 24 }),
     [id],
+  );
+
+  useDocumentMeta(
+    author ? `Tác giả ${author.penName}` : "",
+    author ? `Truyện của tác giả ${author.penName} trên Truyện ma Canh Ba.` : undefined,
   );
 
   if (state === "loading") return <p className="cb-page-intro">Đang tải…</p>;

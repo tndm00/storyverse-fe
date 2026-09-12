@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
+import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { browseStories, listGenres, type StorySort } from "../readerService";
 import { StoryListRow } from "../components/StoryListRow";
 
@@ -51,6 +52,8 @@ export function BrowsePage() {
       }),
     [genreSlug, status, sort, page],
   );
+
+  useDocumentMeta("Khám phá truyện ma", "Lọc truyện ma theo thể loại, trạng thái và sắp xếp mới nhất, đọc nhiều, đánh giá cao.");
 
   return (
     <>
