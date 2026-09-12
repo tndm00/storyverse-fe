@@ -133,7 +133,7 @@ export function AccountPage() {
           await login(email, password);
         }
       },
-      mode === "register" ? "Chào mừng bạn đến với Canh Ba" : "Đăng nhập thành công",
+      mode === "register" ? "Chào mừng bạn đến với Truyện ma Canh Ba" : "Đăng nhập thành công",
       () => navigate(from ?? ROUTES.account, { replace: true }),
     );
 

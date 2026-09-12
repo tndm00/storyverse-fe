@@ -148,7 +148,7 @@ export const LABELS = {
 
 // Reader-site (Canh Ba) branding.
 export const SITE_LABELS = {
-  brand: "Canh Ba",
+  brand: "Truyện ma Canh Ba",
   tagline: "Chuyện kể lúc nửa đêm",
   signIn: "Đăng nhập",
 } as const;
