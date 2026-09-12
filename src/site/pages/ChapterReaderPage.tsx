@@ -65,15 +65,17 @@ export function ChapterReaderPage() {
   if (loading) return <p className="cb-page-intro">Đang tải chương…</p>;
   if (!chapter) return <NotFoundPage />;
 
+  // A story with only one chapter reads as a standalone short story — the
+  // "Chương 1." prefix only makes sense once the author adds a second one.
+  const isStandalone = (story?.chapters.length ?? 0) <= 1;
+
   return (
     <article className="cb-reader">
       <div className="cb-reader-head">
         <Link to={ROUTES.story(slug)} className="cb-kicker">
           {story?.title ?? "Về trang truyện"}
         </Link>
-        <h1>
-          Chương {chapter.order}. {chapter.title}
-        </h1>
+        <h1>{isStandalone ? chapter.title : `Chương ${chapter.order}. ${chapter.title}`}</h1>
         <div className="cb-reader-head-actions">
           <button
             type="button"
