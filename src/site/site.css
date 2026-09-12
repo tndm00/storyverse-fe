@@ -1180,6 +1180,11 @@ textarea.cb-input {
   .canhba .cb-contributor-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+/* Narrower than the 900px breakpoint above on purpose — a half-screen laptop
+   window (~800-900px) should still get the Submit form's 2-column layout;
+   only genuinely narrow windows/phones stack it to 1 column. */
+@media (max-width: 720px) {
   .canhba .cb-submit-grid {
     grid-template-columns: 1fr;
   }
