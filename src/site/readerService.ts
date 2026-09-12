@@ -4,6 +4,7 @@
 // one place and the pages render the same shape regardless of endpoint.
 
 import { contentApi } from "@/services/api/contentApi";
+import { authenticationApi } from "@/services/api/authenticationApi";
 
 // ---- backend shapes (see Content.Application/Dtos) ----------------------
 
@@ -98,6 +99,8 @@ export interface ReaderStoryDetail extends ReaderStory {
   status: string;
   authorProfileId: number | null;
   guestAuthorName: string | null;
+  /** Real author's pen name, fetched from Authentication; null while it's still a guest story or the lookup failed. */
+  authorPenName: string | null;
   genres: ReaderGenreChip[];
   tags: string[];
   chapters: ReaderChapter[];
@@ -266,6 +269,14 @@ export async function getStoryDetail(slug: string): Promise<ReaderStoryDetail | 
       .filter((c) => c.status === "Published")
       .sort((a, b) => a.orderIndex - b.orderIndex);
 
+    const authorPenName =
+      dto.authorProfileId && dto.authorProfileId > 0
+        ? await authenticationApi
+            .getPublicAuthor(dto.authorProfileId)
+            .then((a) => a.penName)
+            .catch(() => null)
+        : null;
+
     return {
       ...summaryToReader(dto),
       id: dto.id,
@@ -273,6 +284,7 @@ export async function getStoryDetail(slug: string): Promise<ReaderStoryDetail | 
       status: dto.status,
       authorProfileId: dto.authorProfileId ?? null,
       guestAuthorName: dto.guestAuthorName ?? null,
+      authorPenName,
       genres: [...(dto.genres ?? [])]
         .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
         .map((g) => ({ name: g.name, slug: g.slug, isPrimary: g.isPrimary })),

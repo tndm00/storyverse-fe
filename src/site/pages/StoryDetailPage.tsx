@@ -39,7 +39,9 @@ export function StoryDetailPage() {
             ) : data.authorProfileId && data.authorProfileId > 0 ? (
               <>
                 <span>·</span>
-                <Link to={ROUTES.author(data.authorProfileId)}>Trang tác giả</Link>
+                <Link to={ROUTES.author(data.authorProfileId)}>
+                  bởi {data.authorPenName ?? "tác giả"}
+                </Link>
               </>
             ) : null}
           </div>
