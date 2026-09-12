@@ -57,10 +57,8 @@ export function SiteLayout() {
     <div className="canhba">
       <header className="cb-header">
         <div className="cb-wrap cb-header-row">
-          <Link to={ROUTES.home} className="cb-brand" aria-label="Canh Ba — trang chủ">
-            <span className="cb-brand-mark" aria-hidden="true">
-              CB
-            </span>
+          <Link to={ROUTES.home} className="cb-brand" aria-label="Truyện ma Canh Ba — trang chủ">
+            <img src="/favicon.svg" alt="" className="cb-brand-mark" width={34} height={34} />
             <span>
               <span className="cb-brand-name">{SITE_LABELS.brand}</span>
               <span className="cb-brand-tag">{SITE_LABELS.tagline}</span>
