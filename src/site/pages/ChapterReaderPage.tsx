@@ -65,9 +65,12 @@ export function ChapterReaderPage() {
   if (loading) return <p className="cb-page-intro">Đang tải chương…</p>;
   if (!chapter) return <NotFoundPage />;
 
-  // A story with only one chapter reads as a standalone short story — the
-  // "Chương 1." prefix only makes sense once the author adds a second one.
-  const isStandalone = (story?.chapters.length ?? 0) <= 1;
+  // Order 1 always reads as the story's standalone short-story opening — no
+  // "Chương 1." prefix, ever, even once a second chapter exists. Numbering
+  // only starts being meaningful from the 2nd chapter onward. A guest-
+  // published story can only ever have order 1 (guests can't add more), so
+  // this alone already makes every guest story a short story by default.
+  const isFirstChapter = chapter.order <= 1;
 
   return (
     <article className="cb-reader">
@@ -75,20 +78,20 @@ export function ChapterReaderPage() {
         <Link to={ROUTES.story(slug)} className="cb-kicker">
           {story?.title ?? "Về trang truyện"}
         </Link>
-        <h1>{isStandalone ? chapter.title : `Chương ${chapter.order}. ${chapter.title}`}</h1>
+        <h1>{isFirstChapter ? chapter.title : `Chương ${chapter.order}. ${chapter.title}`}</h1>
         <div className="cb-reader-head-actions">
           <button
             type="button"
             className="cb-btn cb-ghost cb-btn-sm"
             onClick={() => setReporting((v) => !v)}
           >
-            {isStandalone ? "Báo cáo truyện" : "Báo cáo chương"}
+            {isFirstChapter ? "Báo cáo truyện" : "Báo cáo chương"}
           </button>
         </div>
         {reporting ? (
           <ReportDialog
-            targetType={isStandalone ? "Story" : "Chapter"}
-            targetId={isStandalone ? (story?.id ?? chapterId) : chapterId}
+            targetType={isFirstChapter ? "Story" : "Chapter"}
+            targetId={isFirstChapter ? (story?.id ?? chapterId) : chapterId}
             onClose={() => setReporting(false)}
           />
         ) : null}
@@ -97,7 +100,10 @@ export function ChapterReaderPage() {
       {resumeChapter ? (
         <div className="cb-alert cb-alert-info" style={{ marginBottom: 16 }}>
           <span>
-            Bạn đang đọc dở Chương {resumeChapter.order}. {resumeChapter.title}
+            Bạn đang đọc dở{" "}
+            {resumeChapter.order <= 1
+              ? resumeChapter.title
+              : `Chương ${resumeChapter.order}. ${resumeChapter.title}`}
           </span>
           <Link
             to={ROUTES.chapter(slug, resumeChapter.id)}
