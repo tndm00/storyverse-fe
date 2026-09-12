@@ -606,6 +606,13 @@
   background: var(--cb-raised);
   padding: 26px;
   box-shadow: var(--cb-shadow-soft);
+}
+/* Only for pages that also set an inline maxWidth on the card (the Submit
+   success state, BecomeAuthor, Account) — margin:auto centers it. Applying
+   this to every .cb-form-card broke the Submit *form* card, which sits in a
+   CSS grid column with no maxWidth: an auto margin on a grid item makes it
+   shrink-to-content instead of stretching to fill the column. */
+.cb-form-card-centered {
   margin-left: auto;
   margin-right: auto;
 }

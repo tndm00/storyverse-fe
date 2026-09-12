@@ -92,7 +92,7 @@ export function AccountPage() {
             ))}
           </div>
         </div>
-        <div className="cb-form-card" style={{ maxWidth: 460 }}>
+        <div className="cb-form-card cb-form-card-centered" style={{ maxWidth: 460 }}>
           {isAuthor ? (
             <Link to={ROUTES.authorStudio} className="cb-btn cb-block">
               Truyện của tôi
@@ -146,7 +146,7 @@ export function AccountPage() {
         </p>
       </div>
 
-      <div className="cb-form-card" style={{ maxWidth: 460 }}>
+      <div className="cb-form-card cb-form-card-centered" style={{ maxWidth: 460 }}>
         <div className="cb-segmented">
           <button
             type="button"

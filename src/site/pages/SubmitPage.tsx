@@ -122,7 +122,7 @@ export function SubmitPage() {
   if (published) {
     return (
       <section className="cb-section">
-        <div className="cb-form-card cb-form-success" style={{ maxWidth: 520 }}>
+        <div className="cb-form-card cb-form-card-centered cb-form-success" style={{ maxWidth: 520 }}>
           <div className="cb-check" aria-hidden="true">
             <svg
               width="20"

@@ -80,7 +80,7 @@ export function BecomeAuthorPage() {
         </p>
       </div>
 
-      <div className="cb-form-card" style={{ maxWidth: 520 }}>
+      <div className="cb-form-card cb-form-card-centered" style={{ maxWidth: 520 }}>
         {needPassword ? (
           <form
             onSubmit={(e) => {
