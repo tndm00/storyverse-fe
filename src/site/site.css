@@ -729,8 +729,8 @@ textarea.cb-input {
   font-size: 26px;
 }
 .cb-reader-body {
-  font-size: var(--reader-font-size, 17px);
-  line-height: var(--reader-line-height, 1.85);
+  font-size: 17px;
+  line-height: 1.85;
 }
 .cb-reader-body p {
   margin: 0 0 1.4em;
@@ -752,70 +752,11 @@ textarea.cb-input {
   color: var(--cb-text, inherit);
 }
 
-/* reader view-scoped colour themes (do not affect the site theme) */
-.cb-reader[data-reader-theme="dark"],
-.cb-reader[data-reader-theme="sepia"] {
-  padding-inline: clamp(16px, 4vw, 40px);
-  border-radius: var(--cb-radius);
-}
-.cb-reader[data-reader-theme="dark"] {
-  background: #14161a;
-  color: #cdd2d9;
-}
-.cb-reader[data-reader-theme="dark"] .cb-reader-head {
-  border-color: #2b2f36;
-}
-.cb-reader[data-reader-theme="dark"] .cb-reader-head h1,
-.cb-reader[data-reader-theme="dark"] .cb-kicker {
-  color: #e8ebef;
-}
-.cb-reader[data-reader-theme="sepia"] {
-  background: #f4ecd8;
-  color: #4a3c28;
-}
-.cb-reader[data-reader-theme="sepia"] .cb-reader-head {
-  border-color: #ddd0b3;
-}
-.cb-reader[data-reader-theme="sepia"] .cb-reader-head h1,
-.cb-reader[data-reader-theme="sepia"] .cb-kicker {
-  color: #3a2f1e;
-}
-
-/* reading settings panel */
 .cb-reader-head-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
-}
-.cb-reader-settings {
-  margin-top: 14px;
-  padding: 14px;
-  border: 1px solid var(--cb-border);
-  border-radius: var(--cb-radius);
-  background: var(--cb-raised);
-  color: var(--cb-text);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.cb-reader-settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.cb-reader-settings-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.cb-reader-settings-value {
-  min-width: 48px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
 }
 .cb-chapter-nav {
   display: flex;

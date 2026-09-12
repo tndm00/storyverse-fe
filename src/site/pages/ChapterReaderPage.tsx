@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
@@ -7,17 +7,13 @@ import { getReadingProgress, saveReadingProgress } from "../libraryService";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { ChapterComments } from "../components/chapter/ChapterComments";
 import { ReportDialog } from "../components/ReportDialog";
-import { ReadingSettingsPanel } from "../reader/ReadingSettingsPanel";
-import { FONT_SIZES, LINE_HEIGHTS, WIDTHS, useReadingSettings } from "../reader/readingSettings";
 import { useAuth } from "@/hooks/useAuth";
 
 export function ChapterReaderPage() {
   const { slug = "", order: chapterId = "" } = useParams();
   const { isAuthenticated } = useAuth();
   const [reporting, setReporting] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [resumeChapterId, setResumeChapterId] = useState<string | null>(null);
-  const { settings, update, reset } = useReadingSettings();
 
   const { data: story } = useAsyncQuery(() => getStoryDetail(slug), [slug]);
   const { data: chapter, loading } = useAsyncQuery(
@@ -69,14 +65,8 @@ export function ChapterReaderPage() {
   if (loading) return <p className="cb-page-intro">Đang tải chương…</p>;
   if (!chapter) return <NotFoundPage />;
 
-  const readerStyle = {
-    maxWidth: WIDTHS[settings.width],
-    "--reader-font-size": `${FONT_SIZES[settings.fontSize]}px`,
-    "--reader-line-height": String(LINE_HEIGHTS[settings.lineHeight]),
-  } as CSSProperties;
-
   return (
-    <article className="cb-reader" data-reader-theme={settings.theme} style={readerStyle}>
+    <article className="cb-reader">
       <div className="cb-reader-head">
         <Link to={ROUTES.story(slug)} className="cb-kicker">
           {story?.title ?? "Về trang truyện"}
@@ -88,27 +78,11 @@ export function ChapterReaderPage() {
           <button
             type="button"
             className="cb-btn cb-ghost cb-btn-sm"
-            aria-expanded={showSettings}
-            onClick={() => setShowSettings((v) => !v)}
-          >
-            Cài đặt đọc
-          </button>
-          <button
-            type="button"
-            className="cb-btn cb-ghost cb-btn-sm"
             onClick={() => setReporting((v) => !v)}
           >
             Báo cáo chương
           </button>
         </div>
-        {showSettings ? (
-          <ReadingSettingsPanel
-            settings={settings}
-            update={update}
-            reset={reset}
-            onClose={() => setShowSettings(false)}
-          />
-        ) : null}
         {reporting ? (
           <ReportDialog
             targetType="Chapter"
