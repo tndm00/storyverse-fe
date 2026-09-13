@@ -6,13 +6,15 @@ import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { getStoryDetail } from "../readerService";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { StoryEngagementBar } from "../components/story/StoryEngagementBar";
-import { AddToLibraryButton } from "../components/story/AddToLibraryButton";
 import { ReportDialog } from "../components/ReportDialog";
+
+const CHAPTERS_PAGE_SIZE = 10;
 
 export function StoryDetailPage() {
   const { slug = "" } = useParams();
   const { data, loading } = useAsyncQuery(() => getStoryDetail(slug), [slug]);
   const [reporting, setReporting] = useState(false);
+  const [chapterPage, setChapterPage] = useState(1);
 
   const description = data?.description || `Đọc truyện ma "${data?.title ?? ""}" trên Truyện ma Canh Ba.`;
   useDocumentMeta(data?.title ?? "", data ? description : undefined);
@@ -93,7 +95,6 @@ export function StoryDetailPage() {
                 Đọc từ đầu
               </Link>
             ) : null}
-            <AddToLibraryButton storyId={data.id} />
             <button
               type="button"
               className="cb-btn cb-ghost cb-btn-sm"
@@ -126,17 +127,44 @@ export function StoryDetailPage() {
         {data.chapters.length === 0 ? (
           <p className="cb-page-intro">Truyện chưa có chương nào được đăng.</p>
         ) : (
-          <ul className="cb-trend">
-            {data.chapters.map((c) => (
-              <li key={c.id}>
-                <Link to={ROUTES.chapter(data.slug, c.id)} className="cb-trend-left">
-                  <span className="cb-trend-rank">{String(c.order).padStart(2, "0")}</span>
-                  <span className="cb-trend-title">{c.title}</span>
-                </Link>
-                <span className="cb-trend-views">{c.wordCount.toLocaleString("vi-VN")} chữ</span>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="cb-trend">
+              {data.chapters
+                .slice((chapterPage - 1) * CHAPTERS_PAGE_SIZE, chapterPage * CHAPTERS_PAGE_SIZE)
+                .map((c) => (
+                  <li key={c.id}>
+                    <Link to={ROUTES.chapter(data.slug, c.id)} className="cb-trend-left">
+                      <span className="cb-trend-rank">{String(c.order).padStart(2, "0")}</span>
+                      <span className="cb-trend-title">{c.title}</span>
+                    </Link>
+                    <span className="cb-trend-views">{c.wordCount.toLocaleString("vi-VN")} chữ</span>
+                  </li>
+                ))}
+            </ul>
+            {data.chapters.length > CHAPTERS_PAGE_SIZE ? (
+              <div className="cb-pagination" style={{ marginTop: 24 }}>
+                <button
+                  type="button"
+                  className="cb-btn cb-ghost cb-btn-sm"
+                  disabled={chapterPage <= 1}
+                  onClick={() => setChapterPage((p) => p - 1)}
+                >
+                  ← Trước
+                </button>
+                <span className="cb-detail-meta">
+                  Trang {chapterPage} / {Math.ceil(data.chapters.length / CHAPTERS_PAGE_SIZE)}
+                </span>
+                <button
+                  type="button"
+                  className="cb-btn cb-ghost cb-btn-sm"
+                  disabled={chapterPage >= Math.ceil(data.chapters.length / CHAPTERS_PAGE_SIZE)}
+                  onClick={() => setChapterPage((p) => p + 1)}
+                >
+                  Sau →
+                </button>
+              </div>
+            ) : null}
+          </>
         )}
       </section>
     </>
