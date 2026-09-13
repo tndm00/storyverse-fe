@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { ROUTES, SITE_LABELS } from "@/utils/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { AUTHOR_ROLE, canUseAdminConsole, hasRole } from "@/services/authService";
@@ -32,10 +32,27 @@ const NAV: { label: string; to: string; end?: boolean }[] = [
 // via <Outlet />, footer. The admin console lives under its own (deliberately
 // obscure) path behind its own layout and keeps the Ant Design theme untouched.
 export function SiteLayout() {
+  const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
   const [navOpen, setNavOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [theme, setTheme] = useState<CbTheme>(readTheme);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  const submitSearch = () => {
+    const q = searchTerm.trim();
+    if (!q) return;
+    navigate(`${ROUTES.truyenHay}?q=${encodeURIComponent(q)}`);
+    setSearchOpen(false);
+    setSearchTerm("");
+    setNavOpen(false);
+  };
 
   useEffect(() => {
     const root = document.documentElement;
@@ -118,19 +135,46 @@ export function SiteLayout() {
               )}
             </button>
 
-            <button type="button" className="cb-icon-btn" aria-label="Tìm kiếm">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
+            {searchOpen ? (
+              <form
+                className="cb-header-search"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submitSearch();
+                }}
               >
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-            </button>
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  className="cb-input"
+                  placeholder="Tìm truyện ma…"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onBlur={() => {
+                    if (!searchTerm.trim()) setSearchOpen(false);
+                  }}
+                />
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="cb-icon-btn"
+                aria-label="Tìm kiếm"
+                onClick={() => setSearchOpen(true)}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+              </button>
+            )}
 
             {isAuthenticated ? <NotificationBell /> : null}
 

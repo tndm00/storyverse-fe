@@ -38,6 +38,8 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
   const [genres, setGenres] = useState<{ name: string; slug: string }[]>([]);
   const [genreSlug, setGenreSlug] = useState(() => searchParams.get("genre") ?? "");
   const [status, setStatus] = useState("");
+  const [keywordInput, setKeywordInput] = useState(() => searchParams.get("q") ?? "");
+  const [keyword, setKeyword] = useState(() => searchParams.get("q") ?? "");
   const [sort, setSort] = useState<StorySort>(() => {
     const fromUrl = searchParams.get("sort");
     return fromUrl === "viewCount" || fromUrl === "ratingAvg" || fromUrl === "publishedAt"
@@ -54,7 +56,7 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
 
   useEffect(() => {
     setPage(1);
-  }, [genreSlug, status, sort]);
+  }, [genreSlug, status, sort, keyword]);
 
   const { data, loading } = useAsyncQuery(
     () =>
@@ -62,11 +64,12 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
         genreSlug: genreSlug || undefined,
         status: status || undefined,
         length: lengthMode,
+        keyword: keyword || undefined,
         sort,
         pageNumber: page,
         pageSize: 20,
       }),
-    [genreSlug, status, sort, page, lengthMode],
+    [genreSlug, status, sort, page, lengthMode, keyword],
   );
 
   const copy = COPY[lengthMode];
@@ -77,9 +80,24 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
       <section className="cb-section">
         <div className="cb-hero-head">
           <h1>{copy.title}</h1>
-          <p className="cb-page-intro">{copy.intro}</p>
+          <p className="cb-page-intro">
+            {keyword ? `Kết quả tìm kiếm cho “${keyword}”` : copy.intro}
+          </p>
         </div>
-        <div className="cb-inline-form">
+        <form
+          className="cb-inline-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setKeyword(keywordInput.trim());
+          }}
+        >
+          <input
+            type="search"
+            className="cb-input"
+            placeholder="Tìm theo tên truyện…"
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+          />
           <select
             className="cb-input"
             value={genreSlug}
@@ -110,7 +128,7 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
               </option>
             ))}
           </select>
-        </div>
+        </form>
       </section>
 
       <section className="cb-section" style={{ paddingTop: 0 }}>

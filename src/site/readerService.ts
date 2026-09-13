@@ -176,6 +176,7 @@ export interface BrowseOptions {
   genreSlug?: string;
   status?: string;
   length?: "long" | "short";
+  keyword?: string;
   authorProfileId?: string | number;
   sort?: StorySort;
   direction?: "asc" | "desc";
@@ -201,6 +202,7 @@ export async function browseStories(opts: BrowseOptions = {}): Promise<BrowseRes
         "genre-slug": opts.genreSlug,
         status: opts.status,
         length: opts.length,
+        q: opts.keyword,
         "author-profile-id": opts.authorProfileId,
         "sort-by": opts.sort ?? "publishedAt",
         "sort-direction": opts.direction ?? "desc",

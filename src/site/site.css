@@ -183,6 +183,18 @@
   align-items: center;
   gap: 10px;
 }
+.cb-header-search {
+  display: flex;
+}
+.cb-header-search .cb-input {
+  width: 180px;
+  padding: 8px 12px;
+}
+@media (max-width: 480px) {
+  .cb-header-search .cb-input {
+    width: 130px;
+  }
+}
 .cb-icon-btn {
   width: 36px;
   height: 36px;
