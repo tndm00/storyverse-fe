@@ -49,11 +49,11 @@ function ListSection({
 
 export function HomePage() {
   const { data: newStories, loading: newLoading } = useAsyncQuery(
-    () => listStories({ sort: "publishedAt", pageSize: 10 }),
+    () => listStories({ sort: "publishedAt", pageSize: 20 }),
     [],
   );
   const { data: hotStories, loading: hotLoading } = useAsyncQuery(
-    () => listStories({ sort: "viewCount", pageSize: 10 }),
+    () => listStories({ sort: "viewCount", pageSize: 20 }),
     [],
   );
 
