@@ -6,7 +6,6 @@ import { SiteLayout } from "./layouts/SiteLayout";
 
 // Pages are code-split; the layout stays in the main chunk.
 const HomePage = lazyNamed(() => import("./pages/HomePage"), "HomePage");
-const FeaturedPage = lazyNamed(() => import("./pages/FeaturedPage"), "FeaturedPage");
 const TopicsPage = lazyNamed(() => import("./pages/TopicsPage"), "TopicsPage");
 const CommunityPage = lazyNamed(() => import("./pages/CommunityPage"), "CommunityPage");
 const SubmitPage = lazyNamed(() => import("./pages/SubmitPage"), "SubmitPage");
@@ -32,11 +31,11 @@ export const siteRoutes = {
   element: <SiteLayout />,
   children: [
     { index: true, element: <HomePage /> },
-    { path: "noi-bat", element: <FeaturedPage /> },
+    { path: "truyen-hay", element: <BrowsePage lengthMode="long" /> },
+    { path: "truyen-ngan", element: <BrowsePage lengthMode="short" /> },
     { path: "theo-chu-de", element: <TopicsPage /> },
     { path: "cong-dong", element: <CommunityPage /> },
     { path: "dang-truyen", element: <SubmitPage /> },
-    { path: "kham-pha", element: <BrowsePage /> },
     { path: "truyen/:slug", element: <StoryDetailPage /> },
     { path: "truyen/:slug/chuong/:order", element: <ChapterReaderPage /> },
     { path: "tu-truyen", element: <LibraryPage /> },

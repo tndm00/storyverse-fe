@@ -45,8 +45,8 @@ async function fetchAllStorySlugs(): Promise<StorySummary[]> {
 
 const STATIC_PATHS = [
   "/",
-  "/noi-bat",
-  "/kham-pha",
+  "/truyen-hay",
+  "/truyen-ngan",
   "/theo-chu-de",
   "/cong-dong",
   "/dang-truyen",

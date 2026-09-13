@@ -175,6 +175,7 @@ export async function listGenres(): Promise<GenreOption[]> {
 export interface BrowseOptions {
   genreSlug?: string;
   status?: string;
+  length?: "long" | "short";
   authorProfileId?: string | number;
   sort?: StorySort;
   direction?: "asc" | "desc";
@@ -199,6 +200,7 @@ export async function browseStories(opts: BrowseOptions = {}): Promise<BrowseRes
       params: {
         "genre-slug": opts.genreSlug,
         status: opts.status,
+        length: opts.length,
         "author-profile-id": opts.authorProfileId,
         "sort-by": opts.sort ?? "publishedAt",
         "sort-direction": opts.direction ?? "desc",

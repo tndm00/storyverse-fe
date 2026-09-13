@@ -18,7 +18,22 @@ const STATUSES = [
   { value: "Hiatus", label: "Tạm dừng" },
 ];
 
-export function BrowsePage() {
+const COPY: Record<"long" | "short", { title: string; intro: string; metaDescription: string }> = {
+  long: {
+    title: "Truyện Ma Hay",
+    intro: "Truyện dài nhiều chương — lọc theo thể loại, trạng thái và sắp xếp.",
+    metaDescription:
+      "Truyện ma dài nhiều chương, đọc dài kỳ — lọc theo thể loại, trạng thái và sắp xếp mới nhất, đọc nhiều, đánh giá cao.",
+  },
+  short: {
+    title: "Truyện Ma Ngắn",
+    intro: "Truyện ngắn trọn vẹn 1 chương — lọc theo thể loại, trạng thái và sắp xếp.",
+    metaDescription:
+      "Truyện ma ngắn trọn vẹn 1 chương — lọc theo thể loại, trạng thái và sắp xếp mới nhất, đọc nhiều, đánh giá cao.",
+  },
+};
+
+export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
   const [searchParams] = useSearchParams();
   const [genres, setGenres] = useState<{ name: string; slug: string }[]>([]);
   const [genreSlug, setGenreSlug] = useState(() => searchParams.get("genre") ?? "");
@@ -46,21 +61,23 @@ export function BrowsePage() {
       browseStories({
         genreSlug: genreSlug || undefined,
         status: status || undefined,
+        length: lengthMode,
         sort,
         pageNumber: page,
         pageSize: 20,
       }),
-    [genreSlug, status, sort, page],
+    [genreSlug, status, sort, page, lengthMode],
   );
 
-  useDocumentMeta("Khám phá truyện ma", "Lọc truyện ma theo thể loại, trạng thái và sắp xếp mới nhất, đọc nhiều, đánh giá cao.");
+  const copy = COPY[lengthMode];
+  useDocumentMeta(copy.title, copy.metaDescription);
 
   return (
     <>
       <section className="cb-section">
         <div className="cb-hero-head">
-          <h1>Khám phá</h1>
-          <p className="cb-page-intro">Lọc theo thể loại, trạng thái và sắp xếp truyện.</p>
+          <h1>{copy.title}</h1>
+          <p className="cb-page-intro">{copy.intro}</p>
         </div>
         <div className="cb-inline-form">
           <select

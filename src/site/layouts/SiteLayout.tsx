@@ -21,8 +21,8 @@ function readTheme(): CbTheme {
 
 const NAV: { label: string; to: string; end?: boolean }[] = [
   { label: "Trang chủ", to: ROUTES.home, end: true },
-  { label: "Nổi bật", to: ROUTES.featured },
-  { label: "Khám phá", to: ROUTES.browse },
+  { label: "Truyện Ma Hay", to: ROUTES.truyenHay },
+  { label: "Truyện Ma Ngắn", to: ROUTES.truyenNgan },
   { label: "Theo chủ đề", to: ROUTES.topics },
   { label: "Cộng đồng kể chuyện", to: ROUTES.community },
   { label: "Gửi câu chuyện", to: ROUTES.submit },

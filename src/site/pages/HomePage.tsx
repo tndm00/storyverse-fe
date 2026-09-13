@@ -69,7 +69,7 @@ export function HomePage() {
       <ListSection
         emoji="🔥"
         title="Truyện ma hot"
-        seeAllHref={`${ROUTES.browse}?sort=viewCount`}
+        seeAllHref={`${ROUTES.truyenHay}?sort=viewCount`}
         loading={hotLoading}
         stories={hotStories ?? []}
       />
@@ -77,7 +77,7 @@ export function HomePage() {
       <ListSection
         emoji="🕯️"
         title="Truyện ma mới"
-        seeAllHref={`${ROUTES.browse}?sort=publishedAt`}
+        seeAllHref={`${ROUTES.truyenHay}?sort=publishedAt`}
         loading={newLoading}
         stories={newStories ?? []}
       />

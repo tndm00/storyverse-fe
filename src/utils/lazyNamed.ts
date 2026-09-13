@@ -2,7 +2,8 @@ import { lazy, type ComponentType } from "react";
 
 // React.lazy for modules that use named (not default) exports.
 //   lazyNamed(() => import("./pages/HomePage"), "HomePage")
-export function lazyNamed<M extends Record<string, ComponentType<unknown>>, K extends keyof M>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ComponentType<any> is required so lazyNamed accepts components with required props (e.g. BrowsePage's lengthMode)
+export function lazyNamed<M extends Record<string, ComponentType<any>>, K extends keyof M>(
   factory: () => Promise<M>,
   exportName: K,
 ) {

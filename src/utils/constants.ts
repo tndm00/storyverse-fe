@@ -95,8 +95,8 @@ export const ADMIN_BASE_PATH = "console-7f2k";
 export const ROUTES = {
   // public reader site
   home: "/",
-  browse: "/kham-pha",
-  featured: "/noi-bat",
+  truyenHay: "/truyen-hay",
+  truyenNgan: "/truyen-ngan",
   topics: "/theo-chu-de",
   community: "/cong-dong",
   submit: "/dang-truyen",
