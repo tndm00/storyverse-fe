@@ -40,7 +40,6 @@ export function SubmitPage() {
   const [title, setTitle] = useState("");
   const [penName, setPenName] = useState("");
   const [genreSlug, setGenreSlug] = useState(DEFAULT_GENRE);
-  const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [content, setContent] = useState("");
 
@@ -90,7 +89,7 @@ export function SubmitPage() {
       if (isAuthor) {
         const res = await quickPublish({
           title,
-          description,
+          description: "",
           genres: buildGenreSelection(genreSlug, []),
           tags,
           chapterContent: content,
@@ -101,7 +100,6 @@ export function SubmitPage() {
         const res = await guestPublish({
           penName,
           title,
-          description,
           genreSlug,
           chapterContent: content,
         });
@@ -113,7 +111,6 @@ export function SubmitPage() {
   const resetForm = () => {
     setPublished(null);
     setTitle("");
-    setDescription("");
     setTags([]);
     setContent("");
     if (!isAuthor) setPenName("");
@@ -260,19 +257,6 @@ export function SubmitPage() {
                   </div>
                 </div>
               ) : null}
-
-              <div className="cb-field">
-                <label className="cb-field-label" htmlFor="s-desc">
-                  Mô tả ngắn (tuỳ chọn)
-                </label>
-                <textarea
-                  className="cb-input"
-                  id="s-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  style={{ minHeight: 70 }}
-                />
-              </div>
 
               <div className="cb-field">
                 <label className="cb-field-label" htmlFor="s-content">
