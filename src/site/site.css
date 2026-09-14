@@ -25,6 +25,15 @@
   font-size: 16px;
   line-height: 1.62;
   -webkit-font-smoothing: antialiased;
+  /* Long unbreakable strings (emails, pasted links in comments, a story
+     title with no spaces) must wrap instead of forcing horizontal scroll
+     on phones — iOS Safari in particular won't shrink a flex/grid item
+     below its longest unbreakable run of characters otherwise. */
+  overflow-wrap: anywhere;
+}
+.canhba img {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Pins the footer to the bottom of the viewport on short pages (e.g. the
