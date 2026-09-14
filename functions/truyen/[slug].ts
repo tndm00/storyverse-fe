@@ -14,6 +14,7 @@ const SITE_ORIGIN = "https://truyenmacanh3.com";
 const SITE_NAME = "Truyện ma Canh Ba";
 const DEFAULT_DESCRIPTION =
   "Truyện ma Canh Ba — nơi đọc và góp truyện ma, chuyện tâm linh có thật hoặc tự sáng tác bằng tiếng Việt.";
+const DEFAULT_IMAGE = `${SITE_ORIGIN}/og-default.png`;
 
 const BOT_USER_AGENTS = [
   "facebookexternalhit",
@@ -49,9 +50,15 @@ function renderPreviewHtml(story: StoryDetail): string {
   const title = `${story.title} — ${SITE_NAME}`;
   const description = story.description?.trim() || DEFAULT_DESCRIPTION;
   const url = `${SITE_ORIGIN}/truyen/${encodeURIComponent(story.slug)}`;
-  const image = story.coverImageUrl
-    ? `<meta property="og:image" content="${htmlEscape(story.coverImageUrl)}" />`
-    : "";
+  // Only the default fallback has known, fixed dimensions — a real per-story
+  // cover's actual size is unknown, so don't assert width/height for it.
+  const imageUrl = story.coverImageUrl || DEFAULT_IMAGE;
+  const imageDims = story.coverImageUrl
+    ? ""
+    : `<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />`;
+  const image = `<meta property="og:image" content="${htmlEscape(imageUrl)}" />
+${imageDims}`;
 
   return `<!doctype html>
 <html lang="vi">
