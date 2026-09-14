@@ -100,7 +100,7 @@ export function StoriesPage() {
       render: (title: string, row) => (
         <Space>
           <img
-            src={row.coverImageUrl}
+            src={row.coverImageUrl || "/og-default.png"}
             alt=""
             width={32}
             height={44}

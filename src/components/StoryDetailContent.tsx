@@ -13,7 +13,7 @@ export function StoryDetailContent({ story }: { story: Story | null | undefined 
     <div>
       <Flex gap={16} wrap="wrap">
         <img
-          src={story.coverImageUrl}
+          src={story.coverImageUrl || "/og-default.png"}
           alt={story.title}
           width={120}
           height={160}
