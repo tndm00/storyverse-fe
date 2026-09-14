@@ -344,6 +344,7 @@
   border: none;
   cursor: pointer;
   font-family: inherit;
+  white-space: nowrap;
   transition:
     background 0.3s ease,
     transform 0.2s ease;
