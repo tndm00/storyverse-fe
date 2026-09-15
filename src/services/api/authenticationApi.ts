@@ -49,4 +49,32 @@ export const authenticationApi = {
       bannerUrl: string | null;
       verified: boolean;
     }>(`/v1/auth/authors/${authorProfileId}`),
+
+  // ---- admin author roster (users.manage, PlatformAdmin) -----------------
+  // GET /v1/auth/admin/authors?keyword=&page=&page-size=
+  listAuthorProfilesAdmin: (params?: {
+    keyword?: string;
+    page?: number;
+    pageSize?: number;
+  }) =>
+    client.get("/v1/auth/admin/authors", {
+      params: {
+        keyword: params?.keyword || undefined,
+        page: params?.page,
+        "page-size": params?.pageSize,
+      },
+    }),
+  createAuthorProfileAdmin: (body: {
+    email: string;
+    password: string;
+    displayName: string;
+    penName: string;
+    bio?: string;
+  }) => client.post("/v1/auth/admin/authors", body),
+  updateAuthorProfileAdmin: (
+    authorProfileId: string | number,
+    body: { penName: string; bio?: string; avatarUrl?: string; bannerUrl?: string; verified: boolean },
+  ) => client.put(`/v1/auth/admin/authors/${authorProfileId}`, body),
+  setAuthorProfileStatusAdmin: (authorProfileId: string | number, status: "Active" | "Suspended") =>
+    client.put(`/v1/auth/admin/authors/${authorProfileId}/status`, { status }),
 };

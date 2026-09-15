@@ -125,6 +125,7 @@ export const ROUTES = {
     comments: `/${ADMIN_BASE_PATH}/comments`,
     stories: `/${ADMIN_BASE_PATH}/stories`,
     genres: `/${ADMIN_BASE_PATH}/genres`,
+    authors: `/${ADMIN_BASE_PATH}/authors`,
     reviewItem: (id: string) => `/${ADMIN_BASE_PATH}/review/${id}`,
     report: (id: string) => `/${ADMIN_BASE_PATH}/reports/${id}`,
   },
@@ -141,6 +142,7 @@ export const LABELS = {
   comments: "Bình luận",
   stories: "Stories",
   genres: "Thể loại",
+  authors: "Tác giả",
 } as const;
 
 // Reader-site (Canh Ba) branding.

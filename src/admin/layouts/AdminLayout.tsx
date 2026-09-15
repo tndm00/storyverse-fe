@@ -10,6 +10,7 @@ import {
   FlagOutlined,
   LogoutOutlined,
   SafetyCertificateOutlined,
+  TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "@/hooks/useAuth";
@@ -54,6 +55,11 @@ const MENU_ITEMS = [
     icon: <AppstoreOutlined />,
     label: <Link to={ROUTES.admin.genres}>{LABELS.genres}</Link>,
   },
+  {
+    key: ROUTES.admin.authors,
+    icon: <TeamOutlined />,
+    label: <Link to={ROUTES.admin.authors}>{LABELS.authors}</Link>,
+  },
 ];
 
 function selectedKey(pathname: string): string {
@@ -63,6 +69,7 @@ function selectedKey(pathname: string): string {
   if (pathname.startsWith(ROUTES.admin.comments)) return ROUTES.admin.comments;
   if (pathname.startsWith(ROUTES.admin.stories)) return ROUTES.admin.stories;
   if (pathname.startsWith(ROUTES.admin.genres)) return ROUTES.admin.genres;
+  if (pathname.startsWith(ROUTES.admin.authors)) return ROUTES.admin.authors;
   return ROUTES.admin.dashboard;
 }
 
