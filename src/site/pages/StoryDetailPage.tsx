@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
+import { safeJsonLd } from "@/utils/format";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
 import { getStoryDetail } from "../readerService";
@@ -45,7 +46,7 @@ export function StoryDetailPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <section className="cb-section">
         <div className="cb-hero-head">
           <div className="cb-kicker">{data.kicker}</div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Alert, Input, Modal } from "antd";
 import { MESSAGES } from "@/utils/constants";
 
@@ -30,13 +30,7 @@ export function ConfirmActionModal({
 }: ConfirmActionModalProps) {
   const [reason, setReason] = useState("");
   const [touched, setTouched] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setReason("");
-      setTouched(false);
-    }
-  }, [open]);
+  const reasonInputId = useId();
 
   const invalid = reasonRequired && !reason.trim();
 
@@ -60,11 +54,12 @@ export function ConfirmActionModal({
       destroyOnClose
     >
       {description ? <div style={{ marginBottom: 12 }}>{description}</div> : null}
-      <label style={{ display: "block", marginBottom: 6, fontWeight: 500 }}>
+      <label htmlFor={reasonInputId} style={{ display: "block", marginBottom: 6, fontWeight: 500 }}>
         {reasonLabel}
         {reasonRequired ? <span style={{ color: "#cf1322" }}> *</span> : null}
       </label>
       <Input.TextArea
+        id={reasonInputId}
         rows={4}
         value={reason}
         onChange={(e) => setReason(e.target.value)}

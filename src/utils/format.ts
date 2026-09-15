@@ -29,20 +29,32 @@ export function fromNowVi(value: DateInput): string {
   return dayjs(value).locale("vi").fromNow();
 }
 
+const compactNumberFormatter = new Intl.NumberFormat("en", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+const numberFormatter = new Intl.NumberFormat("en");
+
 // 12345 -> "12.3K"
 export function compactNumber(value: number | null | undefined): string {
   if (value == null) return "—";
-  return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(
-    value,
-  );
+  return compactNumberFormatter.format(value);
 }
 
 export function formatNumber(value: number | null | undefined): string {
   if (value == null) return "—";
-  return new Intl.NumberFormat("en").format(value);
+  return numberFormatter.format(value);
 }
 
 export function truncate(text: string | null | undefined, max = 120): string {
   if (!text) return "";
   return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
+// JSON.stringify does not escape "<", so a value containing the literal text
+// "</script>" (e.g. a user-submitted story title) would close the script tag
+// early and inject arbitrary HTML. Escaping "<" to its unicode form keeps the
+// JSON valid while making that breakout impossible.
+export function safeJsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }
