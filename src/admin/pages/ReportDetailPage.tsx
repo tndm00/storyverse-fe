@@ -11,11 +11,11 @@ import {
   Select,
   Skeleton,
   Space,
-  Timeline,
   Typography,
 } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
+import { HistoryTimelineCard } from "@/components/HistoryTimelineCard";
 import { StatusTag } from "@/components/StatusTag";
 import { StoryDetailContent } from "@/components/StoryDetailContent";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
@@ -170,21 +170,7 @@ export function ReportDetailPage() {
             )}
           </Card>
 
-          <Card title="History" style={{ marginTop: 16 }}>
-            <Timeline
-              items={report.history.map((h) => ({
-                children: (
-                  <Space direction="vertical" size={0}>
-                    <Text strong>{h.action}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {h.actor} · {formatDate(h.at)}
-                    </Text>
-                    {h.note ? <Text>{h.note}</Text> : null}
-                  </Space>
-                ),
-              }))}
-            />
-          </Card>
+          <HistoryTimelineCard history={report.history} />
         </Col>
       </Row>
     </div>

@@ -160,6 +160,7 @@ export function StoryEngagementBar({
           <Stars value={score} onPick={setScore} />
           <textarea
             className="cb-input"
+            aria-label="Nhận xét của bạn"
             placeholder="Nhận xét của bạn (tuỳ chọn)"
             value={review}
             onChange={(e) => setReview(e.target.value)}

@@ -99,7 +99,12 @@ function VolumeRow({
   return (
     <li>
       <div className="cb-inline-form" style={{ flex: 1 }}>
-        <input className="cb-input" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input
+          className="cb-input"
+          aria-label="Tên phần"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
         <button
           type="button"
           className="cb-btn cb-btn-sm"
@@ -402,6 +407,7 @@ function ManageBody({ slug }: { slug: string }) {
           <div className="cb-inline-form">
             <select
               className="cb-input"
+              aria-label="Đổi trạng thái truyện"
               value={nextStatus}
               onChange={(e) => setNextStatus(e.target.value as StoryStatus | "")}
             >
@@ -461,6 +467,7 @@ function ManageBody({ slug }: { slug: string }) {
         <div className="cb-inline-form">
           <input
             className="cb-input"
+            aria-label="Tên phần mới"
             value={volTitle}
             onChange={(e) => setVolTitle(e.target.value)}
             placeholder="Tên phần mới"

@@ -248,7 +248,10 @@ function EditorBody({ slug, chapterId }: { slug: string; chapterId: string }) {
               step="1"
               min="0"
               value={orderIndex}
-              onChange={(e) => setOrderIndex(Number(e.target.value))}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n)) setOrderIndex(n);
+              }}
             />
           </div>
         </div>

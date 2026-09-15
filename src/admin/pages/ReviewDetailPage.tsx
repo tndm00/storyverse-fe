@@ -11,7 +11,6 @@ import {
   Row,
   Skeleton,
   Space,
-  Timeline,
   Typography,
 } from "antd";
 import {
@@ -21,6 +20,7 @@ import {
   PlayCircleOutlined,
 } from "@ant-design/icons";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
+import { HistoryTimelineCard } from "@/components/HistoryTimelineCard";
 import { StatusTag } from "@/components/StatusTag";
 import { StoryDetailContent } from "@/components/StoryDetailContent";
 import { ConfirmActionModal } from "@/admin/components/ConfirmActionModal";
@@ -203,21 +203,7 @@ export function ReviewDetailPage() {
             ) : null}
           </Card>
 
-          <Card title="History" style={{ marginTop: 16 }}>
-            <Timeline
-              items={item.history.map((h) => ({
-                children: (
-                  <Space direction="vertical" size={0}>
-                    <Text strong>{h.action}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {h.actor} · {formatDate(h.at)}
-                    </Text>
-                    {h.note ? <Text>{h.note}</Text> : null}
-                  </Space>
-                ),
-              }))}
-            />
-          </Card>
+          <HistoryTimelineCard history={item.history} />
         </Col>
       </Row>
 

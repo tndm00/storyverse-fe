@@ -53,6 +53,7 @@ function CommentItem({
         <>
           <textarea
             className="cb-input"
+            aria-label="Sửa nội dung bình luận"
             value={editDraft}
             onChange={(e) => setEditDraft(e.target.value)}
             style={{ minHeight: 60 }}
@@ -137,6 +138,7 @@ function CommentItem({
         <div className="cb-reply-box">
           <textarea
             className="cb-input"
+            aria-label="Viết trả lời"
             placeholder="Viết trả lời…"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -205,6 +207,7 @@ export function ChapterComments({ chapterId }: { chapterId: string }) {
         <div className="cb-comment-form">
           <textarea
             className="cb-input"
+            aria-label="Viết bình luận"
             placeholder="Chia sẻ cảm nghĩ của bạn về chương này…"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}

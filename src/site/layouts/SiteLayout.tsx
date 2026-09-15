@@ -147,6 +147,7 @@ export function SiteLayout() {
                   ref={searchInputRef}
                   type="search"
                   className="cb-input"
+                  aria-label="Tìm truyện ma"
                   placeholder="Tìm truyện ma…"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

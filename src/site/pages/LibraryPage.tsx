@@ -154,6 +154,7 @@ function Shelves() {
               <span className="cb-chapter-row-actions">
                 <select
                   className="cb-input"
+                  aria-label="Chuyển kệ truyện"
                   value={it.shelf}
                   disabled={busy}
                   onChange={(e) =>

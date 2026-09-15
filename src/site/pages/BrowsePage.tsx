@@ -94,12 +94,14 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
           <input
             type="search"
             className="cb-input"
+            aria-label="Tìm theo tên truyện"
             placeholder="Tìm theo tên truyện…"
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
           />
           <select
             className="cb-input"
+            aria-label="Lọc theo thể loại"
             value={genreSlug}
             onChange={(e) => setGenreSlug(e.target.value)}
           >
@@ -110,7 +112,12 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
               </option>
             ))}
           </select>
-          <select className="cb-input" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <select
+            className="cb-input"
+            aria-label="Lọc theo trạng thái"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
             {STATUSES.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
@@ -119,6 +126,7 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
           </select>
           <select
             className="cb-input"
+            aria-label="Sắp xếp"
             value={sort}
             onChange={(e) => setSort(e.target.value as StorySort)}
           >
