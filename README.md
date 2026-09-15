@@ -1,5 +1,7 @@
 # StoryVerse Web (story-fe-prj)
 
+<!-- CI check: verifying Cloudflare Pages auto-deploy from GitHub -->
+
 Two areas in one **React 18 + TypeScript + Vite + Ant Design 5** app:
 
 - **Reader site** (`/`) — public pages readers use: home, browse, story, chapter reader, library, author. _Currently scaffolds only._
