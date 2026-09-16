@@ -1255,6 +1255,24 @@ textarea.cb-input {
     flex-wrap: wrap;
     row-gap: 8px;
   }
+
+  /* .cb-trend li packs a fixed-width genre pill + the title + fixed-width
+     meta text (reads/rating/chapter count) into one row. On phone width
+     the pill and meta text alone leave almost no room for the only
+     flexible item (the title), squeezing it down to 1-2 visible
+     characters. Wrapping onto two rows — title (with its pill) on top,
+     full width; meta text below — gives the title real room instead. */
+  .canhba .cb-trend li {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .canhba .cb-trend-left {
+    flex-basis: 100%;
+  }
+  .canhba .cb-trend-views {
+    flex-basis: 100%;
+    white-space: normal;
+  }
 }
 @media (max-width: 640px) {
   .canhba .cb-cta-band {
