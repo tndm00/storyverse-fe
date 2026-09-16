@@ -307,6 +307,13 @@
   font-variant-numeric: tabular-nums;
 }
 .cb-trend-title {
+  /* flex:1 lets this take the space .cb-trend-left has left after the rank
+     digit and kicker; min-width:0 overrides the flex-item default of
+     "never shrink below content size", which is what let a long unbroken
+     title (white-space:nowrap) force the whole page wider than the mobile
+     viewport instead of actually truncating with the ellipsis below. */
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
