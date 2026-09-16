@@ -3,11 +3,12 @@ import { Link, useParams } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useDocumentMeta } from "@/hooks/useDocumentMeta";
-import { getChapterContent, getStoryDetail } from "../readerService";
+import { getChapterContent, getStoryDetail, listStories } from "../readerService";
 import { getReadingProgress, saveReadingProgress } from "../libraryService";
 import { NotFoundPage } from "@/components/NotFoundPage";
 import { ChapterComments } from "../components/chapter/ChapterComments";
 import { ReportDialog } from "../components/ReportDialog";
+import { StoryListRow } from "../components/StoryListRow";
 import { useAuth } from "@/hooks/useAuth";
 
 export function ChapterReaderPage() {
@@ -62,6 +63,22 @@ export function ChapterReaderPage() {
     () => story?.chapters.find((c) => c.id === resumeChapterId) ?? null,
     [story, resumeChapterId],
   );
+
+  // A short story (exactly 1 chapter) has no prior/next chapter and no real
+  // table of contents to jump to — the nav bar would render three empty
+  // slots. Only multi-chapter stories get chapter navigation; single-chapter
+  // ones get a "related stories" list instead (below).
+  const isSingleChapter = (story?.chapters.length ?? 0) === 1;
+  const primaryGenreSlug = story?.genres.find((g) => g.isPrimary)?.slug ?? story?.genres[0]?.slug;
+
+  const { data: relatedStories, loading: relatedLoading } = useAsyncQuery(
+    () =>
+      isSingleChapter && primaryGenreSlug
+        ? listStories({ genreSlug: primaryGenreSlug, pageSize: 7 })
+        : Promise.resolve([]),
+    [isSingleChapter, primaryGenreSlug],
+  );
+  const relatedList = (relatedStories ?? []).filter((s) => s.slug !== slug).slice(0, 6);
 
   useDocumentMeta(
     chapter && story
@@ -126,31 +143,51 @@ export function ChapterReaderPage() {
 
       <div className="cb-reader-body" dangerouslySetInnerHTML={{ __html: chapter.html }} />
 
-      <nav className="cb-chapter-nav" aria-label="Điều hướng chương">
-        {prev ? (
-          <Link to={ROUTES.chapter(slug, prev.id)} className="cb-btn cb-ghost">
-            ← Chương trước
+      {isSingleChapter ? null : (
+        <nav className="cb-chapter-nav" aria-label="Điều hướng chương">
+          {prev ? (
+            <Link to={ROUTES.chapter(slug, prev.id)} className="cb-btn cb-ghost">
+              ← Chương trước
+            </Link>
+          ) : (
+            <span />
+          )}
+          <Link to={ROUTES.story(slug)} className="cb-btn cb-ghost">
+            Mục lục
           </Link>
-        ) : (
-          <span />
-        )}
-        <Link to={ROUTES.story(slug)} className="cb-btn cb-ghost">
-          Mục lục
-        </Link>
-        {next ? (
-          <Link
-            to={ROUTES.chapter(slug, next.id)}
-            className="cb-btn"
-            onClick={() => {
-              if (story?.id) saveReadingProgress(story.id, next.id).catch(() => {});
-            }}
-          >
-            Chương sau →
-          </Link>
-        ) : (
-          <span />
-        )}
-      </nav>
+          {next ? (
+            <Link
+              to={ROUTES.chapter(slug, next.id)}
+              className="cb-btn"
+              onClick={() => {
+                if (story?.id) saveReadingProgress(story.id, next.id).catch(() => {});
+              }}
+            >
+              Chương sau →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      )}
+
+      {isSingleChapter && !relatedLoading && relatedList.length > 0 ? (
+        <section className="cb-section" aria-label="Truyện liên quan">
+          <div className="cb-section-head">
+            <h2>Có thể bạn cũng thích</h2>
+            {primaryGenreSlug ? (
+              <Link to={`${ROUTES.truyenHay}?genre=${primaryGenreSlug}`} className="cb-see-all">
+                Xem tất cả
+              </Link>
+            ) : null}
+          </div>
+          <ul className="cb-trend">
+            {relatedList.map((s) => (
+              <StoryListRow key={s.slug} story={s} />
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <ChapterComments chapterId={chapterId} />
     </article>
