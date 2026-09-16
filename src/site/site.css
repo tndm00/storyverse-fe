@@ -103,6 +103,19 @@
   position: sticky;
   top: 0;
   z-index: 1003;
+}
+/* The blurred background lives on its own layer behind the header's
+   content instead of directly on .cb-header. Some in-app WebViews (e.g.
+   Facebook's/Instagram's iOS browser) fail to paint child content — the
+   theme/search/menu icon buttons in particular — when backdrop-filter is
+   applied straight to a position:sticky element that also holds that
+   content; giving the blur its own stacking layer avoids the bug outright
+   regardless of its exact cause, with no visible difference elsewhere. */
+.cb-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   background: color-mix(in srgb, var(--cb-surface) 92%, transparent);
   backdrop-filter: blur(6px);
 }
