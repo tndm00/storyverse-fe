@@ -40,6 +40,14 @@
    Submit success card) instead of leaving a blank gap below it. */
 .canhba > main {
   flex: 1 0 auto;
+  /* A flex item's default min-width is "auto" (its content's natural
+     width), not 0 — so any wide descendant (e.g. a long unbroken title)
+     was keeping <main> itself, not just that descendant, wider than the
+     viewport on mobile, regardless of that descendant's own overflow/
+     ellipsis rules. This is the actual fix; min-width:0 on the descendant
+     alone wasn't enough because this item never let the descendant shrink
+     to begin with. */
+  min-width: 0;
 }
 
 :root[data-cb-theme="light"] .canhba {
