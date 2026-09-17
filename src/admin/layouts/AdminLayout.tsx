@@ -10,6 +10,7 @@ import {
   FlagOutlined,
   LogoutOutlined,
   SafetyCertificateOutlined,
+  SyncOutlined,
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -60,6 +61,11 @@ const MENU_ITEMS = [
     icon: <TeamOutlined />,
     label: <Link to={ROUTES.admin.authors}>{LABELS.authors}</Link>,
   },
+  {
+    key: ROUTES.admin.searchSync,
+    icon: <SyncOutlined />,
+    label: <Link to={ROUTES.admin.searchSync}>{LABELS.searchSync}</Link>,
+  },
 ];
 
 function selectedKey(pathname: string): string {
@@ -70,6 +76,7 @@ function selectedKey(pathname: string): string {
   if (pathname.startsWith(ROUTES.admin.stories)) return ROUTES.admin.stories;
   if (pathname.startsWith(ROUTES.admin.genres)) return ROUTES.admin.genres;
   if (pathname.startsWith(ROUTES.admin.authors)) return ROUTES.admin.authors;
+  if (pathname.startsWith(ROUTES.admin.searchSync)) return ROUTES.admin.searchSync;
   return ROUTES.admin.dashboard;
 }
 

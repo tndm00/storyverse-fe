@@ -17,6 +17,7 @@ const CommentsPage = lazyNamed(() => import("./pages/CommentsPage"), "CommentsPa
 const StoriesPage = lazyNamed(() => import("./pages/StoriesPage"), "StoriesPage");
 const GenresPage = lazyNamed(() => import("./pages/GenresPage"), "GenresPage");
 const AuthorsPage = lazyNamed(() => import("./pages/AuthorsPage"), "AuthorsPage");
+const SearchSyncPage = lazyNamed(() => import("./pages/SearchSyncPage"), "SearchSyncPage");
 
 // Admin console route subtree, mounted at ADMIN_BASE_PATH (an obscure,
 // hard-to-guess slug — not "/admin" — so the console isn't findable by
@@ -40,5 +41,6 @@ export const adminRoutes = {
     { path: "stories", element: <StoriesPage /> },
     { path: "genres", element: <GenresPage /> },
     { path: "authors", element: <AuthorsPage /> },
+    { path: "search-sync", element: <SearchSyncPage /> },
   ],
 };

@@ -1,7 +1,8 @@
 // Stories management facade — Content service admin endpoints (Batch 1):
-//   GET /v1/stories/admin         — every status, incl. Draft
-//   GET /v1/stories/admin/counts  — { total, byStatus }
-//   GET /v1/stories/{id}          — full detail (admin can read unpublished)
+//   GET /v1/stories/admin                     — every status, incl. Draft
+//   GET /v1/stories/admin/counts               — { total, byStatus }
+//   GET /v1/stories/admin/search-sync-status   — Elasticsearch background sync status
+//   GET /v1/stories/{id}                      — full detail (admin can read unpublished)
 //
 // Used only by the admin console (StoriesPage, DashboardPage).
 
@@ -51,6 +52,14 @@ interface PagedDto<T> {
 interface AdminCountsDto {
   total: number;
   byStatus: Partial<Record<StoryStatus, number>>;
+}
+
+export interface SearchSyncStatus {
+  lastSyncedAt: string | null;
+  syncedDocumentCount: number;
+  eligibleStoryCount: number;
+  enabled: boolean;
+  searchReadEnabled: boolean;
 }
 
 // primary genre first, then the rest — display order for a genre list.
@@ -140,6 +149,10 @@ export async function counts(): Promise<StoryCounts> {
   const zero = Object.fromEntries(STORY_STATUS.map((s) => [s, 0])) as Record<StoryStatus, number>;
   for (const s of STORY_STATUS) zero[s] = dto.byStatus?.[s] ?? 0;
   return { ...zero, total: dto.total ?? 0 };
+}
+
+export async function getSearchSyncStatus(): Promise<SearchSyncStatus> {
+  return contentApi.client.get<SearchSyncStatus>("/v1/stories/admin/search-sync-status");
 }
 
 export async function get(publicId: string): Promise<Story> {
