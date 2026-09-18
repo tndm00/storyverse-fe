@@ -26,10 +26,10 @@ const COPY: Record<"long" | "short", { title: string; intro: string; metaDescrip
       "Truyện ma dài nhiều chương, đọc dài kỳ — lọc theo thể loại, trạng thái và sắp xếp mới nhất, đọc nhiều, đánh giá cao.",
   },
   short: {
-    title: "Truyện Ma Ngắn",
+    title: "Truyện Ma Có Thật",
     intro: "Truyện ngắn trọn vẹn 1 chương — lọc theo thể loại, trạng thái và sắp xếp.",
     metaDescription:
-      "Truyện ma ngắn trọn vẹn 1 chương — lọc theo thể loại, trạng thái và sắp xếp mới nhất, đọc nhiều, đánh giá cao.",
+      "Truyện ma có thật trọn vẹn 1 chương — lọc theo thể loại, trạng thái và sắp xếp mới nhất, đọc nhiều, đánh giá cao.",
   },
 };
 
