@@ -76,12 +76,16 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
     setPage(1);
   }, [genreSlug, status, sort, keyword]);
 
+  // A keyword search looks across every story regardless of length — the
+  // header search box always lands here on the "long stories" route, so
+  // restricting to lengthMode would silently drop short-story matches (the
+  // user just sees "no results" with no indication why).
   const { data, loading } = useAsyncQuery(
     () =>
       browseStories({
         genreSlug: genreSlug || undefined,
         status: status || undefined,
-        length: lengthMode,
+        length: keyword ? undefined : lengthMode,
         keyword: keyword || undefined,
         sort,
         pageNumber: page,
