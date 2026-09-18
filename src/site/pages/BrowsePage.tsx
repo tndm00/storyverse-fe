@@ -54,6 +54,24 @@ export function BrowsePage({ lengthMode }: { lengthMode: "long" | "short" }) {
       .catch(() => {});
   }, []);
 
+  // Re-syncs filters from the URL when it changes without remounting this
+  // component — e.g. the header search box calls navigate() to this same
+  // route with a new ?q=, which React Router treats as a re-render, not a
+  // fresh mount, so the lazy useState initializers above never see it.
+  useEffect(() => {
+    const q = searchParams.get("q") ?? "";
+    const genre = searchParams.get("genre") ?? "";
+    const fromUrl = searchParams.get("sort");
+    setKeyword(q);
+    setKeywordInput(q);
+    setGenreSlug(genre);
+    setSort(
+      fromUrl === "viewCount" || fromUrl === "ratingAvg" || fromUrl === "publishedAt"
+        ? fromUrl
+        : "publishedAt",
+    );
+  }, [searchParams]);
+
   useEffect(() => {
     setPage(1);
   }, [genreSlug, status, sort, keyword]);
