@@ -35,3 +35,23 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+# Sensitive files: never commit passwords, keys or credentials
+pass-story*
+password*.txt
+passwords*.txt
+secret*.txt
+secrets*.txt
+credentials*.txt
+*.pem
+*.key
+*.pfx
+*.p12
+*.jks
+id_rsa*
+id_ed25519*
+*.kdbx
+.env
+.env.*
+!.env.example
+!.env.*.example
