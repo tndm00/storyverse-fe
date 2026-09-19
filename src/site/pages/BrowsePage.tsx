@@ -13,7 +13,7 @@ const SORTS: { value: StorySort; label: string }[] = [
 
 const STATUSES = [
   { value: "", label: "Tất cả trạng thái" },
-  { value: "Ongoing", label: "Đang ra" },
+  { value: "Ongoing", label: "Công khai" },
   { value: "Completed", label: "Hoàn thành" },
   { value: "Hiatus", label: "Tạm dừng" },
 ];
