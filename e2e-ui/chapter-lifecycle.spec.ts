@@ -42,7 +42,8 @@ test("author manages volumes and the chapter lifecycle (add, draft, submit, edit
   await approveChapterAsAdmin(browser, firstChapterId);
 
   await page.goto(`/tac-gia/truyen/${storySlug}`);
-  await expect(page.getByText("Đang ra")).toBeVisible(); // story auto-flips to Ongoing
+  // story auto-flips to Ongoing, shown as "Công khai"
+  await expect(page.locator(".cb-badge", { hasText: "Công khai" })).toBeVisible();
 
   // ---- add a volume -------------------------------------------------
   await page.getByPlaceholder("Tên phần mới").fill(volumeTitle);

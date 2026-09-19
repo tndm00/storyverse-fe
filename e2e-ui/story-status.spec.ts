@@ -17,8 +17,10 @@ test("author transitions a story's status from Ongoing to Completed", async ({ b
     content: "Truyện này sẽ được đổi trạng thái sau khi chương đầu được duyệt. ".repeat(10),
   });
 
+  // An Ongoing story (has a published chapter) shows the "Công khai" status pill.
+  const publicBadge = page.locator(".cb-badge", { hasText: "Công khai" });
   await page.goto(`/tac-gia/truyen/${storySlug}`);
-  await expect(page.getByText("Đang ra")).toBeVisible();
+  await expect(publicBadge).toBeVisible();
 
   // Scoped to `.cb-inline-form select`: the only <select> in that wrapper is
   // the status-transition one (the "add volume" inline-form has no select,
@@ -27,7 +29,7 @@ test("author transitions a story's status from Ongoing to Completed", async ({ b
   await page.getByRole("button", { name: "Cập nhật" }).click();
 
   await expect(page.getByText("Hoàn thành")).toBeVisible();
-  await expect(page.getByText("Đang ra")).toHaveCount(0);
+  await expect(publicBadge).toHaveCount(0);
   // Completed has no further transitions — the dropdown/button disappear.
   await expect(page.getByRole("button", { name: "Cập nhật" })).toHaveCount(0);
 });

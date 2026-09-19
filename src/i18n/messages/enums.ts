@@ -5,7 +5,7 @@ import { defineMessages } from "../defineMessages";
 export const enums = defineMessages({
   // story / chapter / review / report statuses (one group, some values are shared)
   "enum.status.Draft": { en: "Draft", vi: "Nháp" },
-  "enum.status.Ongoing": { en: "Ongoing", vi: "Đang ra" },
+  "enum.status.Ongoing": { en: "Ongoing", vi: "Công khai" },
   "enum.status.Completed": { en: "Completed", vi: "Hoàn thành" },
   "enum.status.Hiatus": { en: "Hiatus", vi: "Tạm dừng" },
   "enum.status.Dropped": { en: "Dropped", vi: "Đã bỏ" },
