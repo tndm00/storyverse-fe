@@ -17,6 +17,7 @@ import {
 import type { AdminUser } from "@/types/domain";
 
 export const AUTHOR_ROLE = "Author";
+export const PLATFORM_ADMIN_ROLE = "PlatformAdmin";
 
 export interface LoginResult {
   accessToken: string;
@@ -68,6 +69,12 @@ const allowedRoleSet = new Set<string>(ADMIN_CONSOLE_ROLES.map(normalize));
 export function hasRole(roles: readonly string[] | undefined, name: string): boolean {
   const target = normalize(name);
   return (roles ?? []).some((role) => normalize(role) === target);
+}
+
+// PlatformAdmin only (not Moderator). Gates the view statistics UI, which the backend
+// also restricts to the PlatformAdmin-only `analytics.view` permission.
+export function isPlatformAdmin(roles: readonly string[] | undefined): boolean {
+  return hasRole(roles, PLATFORM_ADMIN_ROLE);
 }
 
 // Whether an account may enter /admin. Used by RequireAuth + LoginPage — NOT by

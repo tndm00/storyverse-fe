@@ -7,8 +7,11 @@ import {
   BookOutlined,
 } from "@ant-design/icons";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
+import { ViewStatsCards } from "@/admin/components/ViewStatsCards";
 import { StatusTag } from "@/components/StatusTag";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
+import { useAuth } from "@/hooks/useAuth";
+import { isPlatformAdmin } from "@/services/authService";
 import * as reviewService from "@/services/reviewService";
 import * as reportService from "@/services/reportService";
 import * as storyService from "@/services/storyService";
@@ -18,6 +21,7 @@ import { LABELS, ROUTES } from "@/utils/constants";
 const { Text } = Typography;
 
 export function DashboardPage() {
+  const { user } = useAuth();
   const reviewCounts = useAsyncQuery(() => reviewService.counts(), []);
   const reportCounts = useAsyncQuery(() => reportService.counts(), []);
   const storyCounts = useAsyncQuery(() => storyService.counts(), []);
@@ -67,6 +71,8 @@ export function DashboardPage() {
         title={LABELS.dashboard}
         subtitle="Overview of the review and moderation workload"
       />
+
+      {isPlatformAdmin(user?.roles) ? <ViewStatsCards /> : null}
 
       <Row gutter={[16, 16]}>
         {stats.map((s) => (

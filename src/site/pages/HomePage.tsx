@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ROUTES } from "@/utils/constants";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { listStories, type ReaderStory } from "../readerService";
+import { AdminViewStatsPopup } from "../components/AdminViewStatsPopup";
 
 function ListSection({
   emoji,
@@ -59,6 +60,7 @@ export function HomePage() {
 
   return (
     <>
+      <AdminViewStatsPopup />
       <section className="cb-hero">
         <div className="cb-hero-head">
           <h1>Những chuyện kể khi đèn đã tắt</h1>

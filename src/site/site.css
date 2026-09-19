@@ -1304,3 +1304,56 @@ textarea.cb-input {
     transition: none !important;
   }
 }
+
+/* Admin view statistics popup (homepage, PlatformAdmin only) */
+.canhba .cb-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+}
+.canhba .cb-modal {
+  width: min(560px, 100%);
+}
+.canhba .cb-views-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 18px 0 8px;
+}
+.canhba .cb-views-item {
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius);
+  padding: 14px 10px;
+  text-align: center;
+}
+.canhba .cb-views-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--cb-muted);
+}
+.canhba .cb-views-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--cb-accent-soft);
+}
+.canhba .cb-views-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--cb-muted);
+}
+.canhba .cb-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+@media (max-width: 520px) {
+  .canhba .cb-views-grid {
+    grid-template-columns: 1fr;
+  }
+}

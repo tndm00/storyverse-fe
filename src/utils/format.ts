@@ -46,6 +46,13 @@ export function formatNumber(value: number | null | undefined): string {
   return numberFormatter.format(value);
 }
 
+// "2026-09-19" -> "19/09/2026" (a date-only string from the API; no time-zone conversion).
+export function formatIsoDateVi(value: string | null | undefined): string {
+  if (!value) return "—";
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
+
 export function truncate(text: string | null | undefined, max = 120): string {
   if (!text) return "";
   return text.length > max ? `${text.slice(0, max)}…` : text;

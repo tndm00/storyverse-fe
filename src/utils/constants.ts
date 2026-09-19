@@ -134,6 +134,25 @@ export const ROUTES = {
   notFound: "/404",
 } as const;
 
+// sessionStorage flag: the admin view-statistics popup shows once per browser session.
+export const ADMIN_VIEWS_POPUP_SEEN_KEY = "cb-admin-views-popup-seen";
+
+// Admin-only view statistics (dashboard cards + homepage popup).
+export const VIEW_STATS_LABELS = {
+  popupTitle: "Thống kê lượt xem",
+  total: "Tổng lượt xem",
+  yesterday: "Hôm qua",
+  today: "Hôm nay",
+  topToday: "Top truyện hôm nay",
+  noTopToday: "Chưa có lượt xem nào hôm nay.",
+  loading: "Đang tải…",
+  loadFailed: "Không tải được thống kê lượt xem.",
+  close: "Đóng",
+  dailyUnavailable: "Số liệu theo ngày tạm thời không khả dụng.",
+  trackingSince: (date: string) =>
+    `Số liệu theo ngày được ghi từ ${date}; các ngày trước đó chưa từng được lưu nên hiển thị 0.`,
+} as const;
+
 // Section names — reused by the admin sidebar menu, breadcrumbs and page headers.
 export const LABELS = {
   dashboard: "Dashboard",

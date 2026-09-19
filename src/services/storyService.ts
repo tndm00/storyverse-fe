@@ -62,6 +62,21 @@ export interface SearchSyncStatus {
   searchReadEnabled: boolean;
 }
 
+export interface TopStoryViews {
+  title: string;
+  slug: string;
+  views: number;
+}
+
+// Daily figures are null when Redis is unavailable (show "—", not a misleading 0).
+export interface ViewStats {
+  totalViews: number;
+  todayViews: number | null;
+  yesterdayViews: number | null;
+  trackingSince: string | null;
+  topStoriesToday: TopStoryViews[];
+}
+
 // primary genre first, then the rest — display order for a genre list.
 function orderedGenreNames(genres: StoryGenreDto[]): string[] {
   return [...genres]
@@ -153,6 +168,11 @@ export async function counts(): Promise<StoryCounts> {
 
 export async function getSearchSyncStatus(): Promise<SearchSyncStatus> {
   return contentApi.client.get<SearchSyncStatus>("/v1/stories/admin/search-sync-status");
+}
+
+// PlatformAdmin only (analytics.view) — a 403 for anyone else.
+export async function getViewStats(): Promise<ViewStats> {
+  return contentApi.client.get<ViewStats>("/v1/stories/admin/view-stats");
 }
 
 export async function get(publicId: string): Promise<Story> {
