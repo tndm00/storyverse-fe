@@ -8,7 +8,7 @@ import { AuthorGuard } from "../components/author/AuthorGuard";
 
 const STATUS_LABEL: Record<string, string> = {
   Draft: "Nháp",
-  Ongoing: "Đang ra",
+  Ongoing: "Công khai",
   Completed: "Hoàn thành",
   Hiatus: "Tạm dừng",
   Dropped: "Đã bỏ",

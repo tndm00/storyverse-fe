@@ -30,7 +30,7 @@ import { ChapterList, NO_VOLUME_KEY } from "../components/author/ChapterList";
 
 const STATUS_LABEL: Record<string, string> = {
   Draft: "Nháp",
-  Ongoing: "Đang ra",
+  Ongoing: "Công khai",
   Completed: "Hoàn thành",
   Hiatus: "Tạm dừng",
   Dropped: "Đã bỏ",
