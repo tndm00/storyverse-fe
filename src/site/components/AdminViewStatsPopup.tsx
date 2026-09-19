@@ -57,13 +57,21 @@ function ViewStatsDialog() {
   if (!open) return null;
 
   return (
-    <div className="cb-modal-backdrop" onClick={() => setOpen(false)}>
+    // The backdrop is a click target for mouse/touch only; keyboard users close the popup with
+    // Escape (handled above) or the Close button, hence role="presentation".
+    <div
+      className="cb-modal-backdrop"
+      role="presentation"
+      onClick={(event) => {
+        // Only a click on the backdrop itself closes it, not one that bubbled up from the card.
+        if (event.target === event.currentTarget) setOpen(false);
+      }}
+    >
       <div
         className="cb-form-card cb-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="cb-views-title"
-        onClick={(event) => event.stopPropagation()}
       >
         <h2 id="cb-views-title">{VIEW_STATS_LABELS.popupTitle}</h2>
         <ViewStatsBody />

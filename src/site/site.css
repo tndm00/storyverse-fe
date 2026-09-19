@@ -123,7 +123,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 0;
+  /* Vertical only: this element is also .cb-wrap, whose 20px side padding a
+     plain "padding: 14px 0" would wipe out, leaving the logo and buttons
+     glued to the screen edges on phones. */
+  padding-block: 14px;
   gap: 16px;
 }
 .cb-brand {
@@ -692,6 +695,15 @@ textarea.cb-input {
   resize: vertical;
   min-height: 160px;
   line-height: 1.6;
+}
+/* iOS Safari zooms the whole page in whenever a text field with a font size
+   below 16px gets focus, and keeps that zoom after the field is gone — so
+   after signing in the account page stayed magnified and cut off at the
+   edges. 16px on touch-sized screens stops the auto-zoom. */
+@media (max-width: 720px) {
+  .canhba .cb-input {
+    font-size: 16px;
+  }
 }
 .cb-input:focus {
   border-color: var(--cb-accent);
