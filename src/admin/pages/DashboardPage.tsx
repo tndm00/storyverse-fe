@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Card, Col, List, Row, Statistic, Table, Typography } from "antd";
+import { Card, Col, List, Row, Statistic, Table, Typography, theme } from "antd";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -21,6 +21,7 @@ import { LABELS, ROUTES } from "@/utils/constants";
 const { Text } = Typography;
 
 export function DashboardPage() {
+  const { token } = theme.useToken();
   const { user } = useAuth();
   const reviewCounts = useAsyncQuery(() => reviewService.counts(), []);
   const reportCounts = useAsyncQuery(() => reportService.counts(), []);
@@ -60,7 +61,7 @@ export function DashboardPage() {
       title: "Total stories",
       value: storyCounts.data?.total,
       icon: <BookOutlined />,
-      color: "#5b21b6",
+      color: token.colorPrimary,
       to: ROUTES.admin.stories,
     },
   ];

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Alert, Card, Col, List, Row, Statistic, Typography } from "antd";
+import { Alert, Card, Col, List, Row, Statistic, Typography, theme } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import * as storyService from "@/services/storyService";
@@ -12,10 +12,11 @@ const { Text } = Typography;
 // PlatformAdmin (see DashboardPage): useAsyncQuery always fetches on mount, and the
 // endpoint answers 403 to anyone else, so the gate lives around this component.
 export function ViewStatsCards() {
+  const { token } = theme.useToken();
   const { data, loading, error } = useAsyncQuery(() => storyService.getViewStats(), []);
 
   const cards = [
-    { title: VIEW_STATS_LABELS.total, value: data?.totalViews, color: "#5b21b6" },
+    { title: VIEW_STATS_LABELS.total, value: data?.totalViews, color: token.colorPrimary },
     { title: VIEW_STATS_LABELS.yesterday, value: data?.yesterdayViews, color: "#1677ff" },
     { title: VIEW_STATS_LABELS.today, value: data?.todayViews, color: "#389e0d" },
   ];

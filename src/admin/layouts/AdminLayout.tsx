@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Avatar, Dropdown, Layout, Menu, Typography } from "antd";
+import { Avatar, Dropdown, Layout, Menu, Typography, theme } from "antd";
 import {
   AppstoreOutlined,
   BookOutlined,
@@ -10,10 +10,12 @@ import {
   FlagOutlined,
   LogoutOutlined,
   SafetyCertificateOutlined,
+  SettingOutlined,
   SyncOutlined,
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import { AdminThemeProvider } from "@/context/AdminThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { LABELS, ROUTES } from "@/utils/constants";
 
@@ -66,6 +68,11 @@ const MENU_ITEMS = [
     icon: <SyncOutlined />,
     label: <Link to={ROUTES.admin.searchSync}>{LABELS.searchSync}</Link>,
   },
+  {
+    key: ROUTES.admin.settings,
+    icon: <SettingOutlined />,
+    label: <Link to={ROUTES.admin.settings}>{LABELS.settings}</Link>,
+  },
 ];
 
 function selectedKey(pathname: string): string {
@@ -77,10 +84,13 @@ function selectedKey(pathname: string): string {
   if (pathname.startsWith(ROUTES.admin.genres)) return ROUTES.admin.genres;
   if (pathname.startsWith(ROUTES.admin.authors)) return ROUTES.admin.authors;
   if (pathname.startsWith(ROUTES.admin.searchSync)) return ROUTES.admin.searchSync;
+  if (pathname.startsWith(ROUTES.admin.settings)) return ROUTES.admin.settings;
   return ROUTES.admin.dashboard;
 }
 
-export function AdminLayout() {
+// The shell is split from AdminLayout so it can read theme tokens from inside <AdminThemeProvider>.
+function AdminShell() {
+  const { token } = theme.useToken();
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -124,7 +134,7 @@ export function AdminLayout() {
             alignItems: "center",
             justifyContent: "flex-end",
             padding: "0 20px",
-            borderBottom: "1px solid #f0f0f0",
+            borderBottom: `1px solid ${token.colorBorderSecondary}`,
           }}
         >
           <Dropdown
@@ -158,5 +168,13 @@ export function AdminLayout() {
         </Content>
       </Layout>
     </Layout>
+  );
+}
+
+export function AdminLayout() {
+  return (
+    <AdminThemeProvider>
+      <AdminShell />
+    </AdminThemeProvider>
   );
 }

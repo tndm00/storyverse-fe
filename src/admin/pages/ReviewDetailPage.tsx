@@ -12,6 +12,7 @@ import {
   Skeleton,
   Space,
   Typography,
+  theme,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -34,6 +35,7 @@ import type { Chapter, Story } from "@/types/domain";
 const { Paragraph, Title, Text } = Typography;
 
 function ChapterContent({ chapter }: { chapter: Chapter | null }) {
+  const { token } = theme.useToken();
   if (!chapter) return <Empty description="Chapter content unavailable" />;
   return (
     <div>
@@ -50,9 +52,9 @@ function ChapterContent({ chapter }: { chapter: Chapter | null }) {
           maxHeight: 460,
           overflow: "auto",
           padding: 16,
-          background: "#fafafa",
+          background: token.colorFillQuaternary,
           borderRadius: 8,
-          border: "1px solid #f0f0f0",
+          border: `1px solid ${token.colorBorderSecondary}`,
         }}
       >
         <Paragraph style={{ whiteSpace: "pre-wrap", marginBottom: 0 }}>{chapter.content}</Paragraph>

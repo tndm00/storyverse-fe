@@ -127,6 +127,7 @@ export const ROUTES = {
     genres: `/${ADMIN_BASE_PATH}/genres`,
     authors: `/${ADMIN_BASE_PATH}/authors`,
     searchSync: `/${ADMIN_BASE_PATH}/search-sync`,
+    settings: `/${ADMIN_BASE_PATH}/settings`,
     reviewItem: (id: string) => `/${ADMIN_BASE_PATH}/review/${id}`,
     report: (id: string) => `/${ADMIN_BASE_PATH}/reports/${id}`,
   },
@@ -136,6 +137,18 @@ export const ROUTES = {
 
 // sessionStorage flag: the admin view-statistics popup shows once per browser session.
 export const ADMIN_VIEWS_POPUP_SEEN_KEY = "cb-admin-views-popup-seen";
+
+// localStorage key holding the admin console's chosen "light" | "dark" theme.
+export const ADMIN_THEME_STORAGE_KEY = "cb-admin-theme";
+
+// Admin console "Cấu hình" (settings) page.
+export const SETTINGS_LABELS = {
+  title: "Cấu hình",
+  appearanceTitle: "Giao diện",
+  appearanceHint: "Chọn giao diện sáng hoặc tối cho bảng điều khiển. Lựa chọn được ghi nhớ trên trình duyệt này.",
+  light: "Sáng",
+  dark: "Tối",
+} as const;
 
 // Admin-only view statistics (dashboard cards + homepage popup).
 export const VIEW_STATS_LABELS = {
@@ -164,6 +177,7 @@ export const LABELS = {
   genres: "Thể loại",
   authors: "Tác giả",
   searchSync: "Đồng bộ tìm kiếm",
+  settings: "Cấu hình",
 } as const;
 
 // Reader-site (Canh Ba) branding.
