@@ -3,25 +3,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { isPlatformAdmin } from "@/services/authService";
 import * as storyService from "@/services/storyService";
-import { ADMIN_VIEWS_POPUP_SEEN_KEY, VIEW_STATS_LABELS } from "@/utils/constants";
+import { VIEW_STATS_LABELS } from "@/utils/constants";
 import { formatIsoDateVi, formatNumber } from "@/utils/format";
 
-function wasSeenThisSession(): boolean {
-  try {
-    return sessionStorage.getItem(ADMIN_VIEWS_POPUP_SEEN_KEY) === "1";
-  } catch {
-    // Storage blocked: treat as "not seen" so the admin still gets the popup.
-    return false;
-  }
-}
-
-function markSeenThisSession(): void {
-  try {
-    sessionStorage.setItem(ADMIN_VIEWS_POPUP_SEEN_KEY, "1");
-  } catch {
-    /* private mode — fine */
-  }
-}
+// Kept in memory on purpose (not in sessionStorage): the popup comes back on every page load or
+// refresh, but is not re-opened each time the admin navigates back to the homepage within the
+// same load.
+let shownThisPageLoad = false;
 
 // Admin-only popup on the homepage: total / yesterday / today views. Only a PlatformAdmin
 // ever mounts the inner dialog, so nobody else triggers the admin-only API request.
@@ -37,14 +25,14 @@ export function AdminViewStatsPopup() {
 function ViewStatsDialog() {
   // Read in the initializer (not an effect) so React StrictMode's double mount in dev
   // cannot flip the decision between the two passes.
-  const [open, setOpen] = useState(() => !wasSeenThisSession());
+  const [open, setOpen] = useState(() => !shownThisPageLoad);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    // "First visit": mark it as soon as it is shown, so leaving without closing it
-    // does not bring it back on the next navigation to the homepage.
-    markSeenThisSession();
+    // Mark it as soon as it is shown, so leaving without closing it does not bring it back on
+    // the next in-app navigation to the homepage (a refresh resets this and shows it again).
+    shownThisPageLoad = true;
     closeRef.current?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {

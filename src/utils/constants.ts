@@ -135,8 +135,6 @@ export const ROUTES = {
   notFound: "/404",
 } as const;
 
-// sessionStorage flag: the admin view-statistics popup shows once per browser session.
-export const ADMIN_VIEWS_POPUP_SEEN_KEY = "cb-admin-views-popup-seen";
 
 // localStorage key holding the admin console's chosen "light" | "dark" theme.
 export const ADMIN_THEME_STORAGE_KEY = "cb-admin-theme";
