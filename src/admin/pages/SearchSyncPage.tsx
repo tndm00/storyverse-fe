@@ -2,16 +2,18 @@ import { Button, Card, Col, Row, Statistic, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { ReloadOutlined } from "@ant-design/icons";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import * as storyService from "@/services/storyService";
 import type { SearchSyncStatus } from "@/services/storyService";
-import { fromNow, formatDate } from "@/utils/format";
+import { formatDate } from "@/utils/format";
 
 // The `search_sync_cursor` table only ever has one row (a single shared
 // cursor) — this key is fixed rather than pulled from the API response.
 const CURSOR_ROW_KEY = "search_sync_cursor";
 
 export function SearchSyncPage() {
+  const { t, fromNow } = useAdminLocale();
   const { data, loading, refetch } = useAsyncQuery(() => storyService.getSearchSyncStatus(), []);
 
   const coveragePercent =
@@ -19,45 +21,50 @@ export function SearchSyncPage() {
       ? Math.round((data.syncedDocumentCount / data.eligibleStoryCount) * 100)
       : null;
 
+  const onOff = (v: boolean) => (
+    <Tag color={v ? "success" : "default"}>{v ? t("searchSync.on") : t("searchSync.off")}</Tag>
+  );
+
   const columns: ColumnsType<SearchSyncStatus> = [
     {
-      title: "Đồng bộ tới",
+      title: t("searchSync.syncedTo"),
       dataIndex: "lastSyncedAt",
-      render: (v: string | null) => (v ? `${formatDate(v)} (${fromNow(v)})` : "Chưa từng chạy"),
+      render: (v: string | null) =>
+        v ? `${formatDate(v)} (${fromNow(v)})` : t("searchSync.neverRun"),
     },
     {
-      title: "Số dòng đã sync (Elasticsearch)",
+      title: t("searchSync.docsSynced"),
       dataIndex: "syncedDocumentCount",
     },
     {
-      title: "Tổng truyện đủ điều kiện (Postgres)",
+      title: t("searchSync.eligible"),
       dataIndex: "eligibleStoryCount",
     },
     {
-      title: "Tỉ lệ đồng bộ",
+      title: t("searchSync.coverage"),
       key: "coverage",
       render: () => (coveragePercent === null ? "—" : `${coveragePercent}%`),
     },
     {
-      title: "Ghi (Enabled)",
+      title: t("searchSync.writeEnabled"),
       dataIndex: "enabled",
-      render: (v: boolean) => <Tag color={v ? "success" : "default"}>{v ? "Bật" : "Tắt"}</Tag>,
+      render: onOff,
     },
     {
-      title: "Đọc (SearchReadEnabled)",
+      title: t("searchSync.readEnabled"),
       dataIndex: "searchReadEnabled",
-      render: (v: boolean) => <Tag color={v ? "success" : "default"}>{v ? "Bật" : "Tắt"}</Tag>,
+      render: onOff,
     },
   ];
 
   return (
     <div>
       <AppPageHeader
-        title="Đồng bộ tìm kiếm (Elasticsearch)"
-        subtitle="Trạng thái job nền đồng bộ truyện từ Postgres vào Elasticsearch — chỉ xem, không có thao tác nào ở đây."
+        title={t("searchSync.title")}
+        subtitle={t("searchSync.subtitle")}
         extra={
           <Button icon={<ReloadOutlined />} onClick={refetch} loading={loading}>
-            Làm mới
+            {t("common.refresh")}
           </Button>
         }
       />
@@ -66,23 +73,20 @@ export function SearchSyncPage() {
         <Col xs={24} sm={8}>
           <Card loading={loading}>
             <Statistic
-              title="Số dòng đã sync vào Elasticsearch"
+              title={t("searchSync.docsSyncedCard")}
               value={data?.syncedDocumentCount ?? 0}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
           <Card loading={loading}>
-            <Statistic
-              title="Tổng truyện đủ điều kiện (Postgres)"
-              value={data?.eligibleStoryCount ?? 0}
-            />
+            <Statistic title={t("searchSync.eligible")} value={data?.eligibleStoryCount ?? 0} />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
           <Card loading={loading}>
             <Statistic
-              title="Tỉ lệ đồng bộ"
+              title={t("searchSync.coverage")}
               value={coveragePercent ?? 0}
               suffix="%"
               valueStyle={{ color: coveragePercent === 100 ? "#3f8600" : undefined }}

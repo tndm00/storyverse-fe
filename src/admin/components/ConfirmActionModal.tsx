@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import { Alert, Input, Modal } from "antd";
-import { MESSAGES } from "@/utils/constants";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 
 export interface ConfirmActionModalProps {
   open: boolean;
@@ -19,15 +19,16 @@ export interface ConfirmActionModalProps {
 export function ConfirmActionModal({
   open,
   title,
-  okText = "Confirm",
+  okText,
   okType = "primary",
   reasonRequired = true,
-  reasonLabel = "Reason",
+  reasonLabel,
   description,
   confirmLoading = false,
   onOk,
   onCancel,
 }: ConfirmActionModalProps) {
+  const { t } = useAdminLocale();
   const [reason, setReason] = useState("");
   const [touched, setTouched] = useState(false);
   const reasonInputId = useId();
@@ -38,7 +39,7 @@ export function ConfirmActionModal({
     <Modal
       open={open}
       title={title}
-      okText={okText}
+      okText={okText ?? t("common.confirm")}
       okButtonProps={{
         danger: okType === "danger",
         disabled: invalid,
@@ -55,7 +56,7 @@ export function ConfirmActionModal({
     >
       {description ? <div style={{ marginBottom: 12 }}>{description}</div> : null}
       <label htmlFor={reasonInputId} style={{ display: "block", marginBottom: 6, fontWeight: 500 }}>
-        {reasonLabel}
+        {reasonLabel ?? t("common.reason")}
         {reasonRequired ? <span style={{ color: "#cf1322" }}> *</span> : null}
       </label>
       <Input.TextArea
@@ -64,7 +65,7 @@ export function ConfirmActionModal({
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         onBlur={() => setTouched(true)}
-        placeholder="This note is shown to the author and kept in the moderation history."
+        placeholder={t("common.noteDefaultPlaceholder")}
         data-testid="reason-input"
       />
       {touched && invalid ? (
@@ -72,7 +73,7 @@ export function ConfirmActionModal({
           style={{ marginTop: 8 }}
           type="error"
           showIcon
-          message={MESSAGES.common.reasonRequired}
+          message={t("common.reasonRequired")}
         />
       ) : null}
     </Modal>

@@ -9,19 +9,20 @@ import {
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { ViewStatsCards } from "@/admin/components/ViewStatsCards";
 import { StatusTag } from "@/components/StatusTag";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAuth } from "@/hooks/useAuth";
 import { isPlatformAdmin } from "@/services/authService";
 import * as reviewService from "@/services/reviewService";
 import * as reportService from "@/services/reportService";
 import * as storyService from "@/services/storyService";
-import { fromNow } from "@/utils/format";
-import { LABELS, ROUTES } from "@/utils/constants";
+import { ROUTES } from "@/utils/constants";
 
 const { Text } = Typography;
 
 export function DashboardPage() {
   const { token } = theme.useToken();
+  const { t, tEnum, fromNow } = useAdminLocale();
   const { user } = useAuth();
   const reviewCounts = useAsyncQuery(() => reviewService.counts(), []);
   const reportCounts = useAsyncQuery(() => reportService.counts(), []);
@@ -37,28 +38,28 @@ export function DashboardPage() {
 
   const stats = [
     {
-      title: "Pending review",
+      title: t("dashboard.pendingReview"),
       value: reviewCounts.data?.Pending,
       icon: <ClockCircleOutlined />,
       color: "#d48806",
       to: ROUTES.admin.reviewQueue,
     },
     {
-      title: "In review",
+      title: t("dashboard.inReview"),
       value: reviewCounts.data?.Reviewing,
       icon: <CheckCircleOutlined />,
       color: "#1677ff",
       to: ROUTES.admin.reviewQueue,
     },
     {
-      title: "Reports pending",
+      title: t("dashboard.reportsPending"),
       value: reportCounts.data?.Pending,
       icon: <FlagOutlined />,
       color: "#cf1322",
       to: ROUTES.admin.reports,
     },
     {
-      title: "Total stories",
+      title: t("dashboard.totalStories"),
       value: storyCounts.data?.total,
       icon: <BookOutlined />,
       color: token.colorPrimary,
@@ -68,16 +69,13 @@ export function DashboardPage() {
 
   return (
     <div>
-      <AppPageHeader
-        title={LABELS.dashboard}
-        subtitle="Overview of the review and moderation workload"
-      />
+      <AppPageHeader title={t("nav.dashboard")} subtitle={t("dashboard.subtitle")} />
 
       {isPlatformAdmin(user?.roles) ? <ViewStatsCards /> : null}
 
       <Row gutter={[16, 16]}>
         {stats.map((s) => (
-          <Col xs={24} sm={12} lg={6} key={s.title}>
+          <Col xs={24} sm={12} lg={6} key={s.to + s.title}>
             <Link to={s.to}>
               <Card
                 hoverable
@@ -98,8 +96,8 @@ export function DashboardPage() {
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24} lg={14}>
           <Card
-            title="Recent submissions"
-            extra={<Link to={ROUTES.admin.reviewQueue}>View all</Link>}
+            title={t("dashboard.recentSubmissions")}
+            extra={<Link to={ROUTES.admin.reviewQueue}>{t("common.viewAll")}</Link>}
           >
             <Table
               size="small"
@@ -109,19 +107,24 @@ export function DashboardPage() {
               dataSource={recentReview.data?.items || []}
               columns={[
                 {
-                  title: "Title",
+                  title: t("common.colTitle"),
                   dataIndex: "title",
                   render: (title, row) => <Link to={ROUTES.admin.reviewItem(row.id)}>{title}</Link>,
                 },
-                { title: "Type", dataIndex: "targetType", width: 90 },
                 {
-                  title: "Status",
+                  title: t("common.colType"),
+                  dataIndex: "targetType",
+                  width: 90,
+                  render: (v: string) => tEnum("target", v),
+                },
+                {
+                  title: t("common.colStatus"),
                   dataIndex: "reviewStatus",
                   width: 110,
                   render: (v) => <StatusTag value={v} />,
                 },
                 {
-                  title: "Submitted",
+                  title: t("common.colSubmitted"),
                   dataIndex: "submittedAt",
                   width: 130,
                   render: (v) => <Text type="secondary">{fromNow(v)}</Text>,
@@ -131,7 +134,10 @@ export function DashboardPage() {
           </Card>
         </Col>
         <Col xs={24} lg={10}>
-          <Card title="Latest reports" extra={<Link to={ROUTES.admin.reports}>View all</Link>}>
+          <Card
+            title={t("dashboard.latestReports")}
+            extra={<Link to={ROUTES.admin.reports}>{t("common.viewAll")}</Link>}
+          >
             <List
               size="small"
               loading={recentReports.loading}

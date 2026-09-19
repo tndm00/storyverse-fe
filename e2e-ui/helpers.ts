@@ -88,6 +88,8 @@ export async function quickPublishAsAuthor(
 // ---- admin console ---------------------------------------------------
 
 export async function loginAsAdmin(page: Page): Promise<void> {
+  // The admin console defaults to Vietnamese; these specs assert the English wording.
+  await page.addInitScript(() => localStorage.setItem("cb-admin-locale", "en"));
   await page.goto("/login");
   await page.getByTestId("login-email").fill(ADMIN_EMAIL);
   await page.getByTestId("login-password").fill(ADMIN_PASSWORD);

@@ -2,13 +2,16 @@ import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Alert, Button, Card, Form, Input, Typography } from "antd";
 import { LockOutlined, SafetyCertificateOutlined, UserOutlined } from "@ant-design/icons";
+import { AdminLocaleProvider } from "@/context/AdminLocaleProvider";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAuth } from "@/hooks/useAuth";
 import { canUseAdminConsole } from "@/services/authService";
-import { MESSAGES, ROUTES } from "@/utils/constants";
+import { ROUTES } from "@/utils/constants";
 
 const { Title, Text } = Typography;
 
-export function LoginPage() {
+function LoginForm() {
+  const { t } = useAdminLocale();
   const { isAuthenticated, login, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +29,7 @@ export function LoginPage() {
       const signedIn = await login(email, password);
       if (!canUseAdminConsole(signedIn.roles)) {
         logout();
-        setError(MESSAGES.auth.notAllowed);
+        setError(t("login.notAllowed"));
         return;
       }
       navigate(location.state?.from?.pathname || ROUTES.admin.dashboard, { replace: true });
@@ -53,7 +56,7 @@ export function LoginPage() {
           <Title level={3} style={{ marginTop: 8, marginBottom: 0 }}>
             StoryVerse Admin
           </Title>
-          <Text type="secondary">Content review &amp; moderation console</Text>
+          <Text type="secondary">{t("login.tagline")}</Text>
         </div>
 
         {error ? (
@@ -65,8 +68,8 @@ export function LoginPage() {
             label="Email"
             name="email"
             rules={[
-              { required: true, message: "Enter your email" },
-              { type: "email", message: "Invalid email" },
+              { required: true, message: t("login.emailRequired") },
+              { type: "email", message: t("login.emailInvalid") },
             ]}
           >
             <Input
@@ -77,9 +80,9 @@ export function LoginPage() {
             />
           </Form.Item>
           <Form.Item
-            label="Password"
+            label={t("login.password")}
             name="password"
-            rules={[{ required: true, message: "Enter your password" }]}
+            rules={[{ required: true, message: t("login.passwordRequired") }]}
           >
             <Input.Password
               prefix={<LockOutlined />}
@@ -96,11 +99,21 @@ export function LoginPage() {
               loading={loading}
               data-testid="login-submit"
             >
-              Sign in
+              {t("login.signIn")}
             </Button>
           </Form.Item>
         </Form>
       </Card>
     </div>
+  );
+}
+
+// The sign-in page is the admin console's front door, so it follows the language chosen in
+// Settings > Language (stored in this browser); it has no language switch of its own.
+export function LoginPage() {
+  return (
+    <AdminLocaleProvider>
+      <LoginForm />
+    </AdminLocaleProvider>
   );
 }

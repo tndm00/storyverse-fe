@@ -3,24 +3,19 @@ import { Alert, Button, Card, Input, Select, Space, Table, Tag, Typography } fro
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { ConfirmActionModal } from "@/admin/components/ConfirmActionModal";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as commentService from "@/services/commentModerationService";
 import type { AdminComment, AdminCommentStatusFilter } from "@/services/commentModerationService";
-import { DEFAULT_PAGE_SIZE, LABELS } from "@/utils/constants";
-import { formatDate, fromNow, truncate } from "@/utils/format";
+import { DEFAULT_PAGE_SIZE } from "@/utils/constants";
+import { formatDate, truncate } from "@/utils/format";
 
 const { Text, Paragraph } = Typography;
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
-const STATUS_OPTIONS: { value: AdminCommentStatusFilter; label: string }[] = [
-  { value: "all", label: "Tất cả trạng thái" },
-  { value: "Visible", label: "Hiển thị" },
-  { value: "Hidden", label: "Đã ẩn" },
-  { value: "Deleted", label: "Đã xoá" },
-];
-
 export function CommentsPage() {
+  const { t, tEnum, fromNow } = useAdminLocale();
   const [status, setStatus] = useState<AdminCommentStatusFilter>("all");
   const [q, setQ] = useState("");
   const [draftQ, setDraftQ] = useState("");
@@ -29,6 +24,13 @@ export function CommentsPage() {
   const [page, setPage] = useState(1);
   const { busy, run } = useAsyncRunner();
   const [target, setTarget] = useState<{ comment: AdminComment; hide: boolean } | null>(null);
+
+  const statusOptions: { value: AdminCommentStatusFilter; label: string }[] = [
+    { value: "all", label: t("common.allStatuses") },
+    { value: "Visible", label: tEnum("commentStatus", "Visible") },
+    { value: "Hidden", label: tEnum("commentStatus", "Hidden") },
+    { value: "Deleted", label: tEnum("commentStatus", "Deleted") },
+  ];
 
   const { data, loading, error, refetch } = useAsyncQuery(
     () =>
@@ -50,25 +52,25 @@ export function CommentsPage() {
 
   const columns: ColumnsType<AdminComment> = [
     {
-      title: "Nội dung",
+      title: t("comments.colContent"),
       dataIndex: "content",
       render: (v: string, row) => (
         <Space direction="vertical" size={0}>
           <Text delete={row.status === "Deleted"}>{truncate(v, 160)}</Text>
           {row.parentCommentId ? (
             <Text type="secondary" style={{ fontSize: 12 }}>
-              ↳ trả lời
+              {t("comments.reply")}
             </Text>
           ) : null}
           <Text type="secondary" style={{ fontSize: 12 }}>
-            Chương: {row.chapterId}
+            {t("comments.chapter", { id: row.chapterId })}
           </Text>
         </Space>
       ),
     },
-    { title: "Tác giả", dataIndex: "authorLabel", width: 160 },
+    { title: t("common.colAuthor"), dataIndex: "authorLabel", width: 160 },
     {
-      title: "Thời gian",
+      title: t("comments.colTime"),
       dataIndex: "createdAt",
       width: 170,
       render: (v: string) => (
@@ -81,11 +83,13 @@ export function CommentsPage() {
       ),
     },
     {
-      title: "Trạng thái",
+      title: t("common.colStatus"),
       dataIndex: "status",
       width: 110,
       render: (v: AdminComment["status"]) => (
-        <Tag color={v === "Visible" ? "green" : v === "Hidden" ? "orange" : "default"}>{v}</Tag>
+        <Tag color={v === "Visible" ? "green" : v === "Hidden" ? "orange" : "default"}>
+          {tEnum("commentStatus", v)}
+        </Tag>
       ),
     },
     {
@@ -98,7 +102,7 @@ export function CommentsPage() {
             danger={!row.hidden}
             onClick={() => setTarget({ comment: row, hide: !row.hidden })}
           >
-            {row.hidden ? "Hiện" : "Ẩn"}
+            {row.hidden ? t("common.show") : t("common.hide")}
           </Button>
         ),
     },
@@ -106,20 +110,20 @@ export function CommentsPage() {
 
   return (
     <div>
-      <AppPageHeader title={LABELS.comments} subtitle="Ẩn / hiện bình luận vi phạm toàn nền tảng" />
+      <AppPageHeader title={t("nav.comments")} subtitle={t("comments.subtitle")} />
 
       <Card
         title={
           <Space wrap>
             <Input
-              placeholder="Tìm nội dung bình luận"
+              placeholder={t("comments.searchText")}
               style={{ width: 240 }}
               value={draftQ}
               onChange={(e) => setDraftQ(e.target.value)}
               onPressEnter={applyFilters}
             />
             <Input
-              placeholder="Lọc theo Chapter ID (tuỳ chọn)"
+              placeholder={t("comments.filterChapter")}
               style={{ width: 260 }}
               value={draftChapterId}
               onChange={(e) => setDraftChapterId(e.target.value)}
@@ -128,14 +132,14 @@ export function CommentsPage() {
             <Select
               style={{ width: 170 }}
               value={status}
-              options={STATUS_OPTIONS}
+              options={statusOptions}
               onChange={(v) => {
                 setStatus(v);
                 setPage(1);
               }}
             />
             <Button type="primary" onClick={applyFilters}>
-              Tìm
+              {t("comments.search")}
             </Button>
           </Space>
         }
@@ -144,7 +148,7 @@ export function CommentsPage() {
           <Alert
             type="error"
             showIcon
-            message="Không tải được bình luận"
+            message={t("comments.loadFailed")}
             description={error.message}
           />
         ) : (
@@ -158,7 +162,7 @@ export function CommentsPage() {
               pageSize: PAGE_SIZE,
               total: data?.totalCount ?? 0,
               onChange: setPage,
-              showTotal: (t) => `${t} bình luận`,
+              showTotal: (total) => t("comments.total", { count: total }),
             }}
           />
         )}
@@ -166,10 +170,10 @@ export function CommentsPage() {
 
       <ConfirmActionModal
         open={Boolean(target)}
-        title={target?.hide ? "Ẩn bình luận" : "Hiện lại bình luận"}
-        okText={target?.hide ? "Ẩn" : "Hiện"}
+        title={target?.hide ? t("comments.hideTitle") : t("comments.showTitle")}
+        okText={target?.hide ? t("common.hide") : t("common.show")}
         okType={target?.hide ? "danger" : "primary"}
-        reasonLabel="Lý do (lưu vào nhật ký kiểm duyệt)"
+        reasonLabel={t("comments.reasonLabel")}
         confirmLoading={busy}
         description={
           <Paragraph type="secondary" style={{ marginBottom: 0 }}>
@@ -181,7 +185,7 @@ export function CommentsPage() {
           if (!target) return;
           run(
             () => commentService.setVisibility(target.comment.id, target.hide, reason),
-            target.hide ? "Đã ẩn bình luận" : "Đã hiện lại bình luận",
+            target.hide ? t("comments.hidden") : t("comments.shown"),
             () => {
               setTarget(null);
               refetch();

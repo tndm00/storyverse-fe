@@ -15,42 +15,42 @@ test("admin creates, edits, hides, and re-shows a genre; empty name is rejected"
   await page.goto("/console-7f2k/genres");
 
   // ---- validation: empty name is rejected, no request sent -------------
-  await page.getByRole("button", { name: "Thêm thể loại" }).click();
+  await page.getByRole("button", { name: "Add genre" }).click();
   const modal = page.locator(".ant-modal-content");
   await expect(modal).toBeVisible();
-  await modal.getByRole("button", { name: "Lưu" }).click();
-  await expect(page.getByText("Nhập tên thể loại")).toBeVisible();
+  await modal.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Enter the genre name")).toBeVisible();
   // Modal is still open (nothing was submitted).
   await expect(modal).toBeVisible();
 
   // ---- create ------------------------------------------------------
-  await modal.getByLabel("Tên").fill(name);
-  await modal.getByRole("button", { name: "Lưu" }).click();
+  await modal.getByLabel("Name").fill(name);
+  await modal.getByRole("button", { name: "Save" }).click();
   await expect(modal).toBeHidden();
 
   const row = page.locator("tr", { hasText: name });
   await expect(row).toBeVisible();
-  await expect(row.getByText("Hiện", { exact: true })).toBeVisible();
+  await expect(row.getByText("Visible", { exact: true })).toBeVisible();
 
   // ---- edit ----------------------------------------------------------
-  await row.getByRole("button", { name: "Sửa" }).click();
+  await row.getByRole("button", { name: "Edit" }).click();
   const editModal = page.locator(".ant-modal-content");
   await expect(editModal).toBeVisible();
-  await expect(editModal.getByLabel("Tên")).toHaveValue(name);
-  await editModal.getByLabel("Tên").fill(updatedName);
-  await editModal.getByRole("button", { name: "Lưu" }).click();
+  await expect(editModal.getByLabel("Name")).toHaveValue(name);
+  await editModal.getByLabel("Name").fill(updatedName);
+  await editModal.getByRole("button", { name: "Save" }).click();
   await expect(editModal).toBeHidden();
 
   const updatedRow = page.locator("tr", { hasText: updatedName });
   await expect(updatedRow).toBeVisible();
 
   // ---- hide ------------------------------------------------------------
-  await updatedRow.getByRole("button", { name: "Ẩn", exact: true }).click();
-  await expect(updatedRow.getByText("Ẩn", { exact: true })).toBeVisible();
+  await updatedRow.getByRole("button", { name: "Hide", exact: true }).click();
+  await expect(updatedRow.getByText("Hidden", { exact: true })).toBeVisible();
 
   // ---- show again --------------------------------------------------
-  await updatedRow.getByRole("button", { name: "Hiện", exact: true }).click();
-  await expect(updatedRow.getByText("Hiện", { exact: true })).toBeVisible();
+  await updatedRow.getByRole("button", { name: "Show", exact: true }).click();
+  await expect(updatedRow.getByText("Visible", { exact: true })).toBeVisible();
 });
 
 // Form.Item's own "required" rule on displayOrder (separate from the name
@@ -64,20 +64,20 @@ test("clearing displayOrder on the create form shows a required-field error and 
   await loginAsAdmin(page);
   await page.goto("/console-7f2k/genres");
 
-  await page.getByRole("button", { name: "Thêm thể loại" }).click();
+  await page.getByRole("button", { name: "Add genre" }).click();
   const modal = page.locator(".ant-modal-content");
   await expect(modal).toBeVisible();
 
-  await modal.getByLabel("Tên").fill(name);
+  await modal.getByLabel("Name").fill(name);
   // displayOrder is pre-filled by openCreate (data?.length ?? 0) — clear it.
-  const displayOrderInput = modal.getByLabel("Thứ tự hiển thị");
+  const displayOrderInput = modal.getByLabel("Display order");
   await displayOrderInput.fill("");
-  await modal.getByRole("button", { name: "Lưu" }).click();
+  await modal.getByRole("button", { name: "Save" }).click();
 
   // No custom message on this rule — antd's own default Form validateMessages
   // (src/locale/en_US.ts, used when no ConfigProvider locale is set) render
   // required errors as "Please enter ${label}".
-  await expect(modal.getByText("Please enter Thứ tự hiển thị")).toBeVisible();
+  await expect(modal.getByText("Please enter Display order")).toBeVisible();
   await expect(modal).toBeVisible();
   await expect(page.locator("tr", { hasText: name })).toHaveCount(0);
 });
@@ -86,7 +86,7 @@ test("clearing displayOrder on the create form shows a required-field error and 
 // antd's own default Form validateMessages template for a string "max"
 // violation is "${label} must be up to ${max} characters" (antd's
 // locale/en_US.ts defaultValidateMessages, used with no ConfigProvider
-// locale set), so the field label ("Tên") and the configured max (100) both
+// locale set), so the field label ("Name") and the configured max (100) both
 // show up in the rendered error.
 test("a genre name over 100 characters shows the max-length error and blocks submit", async ({
   page,
@@ -96,14 +96,14 @@ test("a genre name over 100 characters shows the max-length error and blocks sub
   await loginAsAdmin(page);
   await page.goto("/console-7f2k/genres");
 
-  await page.getByRole("button", { name: "Thêm thể loại" }).click();
+  await page.getByRole("button", { name: "Add genre" }).click();
   const modal = page.locator(".ant-modal-content");
   await expect(modal).toBeVisible();
 
-  await modal.getByLabel("Tên").fill(longName);
-  await modal.getByRole("button", { name: "Lưu" }).click();
+  await modal.getByLabel("Name").fill(longName);
+  await modal.getByRole("button", { name: "Save" }).click();
 
-  await expect(modal.getByText("Tên must be up to 100 characters")).toBeVisible();
+  await expect(modal.getByText("Name must be up to 100 characters")).toBeVisible();
   await expect(modal).toBeVisible();
 });
 
@@ -122,25 +122,25 @@ test("creating a genre with a duplicate name shows an error toast and keeps the 
   await page.goto("/console-7f2k/genres");
 
   // Create it once.
-  await page.getByRole("button", { name: "Thêm thể loại" }).click();
+  await page.getByRole("button", { name: "Add genre" }).click();
   const modal = page.locator(".ant-modal-content");
-  await modal.getByLabel("Tên").fill(name);
-  await modal.getByRole("button", { name: "Lưu" }).click();
+  await modal.getByLabel("Name").fill(name);
+  await modal.getByRole("button", { name: "Save" }).click();
   await expect(modal).toBeHidden();
   await expect(page.locator("tr", { hasText: name })).toBeVisible();
 
   // Try to create it again with the exact same name.
-  await page.getByRole("button", { name: "Thêm thể loại" }).click();
+  await page.getByRole("button", { name: "Add genre" }).click();
   await expect(modal).toBeVisible();
-  await modal.getByLabel("Tên").fill(name);
-  await modal.getByRole("button", { name: "Lưu" }).click();
+  await modal.getByLabel("Name").fill(name);
+  await modal.getByRole("button", { name: "Save" }).click();
 
   await expect(page.locator(".ant-message-error")).toBeVisible();
   await expect(modal).toBeVisible();
 });
 
-// GenresPage's own tooltip invites negative displayOrder values ("Có thể
-// dùng số âm để đưa lên đầu" — negative numbers bring a genre to the front).
+// GenresPage's own tooltip invites negative displayOrder values ("A negative
+// number moves it to the top" — negative numbers bring a genre to the front).
 // CreateGenreCommandValidator/UpdateGenreCommandValidator used to reject any
 // negative value with a 400 (a genuine FE/BE mismatch, previously flagged and
 // left unfixed); both validators were relaxed to match the tooltip's promise.
@@ -156,9 +156,9 @@ test("a negative displayOrder is accepted and sorts the genre to the top of the 
   await loginAsAdmin(page);
   await page.goto("/console-7f2k/genres");
 
-  await page.getByRole("button", { name: "Thêm thể loại" }).click();
+  await page.getByRole("button", { name: "Add genre" }).click();
   const modal = page.locator(".ant-modal-content");
-  await modal.getByLabel("Tên").fill(name);
+  await modal.getByLabel("Name").fill(name);
   // A fixed value like -999 would tie with (and can lose the top spot to) a
   // leftover genre from an earlier run of this same test against the shared,
   // never-cleaned dev DB. DisplayOrder is a 32-bit int server-side, so a raw
@@ -167,12 +167,12 @@ test("a negative displayOrder is accepted and sorts the genre to the top of the 
   // strictly smaller than any earlier run's value, making this run's genre
   // the unique new minimum every time.
   const displayOrder = -Math.floor(Date.now() / 1000);
-  await modal.getByLabel("Thứ tự hiển thị").fill(String(displayOrder));
+  await modal.getByLabel("Display order").fill(String(displayOrder));
   const [createResponse] = await Promise.all([
     page.waitForResponse(
       (r) => r.url().includes("/api/content/v1/genres") && r.request().method() === "POST",
     ),
-    modal.getByRole("button", { name: "Lưu" }).click(),
+    modal.getByRole("button", { name: "Save" }).click(),
   ]);
   expect(createResponse.ok()).toBe(true);
   await expect(modal).toBeHidden();
@@ -192,10 +192,10 @@ test("pressing Escape while the create-genre modal is open closes it without cre
   await loginAsAdmin(page);
   await page.goto("/console-7f2k/genres");
 
-  await page.getByRole("button", { name: "Thêm thể loại" }).click();
+  await page.getByRole("button", { name: "Add genre" }).click();
   const modal = page.locator(".ant-modal-content");
   await expect(modal).toBeVisible();
-  await modal.getByLabel("Tên").fill(name);
+  await modal.getByLabel("Name").fill(name);
 
   await page.keyboard.press("Escape");
   await expect(modal).toBeHidden();

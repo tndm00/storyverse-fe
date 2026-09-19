@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert, Button, Card, Form, InputNumber, Input, Modal, Space, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as genreService from "@/services/genreService";
@@ -14,6 +15,7 @@ interface FormValues {
 }
 
 export function GenresPage() {
+  const { t } = useAdminLocale();
   const { data, loading, refetch } = useAsyncQuery(() => genreService.listAll(), []);
   const { busy, run } = useAsyncRunner();
   const [editing, setEditing] = useState<Genre | "new" | null>(null);
@@ -47,7 +49,7 @@ export function GenresPage() {
               ...input,
               isActive: (editing as Genre).isActive,
             }),
-      editing === "new" ? "Đã tạo thể loại" : "Đã cập nhật",
+      editing === "new" ? t("genres.created") : t("common.updated"),
       () => {
         setEditing(null);
         refetch();
@@ -66,16 +68,21 @@ export function GenresPage() {
               displayOrder: g.displayOrder,
               isActive: true,
             }),
-      g.isActive ? "Đã ẩn thể loại" : "Đã hiện thể loại",
+      g.isActive ? t("genres.nowHidden") : t("genres.nowVisible"),
       refetch,
     );
 
   const columns: ColumnsType<Genre> = [
-    { title: "Tên", dataIndex: "name", key: "name" },
+    { title: t("genres.colName"), dataIndex: "name", key: "name" },
     { title: "Slug", dataIndex: "slug", key: "slug", render: (s: string) => <code>{s}</code> },
-    { title: "Mô tả", dataIndex: "description", key: "description", ellipsis: true },
     {
-      title: "Thứ tự",
+      title: t("genres.colDescription"),
+      dataIndex: "description",
+      key: "description",
+      ellipsis: true,
+    },
+    {
+      title: t("genres.colOrder"),
       dataIndex: "displayOrder",
       key: "displayOrder",
       width: 90,
@@ -83,11 +90,13 @@ export function GenresPage() {
       defaultSortOrder: "ascend",
     },
     {
-      title: "Trạng thái",
+      title: t("common.colStatus"),
       dataIndex: "isActive",
       key: "isActive",
       width: 110,
-      render: (v: boolean) => <Tag color={v ? "success" : "default"}>{v ? "Hiện" : "Ẩn"}</Tag>,
+      render: (v: boolean) => (
+        <Tag color={v ? "success" : "default"}>{v ? t("genres.visible") : t("genres.hidden")}</Tag>
+      ),
     },
     {
       title: "",
@@ -96,10 +105,10 @@ export function GenresPage() {
       render: (_, g) => (
         <Space>
           <Button size="small" onClick={() => openEdit(g)}>
-            Sửa
+            {t("common.edit")}
           </Button>
           <Button size="small" danger={g.isActive} disabled={busy} onClick={() => toggleActive(g)}>
-            {g.isActive ? "Ẩn" : "Hiện"}
+            {g.isActive ? t("common.hide") : t("common.show")}
           </Button>
         </Space>
       ),
@@ -109,11 +118,11 @@ export function GenresPage() {
   return (
     <div>
       <AppPageHeader
-        title="Thể loại"
-        subtitle="Danh sách thể loại truyện (lưu trong CSDL Content). Ẩn thể loại thay vì xoá — truyện đã gán vẫn giữ nguyên."
+        title={t("nav.genres")}
+        subtitle={t("genres.subtitle")}
         extra={
           <Button type="primary" onClick={openCreate}>
-            Thêm thể loại
+            {t("genres.add")}
           </Button>
         }
       />
@@ -131,39 +140,35 @@ export function GenresPage() {
 
       <Modal
         open={editing !== null}
-        title={editing === "new" ? "Thêm thể loại" : "Sửa thể loại"}
+        title={editing === "new" ? t("genres.add") : t("genres.editTitle")}
         onCancel={() => setEditing(null)}
         onOk={submit}
         confirmLoading={busy}
-        okText="Lưu"
-        cancelText="Huỷ"
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
         destroyOnClose
       >
         <Form form={form} layout="vertical">
           <Form.Item
             name="name"
-            label="Tên"
-            rules={[{ required: true, message: "Nhập tên thể loại" }, { max: 100 }]}
+            label={t("genres.colName")}
+            rules={[{ required: true, message: t("genres.nameRequired") }, { max: 100 }]}
           >
-            <Input placeholder="Ví dụ: Kinh dị tâm lý" />
+            <Input placeholder={t("genres.namePlaceholder")} />
           </Form.Item>
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item name="description" label={t("genres.colDescription")}>
             <Input.TextArea rows={2} />
           </Form.Item>
           <Form.Item
             name="displayOrder"
-            label="Thứ tự hiển thị"
-            tooltip="Số nhỏ hiện trước. Có thể dùng số âm để đưa lên đầu."
+            label={t("genres.displayOrder")}
+            tooltip={t("genres.displayOrderHint")}
             rules={[{ required: true }]}
           >
             <InputNumber style={{ width: 160 }} />
           </Form.Item>
           {editing === "new" ? (
-            <Alert
-              type="info"
-              showIcon
-              message="Slug được tạo tự động từ tên và không đổi về sau."
-            />
+            <Alert type="info" showIcon message={t("genres.slugNote")} />
           ) : null}
         </Form>
       </Modal>

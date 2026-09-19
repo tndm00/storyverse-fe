@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { Alert, Card, Col, List, Row, Statistic, Typography, theme } from "antd";
 import { EyeOutlined } from "@ant-design/icons";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import * as storyService from "@/services/storyService";
-import { formatIsoDateVi, formatNumber } from "@/utils/format";
-import { ROUTES, VIEW_STATS_LABELS } from "@/utils/constants";
+import { ROUTES } from "@/utils/constants";
 
 const { Text } = Typography;
 
@@ -13,16 +13,17 @@ const { Text } = Typography;
 // endpoint answers 403 to anyone else, so the gate lives around this component.
 export function ViewStatsCards() {
   const { token } = theme.useToken();
+  const { t, formatNumber, formatIsoDate } = useAdminLocale();
   const { data, loading, error } = useAsyncQuery(() => storyService.getViewStats(), []);
 
   const cards = [
-    { title: VIEW_STATS_LABELS.total, value: data?.totalViews, color: token.colorPrimary },
-    { title: VIEW_STATS_LABELS.yesterday, value: data?.yesterdayViews, color: "#1677ff" },
-    { title: VIEW_STATS_LABELS.today, value: data?.todayViews, color: "#389e0d" },
+    { title: t("viewStats.total"), value: data?.totalViews, color: token.colorPrimary },
+    { title: t("viewStats.yesterday"), value: data?.yesterdayViews, color: "#1677ff" },
+    { title: t("viewStats.today"), value: data?.todayViews, color: "#389e0d" },
   ];
 
   if (error) {
-    return <Alert type="error" showIcon message={VIEW_STATS_LABELS.loadFailed} style={{ marginBottom: 16 }} />;
+    return <Alert type="error" showIcon message={t("viewStats.loadFailed")} style={{ marginBottom: 16 }} />;
   }
 
   return (
@@ -45,15 +46,15 @@ export function ViewStatsCards() {
 
       {data?.trackingSince ? (
         <Text type="secondary" style={{ display: "block", marginTop: 8, fontSize: 12 }}>
-          {VIEW_STATS_LABELS.trackingSince(formatIsoDateVi(data.trackingSince))}
+          {t("viewStats.trackingSince", { date: formatIsoDate(data.trackingSince) })}
         </Text>
       ) : null}
 
-      <Card title={VIEW_STATS_LABELS.topToday} loading={loading} style={{ marginTop: 16 }} size="small">
+      <Card title={t("viewStats.topToday")} loading={loading} style={{ marginTop: 16 }} size="small">
         <List
           size="small"
           dataSource={data?.topStoriesToday ?? []}
-          locale={{ emptyText: VIEW_STATS_LABELS.noTopToday }}
+          locale={{ emptyText: t("viewStats.noTopToday") }}
           renderItem={(s, i) => (
             <List.Item extra={<Text strong>{formatNumber(s.views)}</Text>}>
               <Text type="secondary" style={{ marginRight: 12 }}>{i + 1}</Text>

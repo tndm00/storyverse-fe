@@ -128,6 +128,8 @@ export const ROUTES = {
     authors: `/${ADMIN_BASE_PATH}/authors`,
     searchSync: `/${ADMIN_BASE_PATH}/search-sync`,
     settings: `/${ADMIN_BASE_PATH}/settings`,
+    settingsAppearance: `/${ADMIN_BASE_PATH}/settings/appearance`,
+    settingsLanguage: `/${ADMIN_BASE_PATH}/settings/language`,
     reviewItem: (id: string) => `/${ADMIN_BASE_PATH}/review/${id}`,
     report: (id: string) => `/${ADMIN_BASE_PATH}/reports/${id}`,
   },
@@ -139,14 +141,9 @@ export const ROUTES = {
 // localStorage key holding the admin console's chosen "light" | "dark" theme.
 export const ADMIN_THEME_STORAGE_KEY = "cb-admin-theme";
 
-// Admin console "Cấu hình" (settings) page.
-export const SETTINGS_LABELS = {
-  title: "Cấu hình",
-  appearanceTitle: "Giao diện",
-  appearanceHint: "Chọn giao diện sáng hoặc tối cho bảng điều khiển. Lựa chọn được ghi nhớ trên trình duyệt này.",
-  light: "Sáng",
-  dark: "Tối",
-} as const;
+// localStorage key holding the admin console's chosen language ("vi" | "en"), and its default.
+export const ADMIN_LOCALE_STORAGE_KEY = "cb-admin-locale";
+export const DEFAULT_ADMIN_LOCALE = "vi";
 
 // Admin-only view statistics (dashboard cards + homepage popup).
 export const VIEW_STATS_LABELS = {
@@ -162,20 +159,6 @@ export const VIEW_STATS_LABELS = {
   dailyUnavailable: "Số liệu theo ngày tạm thời không khả dụng.",
   trackingSince: (date: string) =>
     `Số liệu theo ngày được ghi từ ${date}; các ngày trước đó chưa từng được lưu nên hiển thị 0.`,
-} as const;
-
-// Section names — reused by the admin sidebar menu, breadcrumbs and page headers.
-export const LABELS = {
-  dashboard: "Dashboard",
-  reviewQueue: "Review queue",
-  rejectedQueue: "Bị từ chối",
-  reports: "Reports",
-  comments: "Bình luận",
-  stories: "Stories",
-  genres: "Thể loại",
-  authors: "Tác giả",
-  searchSync: "Đồng bộ tìm kiếm",
-  settings: "Cấu hình",
 } as const;
 
 // Reader-site (Canh Ba) branding.

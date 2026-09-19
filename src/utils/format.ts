@@ -5,6 +5,7 @@ import "dayjs/locale/vi";
 dayjs.extend(relativeTime);
 
 type DateInput = string | number | Date | null | undefined;
+type NumberLocale = "vi" | "en";
 
 export function formatDate(value: DateInput): string {
   if (!value) return "—";
@@ -16,9 +17,11 @@ export function formatDateShort(value: DateInput): string {
   return dayjs(value).format("YYYY-MM-DD");
 }
 
-export function fromNow(value: DateInput): string {
+// `locale` is only passed by the admin console (its language switch); without it the result is English,
+// exactly as before.
+export function fromNow(value: DateInput, locale: NumberLocale = "en"): string {
   if (!value) return "—";
-  return dayjs(value).fromNow();
+  return dayjs(value).locale(locale).fromNow();
 }
 
 // Vietnamese relative time for reader-site pages (admin console stays
@@ -29,21 +32,30 @@ export function fromNowVi(value: DateInput): string {
   return dayjs(value).locale("vi").fromNow();
 }
 
-const compactNumberFormatter = new Intl.NumberFormat("en", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-const numberFormatter = new Intl.NumberFormat("en");
+// The reader site always uses the default ("en") formatting; the admin console passes its language.
+const compactNumberFormatters: Record<NumberLocale, Intl.NumberFormat> = {
+  en: new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }),
+  vi: new Intl.NumberFormat("vi", { notation: "compact", maximumFractionDigits: 1 }),
+};
+const numberFormatters: Record<NumberLocale, Intl.NumberFormat> = {
+  en: new Intl.NumberFormat("en"),
+  vi: new Intl.NumberFormat("vi"),
+};
 
-// 12345 -> "12.3K"
-export function compactNumber(value: number | null | undefined): string {
+// 12345 -> "12.3K" (en) / "12,3 N" (vi)
+export function compactNumber(value: number | null | undefined, locale: NumberLocale = "en"): string {
   if (value == null) return "—";
-  return compactNumberFormatter.format(value);
+  return compactNumberFormatters[locale].format(value);
 }
 
-export function formatNumber(value: number | null | undefined): string {
+export function formatNumber(value: number | null | undefined, locale: NumberLocale = "en"): string {
   if (value == null) return "—";
-  return numberFormatter.format(value);
+  return numberFormatters[locale].format(value);
+}
+
+// "2026-09-19" -> "2026-09-19" (a date-only string from the API; no time-zone conversion).
+export function formatIsoDate(value: string | null | undefined): string {
+  return value || "—";
 }
 
 // "2026-09-19" -> "19/09/2026" (a date-only string from the API; no time-zone conversion).

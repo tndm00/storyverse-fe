@@ -18,10 +18,11 @@ import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { HistoryTimelineCard } from "@/components/HistoryTimelineCard";
 import { StatusTag } from "@/components/StatusTag";
 import { StoryDetailContent } from "@/components/StoryDetailContent";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as reportService from "@/services/reportService";
-import { LABELS, MESSAGES, MODERATION_ACTION, ROUTES } from "@/utils/constants";
+import { MODERATION_ACTION, ROUTES } from "@/utils/constants";
 import type { ModerationAction } from "@/utils/constants";
 import { formatDate } from "@/utils/format";
 
@@ -30,6 +31,7 @@ const { Paragraph, Text } = Typography;
 export function ReportDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const { t, tEnum } = useAdminLocale();
   const { busy, run } = useAsyncRunner();
 
   const { data: report, loading, error, refetch } = useAsyncQuery(() => reportService.get(id), [id]);
@@ -41,10 +43,10 @@ export function ReportDetailPage() {
     return (
       <Result
         status="404"
-        title={MESSAGES.report.notFound}
+        title={t("reportDetail.notFound")}
         extra={
           <Button type="primary" onClick={() => navigate(ROUTES.admin.reports)}>
-            Back to reports
+            {t("reportDetail.backToReports")}
           </Button>
         }
       />
@@ -56,38 +58,44 @@ export function ReportDetailPage() {
   return (
     <div>
       <AppPageHeader
-        title={`Report ${report.id}`}
-        breadcrumb={[{ title: LABELS.reports, to: ROUTES.admin.reports }, { title: report.id }]}
-        subtitle={`${report.targetType} · reported by ${report.reporterName}`}
+        title={t("reportDetail.title", { id: report.id })}
+        breadcrumb={[{ title: t("nav.reports"), to: ROUTES.admin.reports }, { title: report.id }]}
+        subtitle={t("reportDetail.subtitle", {
+          type: tEnum("target", report.targetType),
+          reporter: report.reporterName,
+        })}
         extra={
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTES.admin.reports)}>
-            Back
+            {t("common.back")}
           </Button>
         }
       />
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={15}>
-          <Card title="Report">
+          <Card title={t("reportDetail.cardReport")}>
             <Descriptions column={1} size="small" bordered>
-              <Descriptions.Item label="Target">
-                {report.targetRef.title} <Text type="secondary">({report.targetType})</Text>
+              <Descriptions.Item label={t("reports.colTarget")}>
+                {report.targetRef.title}{" "}
+                <Text type="secondary">({tEnum("target", report.targetType)})</Text>
               </Descriptions.Item>
-              <Descriptions.Item label="Reason">
+              <Descriptions.Item label={t("reports.colReason")}>
                 <StatusTag value={report.reason} kind="reason" />
               </Descriptions.Item>
-              <Descriptions.Item label="Reporter">{report.reporterName}</Descriptions.Item>
-              <Descriptions.Item label="Reported at">
+              <Descriptions.Item label={t("reports.colReporter")}>
+                {report.reporterName}
+              </Descriptions.Item>
+              <Descriptions.Item label={t("reportDetail.reportedAt")}>
                 {formatDate(report.createdAt)}
               </Descriptions.Item>
-              <Descriptions.Item label="Status">
+              <Descriptions.Item label={t("common.colStatus")}>
                 <StatusTag value={report.status} />
               </Descriptions.Item>
-              <Descriptions.Item label="Reporter note">
+              <Descriptions.Item label={t("reportDetail.reporterNote")}>
                 <Paragraph style={{ marginBottom: 0 }}>{report.note}</Paragraph>
               </Descriptions.Item>
               {report.action ? (
-                <Descriptions.Item label="Action taken">
+                <Descriptions.Item label={t("reportDetail.actionTaken")}>
                   <StatusTag value={report.action} kind="action" /> — {report.resolutionNote}
                 </Descriptions.Item>
               ) : null}
@@ -95,18 +103,20 @@ export function ReportDetailPage() {
           </Card>
 
           {report.story ? (
-            <Card title="Reported story" style={{ marginTop: 16 }}>
+            <Card title={t("reportDetail.cardStory")} style={{ marginTop: 16 }}>
               <StoryDetailContent story={report.story} />
             </Card>
           ) : null}
         </Col>
 
         <Col xs={24} lg={9}>
-          <Card title="Resolve">
+          <Card title={t("reportDetail.cardResolve")}>
             {closed ? (
               <Result
                 status="success"
-                subTitle={`This report is ${report.status.toLowerCase()}.`}
+                subTitle={t("reportDetail.closed", {
+                  status: tEnum("status", report.status).toLowerCase(),
+                })}
                 style={{ padding: "12px 0" }}
               />
             ) : (
@@ -116,27 +126,27 @@ export function ReportDetailPage() {
                     block
                     loading={busy}
                     onClick={() =>
-                      run(() => reportService.pickUp(id), MESSAGES.report.pickedUp, refetch)
+                      run(() => reportService.pickUp(id), t("reportDetail.pickedUp"), refetch)
                     }
                   >
-                    Pick up (start reviewing)
+                    {t("reportDetail.pickUp")}
                   </Button>
                 ) : null}
 
                 <div>
-                  <Text type="secondary">Moderation action</Text>
+                  <Text type="secondary">{t("reportDetail.moderationAction")}</Text>
                   <Select<ModerationAction>
                     style={{ width: "100%", marginTop: 4 }}
-                    placeholder="Choose an action"
+                    placeholder={t("reportDetail.chooseAction")}
                     value={action ?? undefined}
                     onChange={setAction}
-                    options={MODERATION_ACTION.map((a) => ({ label: a, value: a }))}
+                    options={MODERATION_ACTION.map((a) => ({ label: tEnum("action", a), value: a }))}
                   />
                 </div>
 
                 <div>
                   <Text type="secondary">
-                    Resolution note{" "}
+                    {t("reportDetail.resolutionNote")}{" "}
                     {action && action !== "Dismiss" ? (
                       <span style={{ color: "#cf1322" }}>*</span>
                     ) : null}
@@ -145,7 +155,7 @@ export function ReportDetailPage() {
                     rows={4}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Explain the decision — kept in the audit history."
+                    placeholder={t("reportDetail.notePlaceholder")}
                     style={{ marginTop: 4 }}
                   />
                 </div>
@@ -159,12 +169,12 @@ export function ReportDetailPage() {
                   onClick={() =>
                     run(
                       () => reportService.act(id, { action, note }),
-                      action === "Dismiss" ? MESSAGES.report.dismissed : MESSAGES.report.resolved,
+                      action === "Dismiss" ? t("reportDetail.dismissed") : t("reportDetail.resolved"),
                       refetch,
                     )
                   }
                 >
-                  {action === "Dismiss" ? "Dismiss report" : "Apply & resolve"}
+                  {action === "Dismiss" ? t("reportDetail.dismiss") : t("reportDetail.apply")}
                 </Button>
               </Space>
             )}

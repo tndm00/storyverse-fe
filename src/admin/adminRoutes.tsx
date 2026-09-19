@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import { lazyNamed } from "@/utils/lazyNamed";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { ADMIN_BASE_PATH } from "@/utils/constants";
@@ -18,7 +19,14 @@ const StoriesPage = lazyNamed(() => import("./pages/StoriesPage"), "StoriesPage"
 const GenresPage = lazyNamed(() => import("./pages/GenresPage"), "GenresPage");
 const AuthorsPage = lazyNamed(() => import("./pages/AuthorsPage"), "AuthorsPage");
 const SearchSyncPage = lazyNamed(() => import("./pages/SearchSyncPage"), "SearchSyncPage");
-const SettingsPage = lazyNamed(() => import("./pages/SettingsPage"), "SettingsPage");
+const AppearanceSettingsPage = lazyNamed(
+  () => import("./pages/AppearanceSettingsPage"),
+  "AppearanceSettingsPage",
+);
+const LanguageSettingsPage = lazyNamed(
+  () => import("./pages/LanguageSettingsPage"),
+  "LanguageSettingsPage",
+);
 
 // Admin console route subtree, mounted at ADMIN_BASE_PATH (an obscure,
 // hard-to-guess slug — not "/admin" — so the console isn't findable by
@@ -43,6 +51,8 @@ export const adminRoutes = {
     { path: "genres", element: <GenresPage /> },
     { path: "authors", element: <AuthorsPage /> },
     { path: "search-sync", element: <SearchSyncPage /> },
-    { path: "settings", element: <SettingsPage /> },
+    { path: "settings", element: <Navigate to="appearance" replace /> },
+    { path: "settings/appearance", element: <AppearanceSettingsPage /> },
+    { path: "settings/language", element: <LanguageSettingsPage /> },
   ],
 };

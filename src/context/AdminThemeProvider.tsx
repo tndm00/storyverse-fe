@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { App as AntApp, ConfigProvider } from "antd";
+import enUS from "antd/locale/en_US";
+import viVN from "antd/locale/vi_VN";
 import { ADMIN_THEME_STORAGE_KEY } from "@/utils/constants";
 import { ADMIN_PAGE_BACKGROUND, buildAdminTheme } from "@/theme/antdTheme";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
+import type { AdminLocale } from "@/i18n/types";
 import { AdminThemeContext, type AdminThemeMode } from "./AdminThemeContext";
+
+const ANTD_LOCALES: Record<AdminLocale, typeof enUS> = { en: enUS, vi: viVN };
 
 function readMode(): AdminThemeMode {
   try {
@@ -19,6 +25,7 @@ function readMode(): AdminThemeMode {
  * so without it they would keep the site-wide light theme.
  */
 export function AdminThemeProvider({ children }: { children: ReactNode }) {
+  const { locale } = useAdminLocale();
   const [mode, setModeState] = useState<AdminThemeMode>(readMode);
 
   const setMode = (next: AdminThemeMode) => {
@@ -43,7 +50,7 @@ export function AdminThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <AdminThemeContext.Provider value={value}>
-      <ConfigProvider theme={buildAdminTheme(mode)}>
+      <ConfigProvider theme={buildAdminTheme(mode)} locale={ANTD_LOCALES[locale]}>
         <AntApp>{children}</AntApp>
       </ConfigProvider>
     </AdminThemeContext.Provider>

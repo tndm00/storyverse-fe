@@ -25,26 +25,31 @@ import { HistoryTimelineCard } from "@/components/HistoryTimelineCard";
 import { StatusTag } from "@/components/StatusTag";
 import { StoryDetailContent } from "@/components/StoryDetailContent";
 import { ConfirmActionModal } from "@/admin/components/ConfirmActionModal";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as reviewService from "@/services/reviewService";
-import { compactNumber, formatDate } from "@/utils/format";
-import { LABELS, MESSAGES, ROUTES } from "@/utils/constants";
+import { formatDate } from "@/utils/format";
+import { ROUTES } from "@/utils/constants";
 import type { Chapter, Story } from "@/types/domain";
 
 const { Paragraph, Title, Text } = Typography;
 
 function ChapterContent({ chapter }: { chapter: Chapter | null }) {
   const { token } = theme.useToken();
-  if (!chapter) return <Empty description="Chapter content unavailable" />;
+  const { t, compactNumber } = useAdminLocale();
+  if (!chapter) return <Empty description={t("reviewDetail.chapterUnavailable")} />;
   return (
     <div>
       <Title level={4} style={{ marginTop: 0 }}>
         {chapter.title}
       </Title>
       <Text type="secondary">
-        Order {String(chapter.orderIndex)} · {compactNumber(chapter.wordCount)} words ·{" "}
-        <StatusTag value={chapter.status} />
+        {t("reviewDetail.chapterMeta", {
+          order: String(chapter.orderIndex),
+          words: compactNumber(chapter.wordCount),
+        })}{" "}
+        · <StatusTag value={chapter.status} />
       </Text>
       <div
         style={{
@@ -67,6 +72,7 @@ export function ReviewDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { modal } = App.useApp();
+  const { t, tEnum } = useAdminLocale();
   const { busy, run } = useAsyncRunner();
 
   const { data: item, loading, error, refetch } = useAsyncQuery(() => reviewService.get(id), [id]);
@@ -77,10 +83,10 @@ export function ReviewDetailPage() {
     return (
       <Result
         status="404"
-        title={MESSAGES.review.notFound}
+        title={t("reviewDetail.notFound")}
         extra={
           <Button type="primary" onClick={() => navigate(ROUTES.admin.reviewQueue)}>
-            Back to queue
+            {t("reviewDetail.backToQueue")}
           </Button>
         }
       />
@@ -93,11 +99,11 @@ export function ReviewDetailPage() {
 
   const reapprove = () => {
     modal.confirm({
-      title: MESSAGES.review.reapproveConfirmTitle,
-      content: MESSAGES.review.reapproveConfirmContent,
-      okText: "Đưa về hàng đợi",
+      title: t("reapprove.confirmTitle"),
+      content: t("reapprove.confirmContent"),
+      okText: t("reapprove.ok"),
       onOk: () =>
-        run(() => reviewService.startReview(id), MESSAGES.review.reapproved, () =>
+        run(() => reviewService.startReview(id), t("reapprove.done"), () =>
           navigate(ROUTES.admin.reviewQueue),
         ),
     });
@@ -108,10 +114,13 @@ export function ReviewDetailPage() {
       <AppPageHeader
         title={item.title}
         breadcrumb={[
-          { title: LABELS.reviewQueue, to: ROUTES.admin.reviewQueue },
+          { title: t("nav.reviewQueue"), to: ROUTES.admin.reviewQueue },
           { title: item.id },
         ]}
-        subtitle={`${item.targetType} · submitted by ${item.authorName || "—"}`}
+        subtitle={t("reviewDetail.subtitle", {
+          type: tEnum("target", item.targetType),
+          author: item.authorName || "—",
+        })}
         extra={
           <Space>
             {canReapprove ? (
@@ -122,11 +131,11 @@ export function ReviewDetailPage() {
                 data-testid="reapprove"
                 onClick={reapprove}
               >
-                Đưa về hàng đợi duyệt
+                {t("reapprove.button")}
               </Button>
             ) : null}
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTES.admin.reviewQueue)}>
-              Back
+              {t("common.back")}
             </Button>
           </Space>
         }
@@ -134,7 +143,9 @@ export function ReviewDetailPage() {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={15}>
-          <Card title={item.targetType === "Story" ? "Story" : "Chapter"}>
+          <Card
+            title={item.targetType === "Story" ? t("reviewDetail.cardStory") : t("reviewDetail.cardChapter")}
+          >
             {item.targetType === "Story" ? (
               <StoryDetailContent story={item.target as Story | null} />
             ) : (
@@ -144,20 +155,22 @@ export function ReviewDetailPage() {
         </Col>
 
         <Col xs={24} lg={9}>
-          <Card title="Decision">
+          <Card title={t("reviewDetail.cardDecision")}>
             <Descriptions column={1} size="small">
-              <Descriptions.Item label="Status">
+              <Descriptions.Item label={t("common.colStatus")}>
                 <StatusTag value={item.reviewStatus} />
               </Descriptions.Item>
-              <Descriptions.Item label="Assigned to">{item.assignedTo || "—"}</Descriptions.Item>
-              <Descriptions.Item label="Submitted">
+              <Descriptions.Item label={t("reviewDetail.assignedTo")}>
+                {item.assignedTo || "—"}
+              </Descriptions.Item>
+              <Descriptions.Item label={t("common.colSubmitted")}>
                 {formatDate(item.submittedAt)}
               </Descriptions.Item>
             </Descriptions>
 
             {item.decisionReason ? (
               <Paragraph style={{ marginTop: 8 }}>
-                <Text type="secondary">Last decision note:</Text>
+                <Text type="secondary">{t("reviewDetail.lastDecisionNote")}</Text>
                 <br />
                 {item.decisionReason}
               </Paragraph>
@@ -171,10 +184,10 @@ export function ReviewDetailPage() {
                 loading={busy}
                 data-testid="start-review"
                 onClick={() =>
-                  run(() => reviewService.startReview(id), MESSAGES.review.started, refetch)
+                  run(() => reviewService.startReview(id), t("reviewDetail.started"), refetch)
                 }
               >
-                Start review
+                {t("reviewDetail.startReview")}
               </Button>
               <Button
                 block
@@ -183,9 +196,9 @@ export function ReviewDetailPage() {
                 disabled={!canDecide}
                 loading={busy}
                 data-testid="approve-publish"
-                onClick={() => run(() => reviewService.approve(id), MESSAGES.review.approved, refetch)}
+                onClick={() => run(() => reviewService.approve(id), t("reviewDetail.approved"), refetch)}
               >
-                Approve &amp; publish
+                {t("reviewDetail.approve")}
               </Button>
               <Button
                 block
@@ -195,12 +208,14 @@ export function ReviewDetailPage() {
                 data-testid="reject"
                 onClick={() => setRejectOpen(true)}
               >
-                Reject
+                {t("reviewDetail.reject")}
               </Button>
             </Space>
             {!canStart && !canDecide ? (
               <Text type="secondary" style={{ display: "block", marginTop: 8, fontSize: 12 }}>
-                This item is already {item.reviewStatus.toLowerCase()}.
+                {t("reviewDetail.alreadyDone", {
+                  status: tEnum("status", item.reviewStatus).toLowerCase(),
+                })}
               </Text>
             ) : null}
           </Card>
@@ -211,21 +226,17 @@ export function ReviewDetailPage() {
 
       <ConfirmActionModal
         open={rejectOpen}
-        title="Reject submission"
-        okText="Reject"
+        title={t("reviewDetail.rejectTitle")}
+        okText={t("reviewDetail.reject")}
         okType="danger"
-        reasonLabel="Rejection reason"
+        reasonLabel={t("reviewDetail.rejectReasonLabel")}
         confirmLoading={busy}
-        description={
-          <Text type="secondary">
-            The author sees this note and can revise and resubmit. It is kept in the review history.
-          </Text>
-        }
+        description={<Text type="secondary">{t("reviewDetail.rejectDescription")}</Text>}
         onCancel={() => setRejectOpen(false)}
         onOk={(reason) => {
           void run(
             () => reviewService.reject(id, reason),
-            MESSAGES.review.rejected,
+            t("reviewDetail.rejected"),
             () => {
               refetch();
               setRejectOpen(false);

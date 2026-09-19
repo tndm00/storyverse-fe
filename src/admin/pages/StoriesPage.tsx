@@ -5,13 +5,14 @@ import type { FilterValue, SorterResult, TableCurrentDataSource } from "antd/es/
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
 import { StatusTag } from "@/components/StatusTag";
 import { StoryDetailContent } from "@/components/StoryDetailContent";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import * as storyService from "@/services/storyService";
 import type { StorySortField } from "@/services/storyService";
-import { DEFAULT_PAGE_SIZE, LABELS, STORY_STATUS } from "@/utils/constants";
+import { DEFAULT_PAGE_SIZE, STORY_STATUS } from "@/utils/constants";
 import type { StoryStatus } from "@/utils/constants";
 import type { Story } from "@/types/domain";
-import { compactNumber, formatDateShort } from "@/utils/format";
+import { formatDateShort } from "@/utils/format";
 
 const { Text } = Typography;
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
@@ -19,6 +20,7 @@ const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 type StatusFilter = StoryStatus | "all";
 
 export function StoriesPage() {
+  const { t, tEnum, compactNumber } = useAdminLocale();
   const [status, setStatus] = useState<StatusFilter>("all");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
@@ -42,20 +44,20 @@ export function StoriesPage() {
 
   const doDelete = (story: Story) => {
     modal.confirm({
-      title: "Xoá truyện?",
-      content: `Xoá vĩnh viễn truyện "${story.title}", không thể hoàn tác.`,
-      okText: "Xoá vĩnh viễn",
+      title: t("stories.deleteTitle"),
+      content: t("stories.deleteContent", { title: story.title }),
+      okText: t("stories.deleteOk"),
       okType: "danger",
-      cancelText: "Huỷ",
+      cancelText: t("common.cancel"),
       onOk: async () => {
         setDeleting(true);
         try {
           await storyService.deleteStory(story.publicId);
-          message.success("Đã xoá truyện");
+          message.success(t("stories.deleted"));
           setSelected(null);
           refetch();
         } catch (e) {
-          message.error(e instanceof Error ? e.message : "Không xoá được truyện");
+          message.error(e instanceof Error ? e.message : t("stories.deleteFailed"));
         } finally {
           setDeleting(false);
         }
@@ -94,7 +96,7 @@ export function StoriesPage() {
 
   const columns: ColumnsType<Story> = [
     {
-      title: "Story",
+      title: t("stories.colStory"),
       dataIndex: "title",
       sorter: true,
       render: (title: string, row) => (
@@ -123,20 +125,20 @@ export function StoriesPage() {
       ),
     },
     {
-      title: "Status",
+      title: t("common.colStatus"),
       dataIndex: "status",
       width: 110,
       render: (v: StoryStatus) => <StatusTag value={v} />,
     },
     {
-      title: "Genres",
+      title: t("stories.colGenres"),
       dataIndex: "genres",
       width: 200,
       render: (genres: string[]) => genres.join(", "),
     },
-    { title: "Chapters", dataIndex: "chapterCount", width: 100, align: "right" },
+    { title: t("stories.colChapters"), dataIndex: "chapterCount", width: 100, align: "right" },
     {
-      title: "Views",
+      title: t("stories.colViews"),
       dataIndex: "viewCount",
       width: 100,
       align: "right",
@@ -144,7 +146,7 @@ export function StoriesPage() {
       render: (v: number) => compactNumber(v),
     },
     {
-      title: "Rating",
+      title: t("stories.colRating"),
       dataIndex: "ratingAvg",
       width: 100,
       align: "right",
@@ -152,7 +154,7 @@ export function StoriesPage() {
       render: (v: number, row) => `${v} (${compactNumber(row.ratingCount)})`,
     },
     {
-      title: "Published",
+      title: t("stories.colPublished"),
       dataIndex: "publishedAt",
       width: 120,
       sorter: true,
@@ -165,7 +167,7 @@ export function StoriesPage() {
       render: (_, row) =>
         row.status === "Draft" ? (
           <Button danger size="small" loading={deleting} onClick={() => doDelete(row)}>
-            Xoá
+            {t("common.delete")}
           </Button>
         ) : null,
     },
@@ -173,10 +175,7 @@ export function StoriesPage() {
 
   return (
     <div>
-      <AppPageHeader
-        title={LABELS.stories}
-        subtitle="Every story on the platform, across all lifecycle states"
-      />
+      <AppPageHeader title={t("nav.stories")} subtitle={t("stories.subtitle")} />
 
       <Card
         title={
@@ -186,8 +185,8 @@ export function StoriesPage() {
               onChange={onStatus}
               style={{ width: 160 }}
               options={[
-                { label: "All statuses", value: "all" },
-                ...STORY_STATUS.map((s) => ({ label: s, value: s })),
+                { label: t("common.allStatuses"), value: "all" },
+                ...STORY_STATUS.map((s) => ({ label: tEnum("status", s), value: s })),
               ]}
             />
           </Space>
@@ -195,7 +194,7 @@ export function StoriesPage() {
         extra={
           <Input.Search
             allowClear
-            placeholder="Search title or author"
+            placeholder={t("common.searchTitleOrAuthor")}
             style={{ width: 260 }}
             onSearch={onSearch}
           />
@@ -212,7 +211,7 @@ export function StoriesPage() {
             pageSize: PAGE_SIZE,
             total: data?.totalCount ?? 0,
             onChange: setPage,
-            showTotal: (t) => `${t} stories`,
+            showTotal: (total) => t("stories.total", { count: total }),
           }}
         />
       </Card>
@@ -226,10 +225,10 @@ export function StoriesPage() {
           <Space>
             {selected?.status === "Draft" ? (
               <Button danger loading={deleting} onClick={() => selected && doDelete(selected)}>
-                Xoá
+                {t("common.delete")}
               </Button>
             ) : null}
-            <Button onClick={() => setSelected(null)}>Close</Button>
+            <Button onClick={() => setSelected(null)}>{t("common.close")}</Button>
           </Space>
         }
       >

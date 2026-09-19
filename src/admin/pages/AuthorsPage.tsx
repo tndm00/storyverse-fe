@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Button, Card, Checkbox, Form, Input, Modal, Space, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as authorService from "@/services/authorService";
 import type { AuthorProfile } from "@/services/authorService";
-import { DEFAULT_PAGE_SIZE, LABELS } from "@/utils/constants";
+import { DEFAULT_PAGE_SIZE } from "@/utils/constants";
 import { formatDateShort } from "@/utils/format";
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
@@ -28,6 +29,7 @@ interface EditFormValues {
 }
 
 export function AuthorsPage() {
+  const { t, tEnum } = useAdminLocale();
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
   const { data, loading, refetch } = useAsyncQuery(
@@ -62,7 +64,7 @@ export function AuthorsPage() {
     const v = await createForm.validateFields();
     await run(
       () => authorService.create(v),
-      "Đã tạo tác giả",
+      t("authors.created"),
       () => {
         setCreating(false);
         setPage(1);
@@ -75,7 +77,7 @@ export function AuthorsPage() {
     const v = await editForm.validateFields();
     await run(
       () => authorService.update(editing!.authorProfileId, v),
-      "Đã cập nhật",
+      t("common.updated"),
       () => {
         setEditing(null);
         refetch();
@@ -86,7 +88,7 @@ export function AuthorsPage() {
   const toggleStatus = (a: AuthorProfile) =>
     run(
       () => authorService.setStatus(a.authorProfileId, a.status === "Active" ? "Suspended" : "Active"),
-      a.status === "Active" ? "Đã vô hiệu hoá tác giả" : "Đã khôi phục tác giả",
+      a.status === "Active" ? t("authors.deactivated") : t("authors.restored"),
       refetch,
     );
 
@@ -96,29 +98,27 @@ export function AuthorsPage() {
   };
 
   const columns: ColumnsType<AuthorProfile> = [
-    { title: "Bút danh", dataIndex: "penName", key: "penName" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Tên hiển thị", dataIndex: "displayName", key: "displayName" },
+    { title: t("authors.colPenName"), dataIndex: "penName", key: "penName" },
+    { title: t("authors.email"), dataIndex: "email", key: "email" },
+    { title: t("authors.colDisplayName"), dataIndex: "displayName", key: "displayName" },
     {
-      title: "Xác minh",
+      title: t("authors.colVerified"),
       dataIndex: "verified",
       key: "verified",
       width: 100,
-      render: (v: boolean) => (v ? <Tag color="blue">Đã xác minh</Tag> : null),
+      render: (v: boolean) => (v ? <Tag color="blue">{t("authors.verified")}</Tag> : null),
     },
     {
-      title: "Trạng thái",
+      title: t("common.colStatus"),
       dataIndex: "status",
       key: "status",
       width: 120,
       render: (v: AuthorProfile["status"]) => (
-        <Tag color={v === "Active" ? "success" : "default"}>
-          {v === "Active" ? "Hoạt động" : "Vô hiệu hoá"}
-        </Tag>
+        <Tag color={v === "Active" ? "success" : "default"}>{tEnum("authorStatus", v)}</Tag>
       ),
     },
     {
-      title: "Ngày tạo",
+      title: t("authors.colCreated"),
       dataIndex: "createdAt",
       key: "createdAt",
       width: 120,
@@ -131,7 +131,7 @@ export function AuthorsPage() {
       render: (_, a) => (
         <Space>
           <Button size="small" onClick={() => openEdit(a)}>
-            Sửa
+            {t("common.edit")}
           </Button>
           <Button
             size="small"
@@ -139,7 +139,7 @@ export function AuthorsPage() {
             disabled={busy}
             onClick={() => toggleStatus(a)}
           >
-            {a.status === "Active" ? "Xoá" : "Khôi phục"}
+            {a.status === "Active" ? t("common.delete") : t("authors.restore")}
           </Button>
         </Space>
       ),
@@ -149,11 +149,11 @@ export function AuthorsPage() {
   return (
     <div>
       <AppPageHeader
-        title={LABELS.authors}
-        subtitle="Danh sách tác giả (tài khoản + hồ sơ đăng truyện). Xoá = vô hiệu hoá, không xoá vĩnh viễn — truyện đã đăng vẫn giữ nguyên."
+        title={t("nav.authors")}
+        subtitle={t("authors.subtitle")}
         extra={
           <Button type="primary" onClick={openCreate}>
-            Thêm tác giả
+            {t("authors.add")}
           </Button>
         }
       />
@@ -162,7 +162,7 @@ export function AuthorsPage() {
         extra={
           <Input.Search
             allowClear
-            placeholder="Tìm theo bút danh"
+            placeholder={t("authors.search")}
             style={{ width: 260 }}
             onSearch={onSearch}
           />
@@ -180,51 +180,51 @@ export function AuthorsPage() {
             pageSize: PAGE_SIZE,
             total: data?.totalCount ?? 0,
             onChange: setPage,
-            showTotal: (t) => `${t} tác giả`,
+            showTotal: (total) => t("authors.total", { count: total }),
           }}
         />
       </Card>
 
       <Modal
         open={creating}
-        title="Thêm tác giả"
+        title={t("authors.add")}
         onCancel={() => setCreating(false)}
         onOk={submitCreate}
         confirmLoading={busy}
-        okText="Tạo"
-        cancelText="Huỷ"
+        okText={t("authors.create")}
+        cancelText={t("common.cancel")}
         destroyOnClose
       >
         <Form form={createForm} layout="vertical">
           <Form.Item
             name="email"
-            label="Email"
-            rules={[{ required: true, type: "email", message: "Nhập email hợp lệ" }]}
+            label={t("authors.email")}
+            rules={[{ required: true, type: "email", message: t("authors.emailInvalid") }]}
           >
-            <Input placeholder="ten@vidu.com" />
+            <Input placeholder={t("authors.emailPlaceholder")} />
           </Form.Item>
           <Form.Item
             name="password"
-            label="Mật khẩu"
-            rules={[{ required: true, min: 8, message: "Ít nhất 8 ký tự, gồm chữ và số" }]}
+            label={t("authors.password")}
+            rules={[{ required: true, min: 8, message: t("authors.passwordRule") }]}
           >
-            <Input.Password placeholder="Ít nhất 8 ký tự, có chữ và số" />
+            <Input.Password placeholder={t("authors.passwordRule")} />
           </Form.Item>
           <Form.Item
             name="displayName"
-            label="Tên hiển thị"
-            rules={[{ required: true, message: "Nhập tên hiển thị" }, { max: 100 }]}
+            label={t("authors.colDisplayName")}
+            rules={[{ required: true, message: t("authors.displayNameRequired") }, { max: 100 }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             name="penName"
-            label="Bút danh"
-            rules={[{ required: true, message: "Nhập bút danh" }, { max: 100 }]}
+            label={t("authors.colPenName")}
+            rules={[{ required: true, message: t("authors.penNameRequired") }, { max: 100 }]}
           >
             <Input />
           </Form.Item>
-          <Form.Item name="bio" label="Tiểu sử">
+          <Form.Item name="bio" label={t("authors.bio")}>
             <Input.TextArea rows={2} />
           </Form.Item>
         </Form>
@@ -232,33 +232,33 @@ export function AuthorsPage() {
 
       <Modal
         open={editing !== null}
-        title="Sửa tác giả"
+        title={t("authors.editTitle")}
         onCancel={() => setEditing(null)}
         onOk={submitEdit}
         confirmLoading={busy}
-        okText="Lưu"
-        cancelText="Huỷ"
+        okText={t("common.save")}
+        cancelText={t("common.cancel")}
         destroyOnClose
       >
         <Form form={editForm} layout="vertical">
           <Form.Item
             name="penName"
-            label="Bút danh"
-            rules={[{ required: true, message: "Nhập bút danh" }, { max: 100 }]}
+            label={t("authors.colPenName")}
+            rules={[{ required: true, message: t("authors.penNameRequired") }, { max: 100 }]}
           >
             <Input />
           </Form.Item>
-          <Form.Item name="bio" label="Tiểu sử">
+          <Form.Item name="bio" label={t("authors.bio")}>
             <Input.TextArea rows={2} />
           </Form.Item>
-          <Form.Item name="avatarUrl" label="Ảnh đại diện (URL)">
+          <Form.Item name="avatarUrl" label={t("authors.avatarUrl")}>
             <Input placeholder="https://..." />
           </Form.Item>
-          <Form.Item name="bannerUrl" label="Ảnh bìa (URL)">
+          <Form.Item name="bannerUrl" label={t("authors.bannerUrl")}>
             <Input placeholder="https://..." />
           </Form.Item>
           <Form.Item name="verified" valuePropName="checked">
-            <Checkbox>Đã xác minh</Checkbox>
+            <Checkbox>{t("authors.verified")}</Checkbox>
           </Form.Item>
         </Form>
       </Modal>

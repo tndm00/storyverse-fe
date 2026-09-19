@@ -4,12 +4,13 @@ import { App, Button, Card, Input, Space, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { CheckOutlined } from "@ant-design/icons";
 import { AppPageHeader } from "@/admin/components/AppPageHeader";
+import { useAdminLocale } from "@/hooks/useAdminLocale";
 import { useAsyncQuery } from "@/hooks/useAsyncQuery";
 import { useAsyncRunner } from "@/hooks/useAsyncRunner";
 import * as reviewService from "@/services/reviewService";
 import type { RejectedItem } from "@/services/reviewService";
-import { formatDate, fromNow } from "@/utils/format";
-import { DEFAULT_PAGE_SIZE, LABELS, MESSAGES, ROUTES } from "@/utils/constants";
+import { formatDate } from "@/utils/format";
+import { DEFAULT_PAGE_SIZE, ROUTES } from "@/utils/constants";
 
 const { Text } = Typography;
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
@@ -23,6 +24,7 @@ const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 export function RejectedQueuePage() {
   const navigate = useNavigate();
   const { modal } = App.useApp();
+  const { t, fromNow } = useAdminLocale();
   const { busy, run } = useAsyncRunner();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
@@ -40,20 +42,20 @@ export function RejectedQueuePage() {
 
   const reapprove = (row: RejectedItem) => {
     modal.confirm({
-      title: MESSAGES.review.reapproveConfirmTitle,
+      title: t("reapprove.confirmTitle"),
       content: (
         <>
           <Text strong>{row.title}</Text>
           <br />
-          <Text type="secondary">{MESSAGES.review.reapproveConfirmContent}</Text>
+          <Text type="secondary">{t("reapprove.confirmContent")}</Text>
         </>
       ),
-      okText: "Đưa về hàng đợi",
+      okText: t("reapprove.ok"),
       onOk: () => {
         setReapprovingId(row.id);
         return run(
           () => reviewService.startReview(row.id),
-          MESSAGES.review.reapproved,
+          t("reapprove.done"),
           () => navigate(ROUTES.admin.reviewQueue),
         ).finally(() => setReapprovingId(null));
       },
@@ -62,23 +64,23 @@ export function RejectedQueuePage() {
 
   const columns: ColumnsType<RejectedItem> = [
     {
-      title: "Tên chương",
+      title: t("rejected.colChapter"),
       dataIndex: "title",
       render: (title: string, row) => <Link to={ROUTES.admin.reviewItem(row.id)}>{title}</Link>,
     },
     {
-      title: "Tác giả",
+      title: t("common.colAuthor"),
       dataIndex: "authorName",
       width: 180,
       render: (v: string | undefined) => v || "—",
     },
     {
-      title: "Lý do từ chối",
+      title: t("rejected.colReason"),
       dataIndex: "decisionReason",
       render: (v: string | null) => v || "—",
     },
     {
-      title: "Thời gian bị từ chối",
+      title: t("rejected.colRejectedAt"),
       dataIndex: "rejectedAt",
       width: 190,
       render: (v: string | null) =>
@@ -109,7 +111,7 @@ export function RejectedQueuePage() {
           }}
           data-testid={`reapprove-${row.id}`}
         >
-          Đưa về hàng đợi duyệt
+          {t("reapprove.button")}
         </Button>
       ),
     },
@@ -118,10 +120,10 @@ export function RejectedQueuePage() {
   return (
     <div>
       <AppPageHeader
-        title={LABELS.rejectedQueue}
-        subtitle="Chương đã bị từ chối — đưa về hàng đợi duyệt để xử lý lại, bỏ qua bước gửi lại của tác giả"
+        title={t("nav.rejectedQueue")}
+        subtitle={t("rejected.subtitle")}
         extra={
-          <Button onClick={() => navigate(ROUTES.admin.reviewQueue)}>{LABELS.reviewQueue}</Button>
+          <Button onClick={() => navigate(ROUTES.admin.reviewQueue)}>{t("nav.reviewQueue")}</Button>
         }
       />
 
@@ -130,7 +132,7 @@ export function RejectedQueuePage() {
         extra={
           <Input.Search
             allowClear
-            placeholder="Tìm theo tên chương hoặc tác giả"
+            placeholder={t("rejected.search")}
             style={{ width: 280 }}
             onSearch={onSearch}
           />
@@ -151,7 +153,7 @@ export function RejectedQueuePage() {
             pageSize: PAGE_SIZE,
             total: data?.totalCount ?? 0,
             onChange: setPage,
-            showTotal: (t) => `${t} items`,
+            showTotal: (total) => t("common.itemsTotal", { count: total }),
           }}
         />
       </Card>
